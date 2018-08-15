@@ -1,6 +1,6 @@
 # GraphToSequenceNN [In Progress] 
 
-This Repo is in proceeding. It will provide an example of Graph2Sequence encoding and decoding. The source behind the Graph2Sequence idea is https://arxiv.org/abs/1804.00823.
+This Repo is in proceeding. It will provide an example of Graph2Sequence encoding and decoding. The source behind the Graph2Sequence idea is https://arxiv.org/abs/1804.00823. In this implementation I try to encode datasets from https://amr.isi.edu/ (Abstract Meaning Representation). 
 
 ## The Setup
 

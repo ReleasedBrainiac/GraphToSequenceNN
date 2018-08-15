@@ -4,7 +4,7 @@ This Repo is in proceeding. It will provide an example of Graph2Sequence encodin
 
 ## The Setup
 
-- Tensorflow Version:   1.7.0 => https://www.tensorflow.org/
+- Tensorflow Version:   1.6.0 => https://www.tensorflow.org/ [For GPU]
 - Keras Version:        2.2.2 => https://keras.io/
 - Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/

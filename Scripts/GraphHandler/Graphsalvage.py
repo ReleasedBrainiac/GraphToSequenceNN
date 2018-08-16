@@ -5,6 +5,8 @@ import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
 from TextFormatting.Contentsupport import isDict, multiIsDict
+from anytree.exporter import JsonExporter
+from anytree.importer import JsonImporter
 
 #===========================================================#
 #==                      Helper Methods                   ==#
@@ -145,7 +147,7 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
                                    content)
 
             prev_index = index
-        return root
+    return root
 
 #==             Show RLDAG tree representation            ==#
 def ShowRLDAGTree(root):
@@ -191,8 +193,8 @@ def BuildNextNode( prev_node,
     return prev_node
 
 #==               Search for depending parent             ==#
-def GetParent(prev_node, cur_depth):
-    cur_parent = prev_node.parent
+def GetParent(in_node, cur_depth):
+    cur_parent = in_node.parent
     if(cur_parent != None) and ((cur_parent.depth + 1) > cur_depth):
         while((cur_parent.depth + 1) > cur_depth):
             cur_parent = cur_parent.parent
@@ -203,6 +205,7 @@ def GetParent(prev_node, cur_depth):
 def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
     if(nHasInputNode == False):
         return AnyNode( id=nId,
+                        name=nState,
                         state=nState,
                         depth=nDepth,
                         hasInputNode=nHasInputNode,
@@ -213,6 +216,7 @@ def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes
                         content=nContent)
     else:
         return AnyNode( id=nId,
+                        name=nState,
                         state=nState,
                         depth=nDepth,
                         hasInputNode=nHasInputNode,
@@ -243,9 +247,10 @@ def StateDefinition(graph_root, node):
         if(len(desired) == 1):
             NodeSetNormalState(node)
         else:
-            l = desired[0].label
-            s = desired[0].state
-            node.state = ('Navigate['+str(l)+'.'+str(s)+']')
+            node.followerNodes = desired[0].followerNodes
+            node.hasFollowerNodes = desired[0].hasFollowerNodes
+            node.hasInputNode = desired[0].hasInputNode
+            node.state = ('navigator')
     else:
         NodeSetNormalState(node)
 
@@ -279,6 +284,16 @@ def ReforgeGraphContent(graph_root):
         print('WRONG INPUT FOR [ReforgeGraphContent]')
         return None
 
+#==                    Export informations                ==#
+def ExportToJson(root):
+    exporter = JsonExporter(indent=2, sort_keys=True)
+    return '#::smt\n' + exporter.export(root) + '\n'
+
+#==                    Import informations                ==#
+def ImportAsJson(json_string):
+    importer = JsonImporter()
+    return importer.import_(data)
+
 #===========================================================#
 #==             Gather the  graph informations            ==#
 #==     We create ordered by input order dictionairies    ==#
@@ -291,10 +306,7 @@ def GatherGraphInfo(graph, sem_flag):
     graphLines = graph.split('\n')
     nodes_depth = OrderedDict()
     nodes_content = OrderedDict()
-
-    print('--------------------------------')
-    print('--------------------------------')
-    print(graph)
+    
     for line in graphLines:
         if(sem_flag not in line) and (line != ''):
             s = len(line) - len(line.lstrip(' '))
@@ -318,3 +330,5 @@ def GatherGraphInfo(graph, sem_flag):
     #ShowRLDAGTree(root)
     ReforgeGraphContent(root)
     ShowRLDAGTree(root)
+    return ExportToJson(root)
+    

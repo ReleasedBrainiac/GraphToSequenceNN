@@ -1,11 +1,7 @@
 # - *- coding: utf- 8*-
-#import os
+
 import numpy as np
 import tensorflow as tf
-
-###########
-#Functions#
-###########
 
 def GetMaxColIndexFromTensor(tensor_x):
     count = tensor_x.get_shape()[0]
@@ -112,13 +108,6 @@ def GetTensorResults(edges, nodes, result_tens_arry, iterator):
 def GetFeaturesTensorOnly(edge_and_nodes):
     iterations = KerasGetMaxColCountTensor(edge_and_nodes[0])
     carrier = GetDefaultFloat32TensArray()
-    return GetTensorResults(edge_and_nodes[0], edge_and_nodes[1], carrier, iterations)[2]
-    
-def GetKerasInputLayerPairs(shape_in1, name1, shape_in2, name2):
-    inputs1 = Input(shape=shape_in1, name=name1)
-    inputs2 = Input(shape=shape_in2, name=name2)
-    return [inputs1, inputs2]
-
-def GetMyKerasLambda(tensor_pair_array, out_shape, layer_name):
-    return Lambda(GetFeaturesTensorOnly, output_shape=out_shape, name=layer_name)(tensor_pair_array)
-
+    result = GetTensorResults(edge_and_nodes[0], edge_and_nodes[1], carrier, iterations)[2]
+    print(result)
+    return result 

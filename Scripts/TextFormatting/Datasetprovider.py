@@ -30,8 +30,8 @@ def FileToString(xpath):
         return result
 
 #==                    Restrict Content                   ==#
-def CreateWriteCorpus(max_len, sent, sem):
-    if (max_len < 1) or ((max_len > 0) and (len(sent) < (allowed_size_sen+1)) and (len(sem) < (allowed_size_sem+1))):
+def CreateWriteCorpus(max_len, sent, sem, sen_size, sem_size):
+    if (max_len < 1) or ((max_len > 0) and (len(sent) < (sen_size+1)) and (len(sem) < (sem_size+1))):
         return [True, sent + sem]
 
 #==                     Filter Content                    ==#
@@ -41,33 +41,46 @@ def ClearSentence(in_sentence):
     in_sentence = re.sub('<[^/>]+/>','', '#'+in_sentence)
     return in_sentence+'\n'
 
-def ReforgeSemanticRepresentation(semantic, sem_flag):
-    #half_cleaned_sem = '#'+sem_flag+' '+semantic.replace('\n', '|')+'\n'
+def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
     half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
-    #return re.sub(' +',' ',half_cleaned_sem)+'\n'
     out = half_cleaned_sem+'\n'
-    GatherGraphInfo(out, sem_flag)
     return out
 
+def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag):
+    half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
+    out = half_cleaned_sem+'\n'
+    return GatherGraphInfo(out, sem_flag)
+
 #==                    Write AMR Dataset                  ==#
-def StringToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, len_sem_mw, max_len):
+def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, len_sem_mw, max_len, want_arm):
     with open(ypath, 'w', encoding="utf8") as fileOut:
-        allowed_size_sen = min(len_sen_mw, max_len)
-        allowed_size_sem = min(len_sem_mw, (max_len*2))
+        sen_size = min(len_sen_mw, max_len)
+        sem_size = min(len_sem_mw, (max_len*2))
 
         for i in range(min(len(sent_array), len(sem_array))):
             #Gather sentences without linking substrings because they are not contained in the semantic graph
             sent = sent_flag+' '+sent_array[i]
             sent = ClearSentence(sent)
-            sem = ReforgeSemanticRepresentation(sem_array[i], sem_flag);
+            if(want_arm):
+                sem = ReforgeSemanticRepresentationToCleanARM(sem_array[i], sem_flag);
+            else:
+                sem = ReforgeSemanticRepresentationToAnyTree(sem_array[i], sem_flag);
+            
             #Restrict writing content
-            isAllowed, out = CreateWriteCorpus(max_len, sent, sem)
-'''
+            isAllowed, out = CreateWriteCorpus(max_len, sent, sem, sen_size, sem_size)
             if (isAllowed):
                 fileOut.write(out)
                 fileOut.flush()
+                
+    print(ypath)
     return None
-'''
+
+def GetAnyTreeDataset():
+    for i in range(min(len(sent_array), len(sem_array))):
+            #Gather sentences without linking substrings because they are not contained in the semantic graph
+            sent = sent_flag+' '+sent_array[i]
+            sent = ClearSentence(sent)
+            sem = ReforgeSemanticRepresentation(sem_array[i], sem_flag);
 
 #==             Record clean_content extractor            ==#
 def ExtractContent(in_content, x_delim, y_delim):
@@ -104,6 +117,7 @@ def pipeline(inpath, output_extender, max_length_sentences):
     sents_lens = []
     sema_lens  = []
 
+    save_as_arm = False
     typerror = 'Entered wrong type!'
     sentence_delim = '::snt'
     semantik_delim = '::smt'
@@ -132,13 +146,14 @@ def pipeline(inpath, output_extender, max_length_sentences):
     print(mw_value_sem)
 
     #==                 Sava Collected Content                ==#
-    StringToFile(outpath,
-                 sentences,
-                 semantics,
-                 sentence_delim,
-                 semantik_delim,
-                 mw_value_sen,
-                 mw_value_sem,
-                 max_length)
+    SaveToFile(outpath,
+               sentences,
+               semantics,
+               sentence_delim,
+               semantik_delim,
+               mw_value_sen,
+               mw_value_sem,
+               max_length,
+               save_as_arm)
     
     return None

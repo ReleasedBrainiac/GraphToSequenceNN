@@ -265,10 +265,11 @@ def BuildNextNode( prev_node, index, p_depth, state, depth, hasInputs, input, ha
 #==                 Node Manipulation Methods             ==#
 #===========================================================#
 
-#==              Set destination, root or else           ==#
-def NodeSetNormalState(node):
+#==             Set Node state if not navigated           ==#
+# This funtion set the state of a node in the GraphTree.
+def NormalState(node):
     if isAnyNode(node):
-        if(node.is_leaf):
+        if (node.is_leaf) and not (node.is_root):
             node.state = 'destination'
         elif(node.is_root):
             node.state = 'root'
@@ -276,25 +277,29 @@ def NodeSetNormalState(node):
         else:
             node.state = 'subnode'
     else:
-        print('WRONG INPUT FOR [NodeSetNormalState]')
+        print('WRONG INPUT FOR [NormalState]')
 
-#=              Check node is navigated                  ==#
-def StateDefinition(graph_root, node):
+#=        Check Node is navigated and set state           ==#
+# This function chech notes if they are root, subnode or child (-> DAG review as Tree)
+# If this check is true it calls NormalState function.
+# Otherwise it sets state to 'navigator'.
+# Graph of Rank 1 is a sigle root node!
+def NavigateState(graph_root, node):
     if isAnyNode(graph_root) and isAnyNode(node):
-        if(node.label != None) and (node.content == None):
+        if isNotNone(node.label) and isNone(node.content):
             label = node.label
             desired =findall(graph_root, lambda node: node.label in label)
             if(len(desired) == 1):
-                NodeSetNormalState(node)
+                NormalState(node)
             else:
                 node.followerNodes = desired[0].followerNodes
                 node.hasFollowerNodes = desired[0].hasFollowerNodes
                 node.hasInputNode = desired[0].hasInputNode
                 node.state = ('navigator')
         else:
-            NodeSetNormalState(node)
+            NormalState(node)
     else:
-        print('WRONG INPUT FOR [StateDefinition]')
+        print('WRONG INPUT FOR [NavigateState]')
 
 #=                  Get direct subnodes                  ==#
 def GetSubnodes(node):
@@ -310,7 +315,7 @@ def GetSubnodes(node):
 def SingleNodeReforge(graph_root, node):
     if isAnyNode(graph_root) and isAnyNode(node):
         # Get node state and connected subnodes
-        StateDefinition(graph_root, node)
+        NavigateState(graph_root, node)
         GetSubnodes(node)
     else:
         print('WRONG INPUT FOR [SingleNodeReforge]')
@@ -323,6 +328,7 @@ def ReforgeGraphContent(root):
             SingleNodeReforge(root, node);
     else:
         print('WRONG INPUT FOR [ReforgeGraphContent]')
+
 
 #===========================================================#
 #==             Gather the  graph informations            ==#

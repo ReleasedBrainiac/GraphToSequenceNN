@@ -6,7 +6,7 @@
 import re
 from TextFormatting.Contentsupport import setOrDefault as sod
 from TextFormatting.Contentsupport import isStr, isInt
-from GraphHandler.Graphsalvage import GatherGraphInfo
+from GraphHandler.Graphsalvage import Gatherer
 
 #===========================================================#
 #                   Methods/Functions                       #
@@ -46,10 +46,10 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
     out = half_cleaned_sem+'\n'
     return out
 
-def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_activated):
+def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_activated, to_process):
     half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
     out = half_cleaned_sem+'\n'
-    return GatherGraphInfo(out, sem_flag, print_activated)
+    return Gatherer(out, sem_flag, print_activated, to_process)
 
 #==                    Write AMR Dataset                  ==#
 def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, len_sem_mw, max_len, want_arm, print_activated):
@@ -64,7 +64,7 @@ def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, le
             if(want_arm):
                 sem = ReforgeSemanticRepresentationToCleanARM(sem_array[i], sem_flag);
             else:
-                sem = ReforgeSemanticRepresentationToAnyTree(sem_array[i], sem_flag, print_activated);
+                sem = ReforgeSemanticRepresentationToAnyTree(sem_array[i], sem_flag, print_activated, True);
             
             #Restrict writing content
             isAllowed, out = CreateWriteCorpus(max_len, sent, sem, sen_size, sem_size)

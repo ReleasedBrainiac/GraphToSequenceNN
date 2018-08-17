@@ -27,11 +27,16 @@ def CalcMW(sentence_length):
         return None
 
 #==                    Read AMR Dataset                   ==#
+# This function provide a file reader for the AMR dataset.
 def FileToString(xpath):
-    with open(xpath, 'r', encoding="utf8") as fileIn:
-        data=fileIn.read()
-        result=data.split('#')
-        return result
+    if(isStr(xpath)):
+        with open(xpath, 'r', encoding="utf8") as fileIn:
+            data=fileIn.read()
+            result=data.split('#')
+            return result
+    else:
+        print('WRONG INPUT FOR [FileToString]')
+        return None
 
 #==                    Restrict Content                   ==#
 def CreateWriteCorpus(max_len, sent, sem, sen_size, sem_size):

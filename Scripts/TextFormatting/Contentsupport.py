@@ -12,6 +12,9 @@ def toInt(input):
     if(isFloat(input)):
         return int(input)
 
+def isBool(input):
+    return isinstance(input, bool)
+
 def isNotInStr(seq , string):
     return (seq not in string)
 

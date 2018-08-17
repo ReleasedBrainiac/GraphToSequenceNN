@@ -1,5 +1,6 @@
 # - *- coding: utf- 8*-
 from anytree import AnyNode
+from collections import OrderedDict
 
 def file_len(fname):
         with open(fname, 'r', encoding="utf8") as f:
@@ -27,6 +28,9 @@ def isStr(input):
 
 def isInt(input):
     return isinstance(input, int)
+
+def isODict(input):
+    return isinstance(input, OrderedDict)
 
 def isDict(input):
     return isinstance(input, dict)

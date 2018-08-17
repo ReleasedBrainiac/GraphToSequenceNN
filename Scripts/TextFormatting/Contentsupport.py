@@ -8,6 +8,10 @@ def file_len(fname):
                 pass
         return i + 1
 
+def toInt(input):
+    if(isFloat(input)):
+        return int(input)
+
 def isNotInStr(seq , string):
     return (seq not in string)
 

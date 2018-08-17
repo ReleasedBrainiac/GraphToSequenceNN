@@ -49,7 +49,7 @@ def ExtractRawNodeSequence(sequence):
 
 #==               Get nodes label and content             ==#
 # This function allow to collect the Label and eventually a label content 
-# from string of a ARM Graph variable.
+# from string of a AMR Graph variable.
 def GetSplittedContent(str):
     if(isStr(str)):
         if(isNotInStr('/', str)):
@@ -64,7 +64,7 @@ def GetSplittedContent(str):
         return None
 
 #==                    Cleanup AMR spacing                ==#
-# This function clean up the whitespacing in the ARM Graphstring by a given value.
+# This function clean up the whitespacing in the AMR Graphstring by a given value.
 def AddLeadingWhitespaces(str, amount):
     if(isStr(str)) and (isInt(amount)):
         for i in range(amount):
@@ -220,35 +220,29 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
 #==                    Create a new nodes                 ==#
 # This function creates a new AnyNode with the given input.
 def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
-    if(nHasInputNode == False):
-            nInputNode = None
+    if isInt(nId) and isBool(nHasInputNode) and isBool(nHasFollowerNodes) and isList(nFollowerNodes):
+        if(nHasInputNode == False):
+                nInputNode = None
 
-    return AnyNode( id=nId,
-                    name=nState,
-                    state=nState,
-                    depth=nDepth,
-                    hasInputNode=nHasInputNode,
-                    parent=nInputNode,
-                    hasFollowerNodes=nHasFollowerNodes,
-                    followerNodes=nFollowerNodes,
-                    label=nLabel,
-                    content=nContent)
+        return AnyNode( id=nId,
+                        name=nState,
+                        state=nState,
+                        depth=nDepth,
+                        hasInputNode=nHasInputNode,
+                        parent=nInputNode,
+                        hasFollowerNodes=nHasFollowerNodes,
+                        followerNodes=nFollowerNodes,
+                        label=nLabel,
+                        content=nContent)
+    else:
+        print('WRONG INPUT FOR [NewAnyNode]')
+        return None
 
 #==                   Build next RLDAG node               ==#
-def BuildNextNode( prev_node,
-                   index,
-                   p_depth,
-                   state,
-                   depth,
-                   hasInputs,
-                   input,
-                   hasFollowers,
-                   followers,
-                   label,
-                   content):
-
+# This function create a new node depending on a given node or tree.
+# Here the node gets its position inside the tree depending on the given prev node which is the root or a tree structure.
+def BuildNextNode( prev_node, index, p_depth, state, depth, hasInputs, input, hasFollowers, followers, label, content):
     if isInt(index) and isInt(depth) and isInt(p_depth):
-        #Handle the subgraph parts
         if(index > 0):
             input = GetParentOfNewNode(depth, p_depth, prev_node)
             prev_node = NewAnyNode( index,
@@ -335,37 +329,65 @@ def ReforgeGraphContent(root):
 #==     We create ordered by input order dictionairies    ==#
 #===========================================================#
 
-def GatherGraphInfo(graph, sem_flag):
-    v = 6
-    k = 0
-    root = None
-    graphLines = graph.split('\n')
-    nodes_depth = OrderedDict()
-    nodes_content = OrderedDict()
-    #print(graph)
-    
-    for line in graphLines:
-        if(sem_flag not in line) and (line != ''):
-            s = len(line) - len(line.lstrip(' '))
-            t_rest = s%v
-            t = s/v
+#==                Print Results to Console               ==#
+# This function print the input and result of the gatherer.
+# This allow to evaluate the gatherers work easily.
+def ShowGathererInfo(amr_graph, root):
+    if isStr(amr_graph) and isAnyNode(root):
+        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
+        print(amr_graph)
+        ShowRLDAGTree(root)
+        print('\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n')
+    else:
+        print('WRONG INPUT FOR [ShowGathererInfo]')
+        return None
 
-            if(t_rest > 0):
-                line, s = AddLeadingWhitespaces(line, (v-t_rest))
+#==       Preprocessor for AMR-String-Representation      ==#
+# This function fixes format problems and collect nodes depth and there content ordered by appearance.
+# So its possible to rebuild the AMR structure.
+def AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content):
+    if isStr(sem_flag) and isList(graph_nodes) and isODict(nodes_depth) and isODict(nodes_depth):
+        v = 6   # Definition of 1 depth step in AMR
+        k = 0
+        
+        # Each line is a node definition
+        for line in graph_nodes:
+            if(sem_flag not in line) and (line != ''):
+                s = len(line) - len(line.lstrip(' '))
+                t_rest = s%v
                 t = s/v
 
-            if(k > 0) and ((t - nodes_depth[k-1]) > 1):
-                nodes_depth[k] = nodes_depth[k-1]+1
-            else:
-                nodes_depth[k] = t
+                if(t_rest > 0):
+                    line, s = AddLeadingWhitespaces(line, (v-t_rest))
+                    t = s/v
 
-            nodes_depth[k] = toInt(t)
-            nodes_content[k] = CleanNodeSequence(line)
-            k = k + 1
+                if(k > 0) and ((t - nodes_depth[k-1]) > 1):
+                    nodes_depth[k] = nodes_depth[k-1]+1
+                else:
+                    nodes_depth[k] = t
 
-    root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
-    #ShowRLDAGTree(root)
-    ReforgeGraphContent(root)
-    ShowRLDAGTree(root)
-    return ExportToJson(root)
+                nodes_depth[k] = toInt(t)
+                nodes_content[k] = CleanNodeSequence(line)
+                k = k + 1
+    else:
+        print('WRONG INPUT FOR [AMRPreprocessor]')
+
+
+def GatherGraphInfo(amr_graph, sem_flag, print_to_console):
+    if isStr(amr_graph) and isStr(sem_flag) and isBool(print_to_console):
+        graph_nodes = amr_graph.split('\n')
+        nodes_depth = OrderedDict()
+        nodes_content = OrderedDict()
+
+        AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content)
+        root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
+        ReforgeGraphContent(root)
+
+        if(print_to_console):
+            ShowGathererInfo(amr_graph, root)
+
+        return ExportToJson(root)
+    else:
+        print('WRONG INPUT FOR [GatherGraphInfo]')
+        return None
     

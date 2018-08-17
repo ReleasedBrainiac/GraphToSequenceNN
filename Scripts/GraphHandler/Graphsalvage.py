@@ -4,7 +4,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInStr, isInt
+from TextFormatting.Contentsupport import isDict, isODict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInStr, isInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 
@@ -97,66 +97,64 @@ def ShowRLDAGTree(root):
     else:
         print('WRONG INPUT FOR [ShowRLDAGTree]')
 
-#===========================================================#
 #==               Build a tree like graph                 ==#
-#===========================================================#
-
+# This function build a Graph as tree structure with labeld nodes, 
+# which can usde to navigate like in a graph.
 def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
-    if(len(orderedNodesDepth) != len(orderedNodesContent)):
-        print('Inserted List dont match in size FOR [BuildTreeLikeGraphFromDAG]')
-        return None
+    if (isODict(orderedNodesDepth)) and (isODict(orderedNodesContent)):
+        if(len(orderedNodesDepth) != len(orderedNodesContent)):
+            print('INSERTIONS CONTENT SIZE NOT EQUAL AND ERROR FOR [BuildTreeLikeGraphFromRLDAG]')
+            return None
+        else:
+            root = None
+            prev_index = -1
+            prev_node = None
+            depth = None
+            label = None
+            content = None
+
+            # For all ordered graphnodes gathered by there depth in the graph
+            for index in range(len(orderedNodesDepth)):
+                depth = orderedNodesDepth[index]
+                label, content = GetSplittedContent(orderedNodesContent[index])
+
+                #Setup rooted node
+                if(index == 0):
+                    root = NewAnyNode( index,
+                                       'root',
+                                       depth,
+                                       False,
+                                       [],
+                                       True,
+                                       [],
+                                       label,
+                                       content)
+
+                    prev_node = root
+
+                #Handle the subgraph parts
+                else:
+                    prev_node = BuildNextNode( prev_node,
+                                       index,
+                                       orderedNodesDepth[prev_index],
+                                       None,
+                                       depth,
+                                       True,
+                                       [],
+                                       None,
+                                       [],
+                                       label,
+                                       content)
+
+                prev_index = index
+        return root
     else:
-        root = None
-        raw_cnt = None
-        prev_index = -1
-
-        prev_node = None
-        depth = None
-        label = None
-        content = None
-
-        for index in range(len(orderedNodesDepth)):
-            raw_cnt = orderedNodesContent[index]
-            depth = orderedNodesDepth[index]
-
-            label, content = GetSplittedContent(raw_cnt)
-
-            #Setup rooted node
-            if(index == 0):
-                root = NewAnyNode( index,
-                                   'root',
-                                   depth,
-                                   False,
-                                   [],
-                                   True,
-                                   [],
-                                   label,
-                                   content)
-
-                prev_node = root
-
-            #Handle the subgraph parts
-            else:
-                prev_node = BuildNextNode( prev_node,
-                                   index,
-                                   orderedNodesDepth[index],
-                                   orderedNodesDepth[prev_index],
-                                   None,
-                                   depth,
-                                   True,
-                                   [],
-                                   None,
-                                   [],
-                                   label,
-                                   content)
-
-            prev_index = index
-    return root
+        print('WRONG INPUT FOR [BuildTreeLikeGraphFromRLDAG]')
+        return None
 
 #==                   Build next RLDAG node               ==#
 def BuildNextNode( prev_node,
                    index,
-                   c_depth,
                    p_depth,
                    state,
                    depth,
@@ -170,15 +168,15 @@ def BuildNextNode( prev_node,
     #Handle the subgraph parts
     if(index > 0):
         #Next step down in the Rooted Label DAG (RLDAG)
-        if(c_depth > p_depth):
+        if(depth > p_depth):
             input = prev_node
         else:
             #Next same layer Node in the RLDAG
-            if(c_depth == p_depth):
+            if(depth == p_depth):
                 input = prev_node.parent
             #Next rising layer Node in the RLDAG
             else:
-                input = GetParent(prev_node, c_depth)
+                input = GetParent(prev_node, depth)
 
         prev_node = NewAnyNode( index,
                     state,
@@ -339,8 +337,8 @@ def GatherGraphInfo(graph, sem_flag):
             k = k + 1
 
     root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
-    ShowRLDAGTree(root)
+    #ShowRLDAGTree(root)
     ReforgeGraphContent(root)
-    ShowRLDAGTree(root)
+    #ShowRLDAGTree(root)
     return ExportToJson(root)
     

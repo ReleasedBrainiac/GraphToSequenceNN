@@ -4,9 +4,33 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import isDict, isODict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInStr, isInt
+from TextFormatting.Contentsupport import *
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
+
+#===========================================================#
+#==                    Conversion Methods                 ==#
+#===========================================================#
+
+#==                    Export informations                ==#
+# This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
+def ExportToJson(root):
+    if(isAnyNode(root)):
+        exporter = JsonExporter(indent=2, sort_keys=True)
+        return '#::smt\n' + exporter.export(root) + '\n'
+    else:
+        print('WRONG INPUT FOR [ExportToJson]')
+        return None
+
+#==                    Import informations                ==#
+# This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
+def ImportAsJson(json):
+    if(isStr(json)):
+        importer = JsonImporter()
+        return importer.import_(json)
+    else:
+        print('WRONG INPUT FOR [ImportAsJson]')
+        return None
 
 #===========================================================#
 #==                      Helper Methods                   ==#
@@ -97,6 +121,25 @@ def ShowRLDAGTree(root):
     else:
         print('WRONG INPUT FOR [ShowRLDAGTree]')
 
+#==               Search for depending parent             ==#
+# This function allow to get the parent node of the given node depending on a given depth.
+# The depth is needed to find the correct node during navigation through a graph construction.
+# We search with the previous node and define the steps we have to step up in the tree. 
+def GetParentWithPrev(node, cur_depth):
+    if isAnyNode(node) and isInt(cur_depth) and isNotNone(cur_depth):
+        cur_parent = node.parent
+        while((cur_parent.depth + 1) > cur_depth):
+            cur_parent = cur_parent.parent
+
+        return cur_parent
+    else:
+        print('WRONG INPUT FOR [GetParentWithPrev]')
+        return None
+
+#===========================================================#
+#==                      Build Methods                   ==#
+#===========================================================#
+
 #==               Build a tree like graph                 ==#
 # This function build a Graph as tree structure with labeld nodes, 
 # which can usde to navigate like in a graph.
@@ -141,7 +184,7 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
                                        depth,
                                        True,
                                        [],
-                                       None,
+                                       False,
                                        [],
                                        label,
                                        content)
@@ -151,6 +194,7 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
     else:
         print('WRONG INPUT FOR [BuildTreeLikeGraphFromRLDAG]')
         return None
+
 
 #==                   Build next RLDAG node               ==#
 def BuildNextNode( prev_node,
@@ -176,7 +220,7 @@ def BuildNextNode( prev_node,
                 input = prev_node.parent
             #Next rising layer Node in the RLDAG
             else:
-                input = GetParent(prev_node, depth)
+                input = GetParentWithPrev(prev_node, depth)
 
         prev_node = NewAnyNode( index,
                     state,
@@ -190,43 +234,30 @@ def BuildNextNode( prev_node,
 
     return prev_node
 
-#==               Search for depending parent             ==#
-def GetParent(in_node, cur_depth):
-    cur_parent = in_node.parent
-    if(cur_parent != None) and ((cur_parent.depth + 1) > cur_depth):
-        while((cur_parent.depth + 1) > cur_depth):
-            cur_parent = cur_parent.parent
-
-    return cur_parent
-
 #==                    Create a new nodes                 ==#
 def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
+
     if(nHasInputNode == False):
-        return AnyNode( id=nId,
-                        name=nState,
-                        state=nState,
-                        depth=nDepth,
-                        hasInputNode=nHasInputNode,
-                        parent=None,
-                        hasFollowerNodes=nHasFollowerNodes,
-                        followerNodes=nFollowerNodes,
-                        label=nLabel,
-                        content=nContent)
-    else:
-        return AnyNode( id=nId,
-                        name=nState,
-                        state=nState,
-                        depth=nDepth,
-                        hasInputNode=nHasInputNode,
-                        parent=nInputNode,
-                        hasFollowerNodes=nHasFollowerNodes,
-                        followerNodes=nFollowerNodes,
-                        label=nLabel,
-                        content=nContent)
+        nInputNode = None
+
+    return AnyNode( id=nId,
+                    name=nState,
+                    state=nState,
+                    depth=nDepth,
+                    hasInputNode=nHasInputNode,
+                    parent=nInputNode,
+                    hasFollowerNodes=nHasFollowerNodes,
+                    followerNodes=nFollowerNodes,
+                    label=nLabel,
+                    content=nContent)
+
+#===========================================================#
+#==                 Node Manipulation Methods             ==#
+#===========================================================#
 
 #==              Set destination, root or else           ==#
 def NodeSetNormalState(node):
-    if(isinstance(node, AnyNode)):
+    if isAnyNode(node):
         if(node.is_leaf):
             node.state = 'destination'
         elif(node.is_root):
@@ -239,22 +270,25 @@ def NodeSetNormalState(node):
 
 #=              Check node is navigated                  ==#
 def StateDefinition(graph_root, node):
-    if(node.label != None) and (node.content == None):
-        label = node.label
-        desired =findall(graph_root, lambda node: node.label in label)
-        if(len(desired) == 1):
-            NodeSetNormalState(node)
+    if isAnyNode(graph_root) and isAnyNode(node):
+        if(node.label != None) and (node.content == None):
+            label = node.label
+            desired =findall(graph_root, lambda node: node.label in label)
+            if(len(desired) == 1):
+                NodeSetNormalState(node)
+            else:
+                node.followerNodes = desired[0].followerNodes
+                node.hasFollowerNodes = desired[0].hasFollowerNodes
+                node.hasInputNode = desired[0].hasInputNode
+                node.state = ('navigator')
         else:
-            node.followerNodes = desired[0].followerNodes
-            node.hasFollowerNodes = desired[0].hasFollowerNodes
-            node.hasInputNode = desired[0].hasInputNode
-            node.state = ('navigator')
+            NodeSetNormalState(node)
     else:
-        NodeSetNormalState(node)
+        print('WRONG INPUT FOR [StateDefinition]')
 
 #=                  Get direct subnodes                  ==#
 def GetSubnodes(node):
-    if(isinstance(node, AnyNode)):
+    if isAnyNode(node):
         followers = [node.label for node in node.children]
         if(len(followers) > 0):
             node.hasFollowerNodes = True
@@ -264,7 +298,7 @@ def GetSubnodes(node):
 
 #==                   Reforge single node                ==#
 def SingleNodeReforge(graph_root, node):
-    if isinstance(graph_root, AnyNode) and isinstance(node, AnyNode):
+    if isAnyNode(graph_root) and isAnyNode(node):
         # Get node state and connected subnodes
         StateDefinition(graph_root, node)
         GetSubnodes(node)
@@ -280,30 +314,6 @@ def ReforgeGraphContent(root):
     else:
         print('WRONG INPUT FOR [ReforgeGraphContent]')
 
-##############
-# Conversion #
-##############
-
-#==                    Export informations                ==#
-# This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
-def ExportToJson(root):
-    if(isAnyNode(root)):
-        exporter = JsonExporter(indent=2, sort_keys=True)
-        return '#::smt\n' + exporter.export(root) + '\n'
-    else:
-        print('WRONG INPUT FOR [ExportToJson]')
-        return None
-
-#==                    Import informations                ==#
-# This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
-def ImportAsJson(json):
-    if(isStr(json)):
-        importer = JsonImporter()
-        return importer.import_(json)
-    else:
-        print('WRONG INPUT FOR [ImportAsJson]')
-        return None
-
 #===========================================================#
 #==             Gather the  graph informations            ==#
 #==     We create ordered by input order dictionairies    ==#
@@ -316,6 +326,7 @@ def GatherGraphInfo(graph, sem_flag):
     graphLines = graph.split('\n')
     nodes_depth = OrderedDict()
     nodes_content = OrderedDict()
+    #print(graph)
     
     for line in graphLines:
         if(sem_flag not in line) and (line != ''):
@@ -332,13 +343,13 @@ def GatherGraphInfo(graph, sem_flag):
             else:
                 nodes_depth[k] = t
 
-            nodes_depth[k] = t
+            nodes_depth[k] = toInt(t)
             nodes_content[k] = CleanNodeSequence(line)
             k = k + 1
 
     root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
     #ShowRLDAGTree(root)
     ReforgeGraphContent(root)
-    #ShowRLDAGTree(root)
+    ShowRLDAGTree(root)
     return ExportToJson(root)
     

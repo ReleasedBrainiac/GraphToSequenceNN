@@ -302,6 +302,7 @@ def NavigateState(graph_root, node):
         print('WRONG INPUT FOR [NavigateState]')
 
 #=                  Get direct subnodes                  ==#
+# This function place sub nodes to the current node if some exist.
 def GetSubnodes(node):
     if isAnyNode(node):
         followers = [node.label for node in node.children]
@@ -312,17 +313,17 @@ def GetSubnodes(node):
         print('WRONG INPUT FOR [GetSubnodes]')
 
 #==                   Reforge single node                ==#
+# This function wrap state setup and child info placement for 1 node.
 def SingleNodeReforge(graph_root, node):
     if isAnyNode(graph_root) and isAnyNode(node):
-        # Get node state and connected subnodes
         NavigateState(graph_root, node)
         GetSubnodes(node)
     else:
         print('WRONG INPUT FOR [SingleNodeReforge]')
-        return None
 
-#==                   Connect informations                ==#
-def ReforgeGraphContent(root):
+#==                   Reforge all nodes                  ==#
+# This function wrap the SingleNodeReforge for all GraphTree nodes.
+def GraphReforge(root):
     if (isAnyNode(root)) and (isNotNone(root.children)):
         for node in PreOrderIter(root):
             SingleNodeReforge(root, node);
@@ -388,7 +389,7 @@ def Pipeline(amr_graph, sem_flag, print_to_console):
 
         AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content)
         root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
-        ReforgeGraphContent(root)
+        GraphReforge(root)
 
         if(print_to_console):
             ShowGathererInfo(amr_graph, root)

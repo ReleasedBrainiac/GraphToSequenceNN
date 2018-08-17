@@ -24,6 +24,9 @@ def isInStr(seq , string):
 def isNotNone(input):
     return (input is not None)
 
+def isNone(input):
+    return (input is None)
+
 def isAnyNode(input):
     return isinstance(input, AnyNode)
 

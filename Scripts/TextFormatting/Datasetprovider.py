@@ -46,13 +46,13 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
     out = half_cleaned_sem+'\n'
     return out
 
-def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag):
+def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_activated):
     half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
     out = half_cleaned_sem+'\n'
-    return GatherGraphInfo(out, sem_flag)
+    return GatherGraphInfo(out, sem_flag, print_activated)
 
 #==                    Write AMR Dataset                  ==#
-def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, len_sem_mw, max_len, want_arm):
+def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, len_sem_mw, max_len, want_arm, print_activated):
     with open(ypath, 'w', encoding="utf8") as fileOut:
         sen_size = min(len_sen_mw, max_len)
         sem_size = min(len_sem_mw, (max_len*2))
@@ -64,7 +64,7 @@ def SaveToFile(ypath, sent_array, sem_array, sent_flag, sem_flag, len_sen_mw, le
             if(want_arm):
                 sem = ReforgeSemanticRepresentationToCleanARM(sem_array[i], sem_flag);
             else:
-                sem = ReforgeSemanticRepresentationToAnyTree(sem_array[i], sem_flag);
+                sem = ReforgeSemanticRepresentationToAnyTree(sem_array[i], sem_flag, print_activated);
             
             #Restrict writing content
             isAllowed, out = CreateWriteCorpus(max_len, sent, sem, sen_size, sem_size)
@@ -110,14 +110,13 @@ def ExtractContent(in_content, x_delim, y_delim):
 #===========================================================#
 #                          Pipeline                         #
 #===========================================================#
-def pipeline(inpath, output_extender, max_length_sentences):
+def pipeline(inpath, output_extender, max_length_sentences, save_as_arm, print_activated):
     #==                       Variables                       ==#
     semantics  = []
     sentences  = []
     sents_lens = []
     sema_lens  = []
 
-    save_as_arm = False
     typerror = 'Entered wrong type!'
     sentence_delim = '::snt'
     semantik_delim = '::smt'
@@ -154,6 +153,7 @@ def pipeline(inpath, output_extender, max_length_sentences):
                mw_value_sen,
                mw_value_sem,
                max_length,
-               save_as_arm)
+               save_as_arm,
+               print_activated)
     
     return None

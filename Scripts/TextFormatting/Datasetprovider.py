@@ -117,7 +117,7 @@ def pipeline(inpath, output_extender, max_length_sentences):
     sents_lens = []
     sema_lens  = []
 
-    save_as_arm = True
+    save_as_arm = False
     typerror = 'Entered wrong type!'
     sentence_delim = '::snt'
     semantik_delim = '::smt'

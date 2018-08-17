@@ -29,6 +29,9 @@ def isStr(input):
 def isInt(input):
     return isinstance(input, int)
 
+def isFloat(input):
+    return isinstance(input, float)
+
 def isODict(input):
     return isinstance(input, OrderedDict)
 

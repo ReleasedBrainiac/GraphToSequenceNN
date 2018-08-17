@@ -10,6 +10,9 @@ def file_len(fname):
 def isNotInStr(seq , string):
     return (seq not in string)
 
+def isInStr(seq , string):
+    return (seq in string)
+
 def isNotNone(input):
     return (input is not None)
 

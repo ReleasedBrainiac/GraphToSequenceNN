@@ -4,7 +4,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInt
+from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInStr, isInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 
@@ -13,8 +13,9 @@ from anytree.importer import JsonImporter
 #===========================================================#
 
 #==         Get nodes sentence from string sequence       ==#
-# This function allow to collect the cleaned node sequence.
-def ExtractSentence(sequence):
+# This function allow to collect the raw node sequence containing the label 
+# and maybe some additional values like flags and description content.
+def ExtractRawNodeSequence(sequence):
     if(isStr(sequence)):
         node_sent = re.sub(' +',' ',sequence+')')
         return node_sent[node_sent.find("(")+1:node_sent.find(")")]
@@ -53,30 +54,38 @@ def AddLeadingWhitespaces(str, amount):
         return None
 
 #==          Cleaning nodes sequence from garbage         ==#
+# This function allow to clean the node sequence from all staff so it return label and content only.
+# It will also cut of word extensions so we just get the basis word of a nodes content!
 def CleanNodeSequence(sequence):
-    #node_sent = re.sub(' +',' ',sequence+')')
-    #node_sent = node_sent[node_sent.find("(")+1:node_sent.find(")")]
-    node_sent = ExtractSentence(sequence)
+    if (isStr(sequence)):
+        node_seq = ExtractRawNodeSequence(sequence)
 
-    if(' ' in node_sent):
-        elements = node_sent.split(' ')
-        results = []
-        for value in elements:
-            if("-" in value) or (":" in value):
-                if("-" in value) and not (":" in value):
-                    str1 = value[0: value.rfind('-')]
-                    if(len(str1) > 0):
-                        results.append(str1)
+        # If we have more then just a label
+        if(isInStr(' ', node_seq)):
+            elements = node_seq.split(' ')
+            results = []
+        
+            # Clean the content
+            for value in elements:
+                if(isInStr("-", value)) or (isInStr(":", value)):
+                    if(isInStr("-", value)) and (isNotInStr(":", value)):
+                        str1 = value[0: value.rfind('-')]
+                        if(len(str1) > 0):
+                            results.append(str1)
+                    else:
+                        continue
                 else:
-                    continue
-            else:
-                if(len(value) > 0):
-                    results.append(value)
-        node_sent = ' '.join(results)
-    else:
-        node_sent = node_sent[0: node_sent.rfind('-')]
+                    if(len(value) > 0):
+                        results.append(value)
+            node_seq = ' '.join(results)
+        else:   
+            # If we just have label
+            node_seq = node_seq[0: node_seq.rfind('-')]
 
-    return node_sent
+        return node_seq
+    else:
+        print('WRONG INPUT FOR [CleanNodeSequence]')
+        return None
 
 #===========================================================#
 #==               Build a tree like graph                 ==#

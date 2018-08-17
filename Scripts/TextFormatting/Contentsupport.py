@@ -1,9 +1,20 @@
 # - *- coding: utf- 8*-
+from anytree import AnyNode
+
 def file_len(fname):
         with open(fname, 'r', encoding="utf8") as f:
             for i in enumerate(f):
                 pass
         return i + 1
+
+def isNotInStr(seq , string):
+    return (seq not in string)
+
+def isNotNone(input):
+    return (input is not None)
+
+def isAnyNode(input):
+    return isinstance(input, AnyNode)
 
 def isList(input):
     return isinstance(input, list)

@@ -4,8 +4,7 @@
 #~> https://www.pythonsheets.com/notes/python-rexp.html
 
 import re
-from TextFormatting.Contentsupport import setOrDefault as sod
-from TextFormatting.Contentsupport import isStr, isInt
+from TextFormatting.Contentsupport import *
 from GraphHandler.Graphsalvage import Gatherer
 
 #===========================================================#
@@ -13,14 +12,19 @@ from GraphHandler.Graphsalvage import Gatherer
 #===========================================================#
 
 #==         Calculate MW for a list of numbers            ==#
+# This function calculate the mean over all values in a list.
 def CalcMW(sentence_length):
-    sent_summ = 0
+    if(isList(sentence_length)):
+        sent_summ = 0
 
-    for index, keys in enumerate(sentence_length):
-        sent_summ += sentence_length[index]
+        for index, keys in enumerate(sentence_length):
+            sent_summ += sentence_length[index]
 
-    mw = int(round(sent_summ / len(sentence_length)))
-    return mw
+        mw = int(round(sent_summ / len(sentence_length)))
+        return mw
+    else:
+        print('WRONG INPUT FOR [CalcMW]')
+        return None
 
 #==                    Read AMR Dataset                   ==#
 def FileToString(xpath):
@@ -82,30 +86,51 @@ def GetAnyTreeDataset():
             sent = ClearSentence(sent)
             sem = ReforgeSemanticRepresentation(sem_array[i], sem_flag);
 
+#==        Extract sentence element from AMR input        ==#
+# This function extract the sentence element from AMR corpus element!
+def ExtractSentence(x_delim, in_content, index):
+    raw_start_index = in_content[index].find(x_delim)+6
+    sentence = in_content[index]
+    sent_len = len(sentence)
+    return sentence[raw_start_index:sent_len-1]
+
+#==        Extract semantics element from AMR input        ==#
+# This function extract the semantics element from AMR corpus element!
+def ExtractSemantics(in_content, index):
+    raw_content = in_content[index].split('.txt')
+    raw_con_index = len(raw_content)-1
+    return raw_content[raw_con_index]
+
 #==             Record clean_content extractor            ==#
+# This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
+# Returns:
+# 1. list of length of each sentence
+# 2. list of length of each semantic (= AMR-String-Representation) 
+# 3. list of sentences
+# 4. list of semantics (= AMR-String-Representation) 
+# => 1., 2., 3. and 4. should be equal in length!
 def ExtractContent(in_content, x_delim, y_delim):
-    sent_lens = []
-    sem_lens = []
-    sentences = []
-    semantics = []
+    if isNotNone(in_content) and isStr(x_delim) and isStr(y_delim):
+        sent_lens = []
+        sem_lens = []
+        sentences = []
+        semantics = []
 
-    for index, elem in enumerate(in_content):
-        if x_delim in elem:
-            raw_start_index = in_content[index].find(x_delim)+6
-            sentence = in_content[index]
-            sent_len = len(sentence)
-            sentence = sentence[raw_start_index:sent_len-1]
-            sent_lens.append(len(sentence))
-            sentences.append(sentence)
+        for index, elem in enumerate(in_content):
+            if x_delim in elem:
+                sentence = ExtractSentence(x_delim, in_content, index)
+                sent_lens.append(len(sentence))
+                sentences.append(sentence)
 
-        if y_delim in elem:
-            raw_content = in_content[index].split('.txt')
-            raw_con_index = len(raw_content)-1
-            semantic = raw_content[raw_con_index]
-            sem_lens.append(len(semantic))
-            semantics.append(semantic)
+            if y_delim in elem:
+                semantic = ExtractSemantics(in_content, index)
+                sem_lens.append(len(semantic))
+                semantics.append(semantic)
 
-    return [sent_lens, sem_lens, sentences, semantics]
+        return [sent_lens, sem_lens, sentences, semantics]
+    else:
+        print('WRONG INPUT FOR [ExtractContent]')
+        return None
 
 #===========================================================#
 #                          Pipeline                         #
@@ -122,9 +147,9 @@ def pipeline(inpath, output_extender, max_length_sentences, save_as_arm, print_a
     semantik_delim = '::smt'
     file_delim = '::file'
 
-    max_length = sod(max_length_sentences, -1, isInt(max_length_sentences));
-    inpath  = sod(inpath, typerror, isStr(inpath));
-    outpath = sod(inpath+'.'+ output_extender , typerror, isStr(output_extender));
+    max_length = setOrDefault(max_length_sentences, -1, isInt(max_length_sentences));
+    inpath  = setOrDefault(inpath, typerror, isStr(inpath));
+    outpath = setOrDefault(inpath+'.'+ output_extender , typerror, isStr(output_extender));
 
     print('max_length: ', max_length)
     print('inpath: ', inpath)

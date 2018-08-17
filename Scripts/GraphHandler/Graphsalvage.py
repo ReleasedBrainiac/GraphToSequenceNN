@@ -71,6 +71,8 @@ def CleanNodeSequence(sequence):
                     if(isInStr("-", value)) and (isNotInStr(":", value)):
                         str1 = value[0: value.rfind('-')]
                         if(len(str1) > 0):
+                            # Control Structure
+                            #print("[Raw: ", node_seq, "| Value: ",value,"| Clean: ",str1,"]")
                             results.append(str1)
                     else:
                         continue
@@ -86,6 +88,14 @@ def CleanNodeSequence(sequence):
     else:
         print('WRONG INPUT FOR [CleanNodeSequence]')
         return None
+
+#==             Show RLDAG tree representation            ==#
+# This function show a rendered representation of a AnyNode tree on console!
+def ShowRLDAGTree(root):
+    if(isAnyNode(root)):
+        print(RenderTree(root))
+    else:
+        print('WRONG INPUT FOR [ShowRLDAGTree]')
 
 #===========================================================#
 #==               Build a tree like graph                 ==#
@@ -142,10 +152,6 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
 
             prev_index = index
     return root
-
-#==             Show RLDAG tree representation            ==#
-def ShowRLDAGTree(root):
-    print(RenderTree(root))
 
 #==                   Build next RLDAG node               ==#
 def BuildNextNode( prev_node,
@@ -333,8 +339,8 @@ def GatherGraphInfo(graph, sem_flag):
             k = k + 1
 
     root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
-    #ShowRLDAGTree(root)
+    ShowRLDAGTree(root)
     ReforgeGraphContent(root)
-    #ShowRLDAGTree(root)
+    ShowRLDAGTree(root)
     return ExportToJson(root)
     

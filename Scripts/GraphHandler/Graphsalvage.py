@@ -136,6 +136,28 @@ def GetParentWithPrev(node, cur_depth):
         print('WRONG INPUT FOR [GetParentWithPrev]')
         return None
 
+#==               Search for new node parent              ==#
+# This function allow to get the parent for a new node depending on:
+# 1. depth of the new node
+# 2. depth of the previous inserted node in the tree
+# 3. previous AnyNode element at insertion in the tree
+# This method is used in the BuildNextNode function only because its a part of the workaround!
+def GetParentOfNewNode(depth, p_depth, prev_node):
+    if isInt(depth) and isInt(p_depth) and isAnyNode(prev_node):
+        #Next step down in the Rooted Label DAG (RLDAG)
+        if(depth > p_depth):
+            return prev_node
+        else:
+            #Next same layer Node in the RLDAG
+            if(depth == p_depth):
+                return prev_node.parent
+            #Next rising layer Node in the RLDAG
+            else:
+                return GetParentWithPrev(prev_node, depth)
+    else:
+        print('WRONG INPUT FOR [GetParentOfNewNode]')
+        return None
+
 #===========================================================#
 #==                      Build Methods                   ==#
 #===========================================================#
@@ -195,6 +217,22 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
         print('WRONG INPUT FOR [BuildTreeLikeGraphFromRLDAG]')
         return None
 
+#==                    Create a new nodes                 ==#
+# This function creates a new AnyNode with the given input.
+def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
+    if(nHasInputNode == False):
+            nInputNode = None
+
+    return AnyNode( id=nId,
+                    name=nState,
+                    state=nState,
+                    depth=nDepth,
+                    hasInputNode=nHasInputNode,
+                    parent=nInputNode,
+                    hasFollowerNodes=nHasFollowerNodes,
+                    followerNodes=nFollowerNodes,
+                    label=nLabel,
+                    content=nContent)
 
 #==                   Build next RLDAG node               ==#
 def BuildNextNode( prev_node,
@@ -209,47 +247,25 @@ def BuildNextNode( prev_node,
                    label,
                    content):
 
-    #Handle the subgraph parts
-    if(index > 0):
-        #Next step down in the Rooted Label DAG (RLDAG)
-        if(depth > p_depth):
-            input = prev_node
-        else:
-            #Next same layer Node in the RLDAG
-            if(depth == p_depth):
-                input = prev_node.parent
-            #Next rising layer Node in the RLDAG
-            else:
-                input = GetParentWithPrev(prev_node, depth)
+    if isInt(index) and isInt(depth) and isInt(p_depth):
+        #Handle the subgraph parts
+        if(index > 0):
+            input = GetParentOfNewNode(depth, p_depth, prev_node)
+            prev_node = NewAnyNode( index,
+                        state,
+                        depth,
+                        hasInputs,
+                        input,
+                        hasFollowers,
+                        followers,
+                        label,
+                        content)
 
-        prev_node = NewAnyNode( index,
-                    state,
-                    depth,
-                    hasInputs,
-                    input,
-                    hasFollowers,
-                    followers,
-                    label,
-                    content)
+        return prev_node
+    else:
+        print('WRONG INPUT FOR [BuildNextNode]')
+        return None
 
-    return prev_node
-
-#==                    Create a new nodes                 ==#
-def NewAnyNode(nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
-
-    if(nHasInputNode == False):
-        nInputNode = None
-
-    return AnyNode( id=nId,
-                    name=nState,
-                    state=nState,
-                    depth=nDepth,
-                    hasInputNode=nHasInputNode,
-                    parent=nInputNode,
-                    hasFollowerNodes=nHasFollowerNodes,
-                    followerNodes=nFollowerNodes,
-                    label=nLabel,
-                    content=nContent)
 
 #===========================================================#
 #==                 Node Manipulation Methods             ==#

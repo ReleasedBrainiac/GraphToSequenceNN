@@ -326,7 +326,6 @@ def ReforgeGraphContent(root):
 
 #===========================================================#
 #==             Gather the  graph informations            ==#
-#==     We create ordered by input order dictionairies    ==#
 #===========================================================#
 
 #==                Print Results to Console               ==#
@@ -373,7 +372,8 @@ def AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content):
         print('WRONG INPUT FOR [AMRPreprocessor]')
 
 
-
+#==  Pipeline for AMR-String-Representation to TreeGraph  ==#
+# This function gather a TreeGraph as AnyNode Tree from AMR-String-Representation.
 def Pipeline(amr_graph, sem_flag, print_to_console):
     if isStr(amr_graph) and isStr(sem_flag) and isBool(print_to_console):
         graph_nodes = amr_graph.split('\n')

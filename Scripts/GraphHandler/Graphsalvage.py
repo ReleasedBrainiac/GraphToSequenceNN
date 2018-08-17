@@ -4,7 +4,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import isDict, multiIsDict
+from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 
@@ -13,8 +13,10 @@ from anytree.importer import JsonImporter
 #===========================================================#
 
 #==               Get nodes label and content             ==#
+# This function allow to collect the Label and eventually a label content 
+# from string of a ARM Graph variable.
 def GetSplittedContent(str):
-    if('/' not in str):
+    if(isNotInStr('/', str)):
         return str, None
     else:
         parts = str.split('/')
@@ -23,24 +25,13 @@ def GetSplittedContent(str):
         return label, content
 
 #==                    Cleanup AMR spacing                ==#
+# This function clean up the whitespacing in the ARM Graphstring by a given value.
 def AddLeadingWhitespaces(str, amount):
     for i in range(amount):
         str = ' '+str
 
     ws_count = len(str) - len(str.lstrip(' '))
     return [str, ws_count]
-
-#==                 Get max range of a graph              ==#
-def GetMaxRange(nodes):
-    if(isDict(nodes)):
-        max_depth = 0
-        for node in nodes:
-            if(max_depth < nodes.get(node)):
-                max_depth = nodes.get(node)
-        return int(max_depth)+1 #add+1 during range beginns on 0
-    else:
-        print('WRONG INPUT TYPE FOR [GetMaxRange]')
-        return None
 
 #==          Cleaning nodes sequence from garbage         ==#
 def CleanNodeSequence(node_sequence):
@@ -66,32 +57,6 @@ def CleanNodeSequence(node_sequence):
         node_sent = node_sent[0: node_sent.rfind('-')]
 
     return node_sent
-
-#===========================================================#
-#==                    Gatherer methods                   ==#
-#===========================================================#
-
-def NodeOrderOnDepth(nodes):
-    order = OrderedDict()
-    max_depth = GetMaxRange(nodes)
-
-    for value in range(max_depth):
-        layer = OrderedDict()
-        for node in nodes:
-            current_node = dict()
-
-            if(nodes.get(node) == value):
-                current_node['position'] = node
-                current_node['state'] = None
-                current_node['depth'] = value
-                layer[node] = current_node
-
-        order[value] = layer
-
-    print('Deepest: ', max_depth)
-
-    for value in order:
-        print('Layers: ', order[value], '\n\n')
 
 #===========================================================#
 #==               Build a tree like graph                 ==#
@@ -274,25 +239,37 @@ def SingleNodeReforge(graph_root, node):
         print('WRONG INPUT FOR [SingleNodeReforge]')
 
 #==                   Connect informations                ==#
-def ReforgeGraphContent(graph_root):
-    if(isinstance(graph_root, AnyNode)):
-        if(graph_root.children is not None):
-            #nodes = [node for node in PreOrderIter(graph_root)]
-            for node in PreOrderIter(graph_root):
-                SingleNodeReforge(graph_root, node);
+def ReforgeGraphContent(root):
+    if (isAnyNode(root)) and (isNotNone(root.children)):
+        for node in PreOrderIter(root):
+            SingleNodeReforge(root, node);
     else:
         print('WRONG INPUT FOR [ReforgeGraphContent]')
         return None
 
+##############
+# Conversion #
+##############
+
 #==                    Export informations                ==#
+# This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
 def ExportToJson(root):
-    exporter = JsonExporter(indent=2, sort_keys=True)
-    return '#::smt\n' + exporter.export(root) + '\n'
+    if(isAnyNode(root)):
+        exporter = JsonExporter(indent=2, sort_keys=True)
+        return '#::smt\n' + exporter.export(root) + '\n'
+    else:
+        print('WRONG INPUT FOR [ExportToJson]')
+        return None
 
 #==                    Import informations                ==#
-def ImportAsJson(json_string):
-    importer = JsonImporter()
-    return importer.import_(data)
+# This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
+def ImportAsJson(json):
+    if(isStr(json)):
+        importer = JsonImporter()
+        return importer.import_(json)
+    else:
+        print('WRONG INPUT FOR [ImportAsJson]')
+        return None
 
 #===========================================================#
 #==             Gather the  graph informations            ==#
@@ -329,6 +306,6 @@ def GatherGraphInfo(graph, sem_flag):
     root = BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
     #ShowRLDAGTree(root)
     ReforgeGraphContent(root)
-    ShowRLDAGTree(root)
+    #ShowRLDAGTree(root)
     return ExportToJson(root)
     

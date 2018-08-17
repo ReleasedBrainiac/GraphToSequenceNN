@@ -4,7 +4,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr
+from TextFormatting.Contentsupport import isDict, multiIsDict, isAnyNode, isStr, isNotNone, isNotInStr, isInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 
@@ -12,31 +12,51 @@ from anytree.importer import JsonImporter
 #==                      Helper Methods                   ==#
 #===========================================================#
 
+#==         Get nodes sentence from string sequence       ==#
+# This function allow to collect the cleaned node sequence.
+def ExtractSentence(sequence):
+    if(isStr(sequence)):
+        node_sent = re.sub(' +',' ',sequence+')')
+        return node_sent[node_sent.find("(")+1:node_sent.find(")")]
+    else:
+        print('WRONG INPUT FOR [ExtractSentence]')
+        return None
+
 #==               Get nodes label and content             ==#
 # This function allow to collect the Label and eventually a label content 
 # from string of a ARM Graph variable.
 def GetSplittedContent(str):
-    if(isNotInStr('/', str)):
-        return str, None
+    if(isStr(str)):
+        if(isNotInStr('/', str)):
+            return str, None
+        else:
+            parts = str.split('/')
+            label = parts[0].replace(" ", "")
+            content = parts[1].replace(" ", "")
+            return label, content
     else:
-        parts = str.split('/')
-        label = parts[0].replace(" ", "")
-        content = parts[1].replace(" ", "")
-        return label, content
+        print('WRONG INPUT FOR [GetSplittedContent]')
+        return None
 
 #==                    Cleanup AMR spacing                ==#
 # This function clean up the whitespacing in the ARM Graphstring by a given value.
 def AddLeadingWhitespaces(str, amount):
-    for i in range(amount):
-        str = ' '+str
+    if(isStr(str)) and (isInt(amount)):
+        for i in range(amount):
+            str = ' '+str
 
-    ws_count = len(str) - len(str.lstrip(' '))
-    return [str, ws_count]
+        ws_count = len(str) - len(str.lstrip(' '))
+        return [str, ws_count]
+
+    else:
+        print('WRONG INPUT FOR [AddLeadingWhitespaces]')
+        return None
 
 #==          Cleaning nodes sequence from garbage         ==#
-def CleanNodeSequence(node_sequence):
-    node_sent = re.sub(' +',' ',node_sequence+')')
-    node_sent = node_sent[node_sent.find("(")+1:node_sent.find(")")]
+def CleanNodeSequence(sequence):
+    #node_sent = re.sub(' +',' ',sequence+')')
+    #node_sent = node_sent[node_sent.find("(")+1:node_sent.find(")")]
+    node_sent = ExtractSentence(sequence)
 
     if(' ' in node_sent):
         elements = node_sent.split(' ')
@@ -237,6 +257,7 @@ def SingleNodeReforge(graph_root, node):
         GetSubnodes(node)
     else:
         print('WRONG INPUT FOR [SingleNodeReforge]')
+        return None
 
 #==                   Connect informations                ==#
 def ReforgeGraphContent(root):
@@ -245,7 +266,6 @@ def ReforgeGraphContent(root):
             SingleNodeReforge(root, node);
     else:
         print('WRONG INPUT FOR [ReforgeGraphContent]')
-        return None
 
 ##############
 # Conversion #

@@ -373,7 +373,8 @@ def AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content):
         print('WRONG INPUT FOR [AMRPreprocessor]')
 
 
-def GatherGraphInfo(amr_graph, sem_flag, print_to_console):
+
+def Pipeline(amr_graph, sem_flag, print_to_console):
     if isStr(amr_graph) and isStr(sem_flag) and isBool(print_to_console):
         graph_nodes = amr_graph.split('\n')
         nodes_depth = OrderedDict()
@@ -390,4 +391,15 @@ def GatherGraphInfo(amr_graph, sem_flag, print_to_console):
     else:
         print('WRONG INPUT FOR [GatherGraphInfo]')
         return None
+
+#==        Main execution function for the gatherer       ==#
+# This function handle the execution of the gatherer.
+# The result is a importable json if you like to store [to_process = False] 
+# or a AnyNode Tree if you want to process it further [to_process = True] .
+def Gatherer(amr_graph, sem_flag, print_to_console, to_process):
+    root = Pipeline(amr_graph, sem_flag, print_to_console)
+    if(to_process):
+        return root
+    else:
+        return ExportToJson(root)
     

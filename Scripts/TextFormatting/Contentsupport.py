@@ -122,9 +122,9 @@ def multiIsDict(inputs):
         return False
 
 # This function allow to set an input or default by a switch value.
-def setOrDefault(input, default, setInput):
-    if(isXTypeEqualYType(input, setInput)):
-        if(setInput):
+def setOrDefault(input, default, wantSet):
+    if(isXTypeEqualYType(input, default)) and (isBool(wantSet)):
+        if(wantSet):
             return input
         else:
             return default

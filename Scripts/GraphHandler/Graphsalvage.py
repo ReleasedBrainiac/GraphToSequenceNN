@@ -158,8 +158,23 @@ def GetParentOfNewNode(depth, p_depth, prev_node):
         print('WRONG INPUT FOR [GetParentOfNewNode]')
         return None
 
+#==          Create edge-matrix from GraphTree            ==#
+def GetEdgeMatrixFromGraphTree():
+    print('The method [GetEdgeMatrixFromGraphTree] is currently not implemented!')
+    return None
+
+#==          Create edge-matrix from GraphTree            ==#
+def GetOrderedLabelListFromGraphTree():
+    print('The method [GetOrderedLabelListFromGraphTree] is currently not implemented!')
+    return None
+
+#==          Create edge-matrix from GraphTree            ==#
+def GetSemiEncodedDataset():
+    print('The method [GetSemiEncodedDataset] is currently not implemented!')
+    return None
+
 #===========================================================#
-#==                      Build Methods                   ==#
+#==                      Build Methods                    ==#
 #===========================================================#
 
 #==               Build a tree like graph                 ==#

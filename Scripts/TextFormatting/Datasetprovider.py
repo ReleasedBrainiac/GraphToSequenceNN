@@ -13,14 +13,20 @@ from GraphHandler.Graphsalvage import Gatherer
 
 #==         Calculate MW for a list of numbers            ==#
 # This function calculate the mean over all values in a list.
-def CalcMW(sentence_length):
-    if(isList(sentence_length)):
+#
+#   Inputs:
+#       sentences_length => lengths of all sentences
+#
+#   Return:
+#       The mean over all sentences
+def CalcMW(sentences_length):
+    if(isList(sentences_length)):
         sent_summ = 0
 
-        for index, keys in enumerate(sentence_length):
-            sent_summ += sentence_length[index]
+        for index, keys in enumerate(sentences_length):
+            sent_summ += sentences_length[index]
 
-        mw = int(round(sent_summ / len(sentence_length)))
+        mw = int(round(sent_summ / len(sentences_length)))
         return mw
     else:
         print('WRONG INPUT FOR [CalcMW]')
@@ -28,20 +34,34 @@ def CalcMW(sentence_length):
 
 #==                    Read AMR Dataset                   ==#
 # This function provide a file reader for the AMR dataset.
-def FileToString(xpath):
-    if(isStr(xpath)):
-        with open(xpath, 'r', encoding="utf8") as fileIn:
+#
+#   Inputs:
+#       path    => path string to dataset text file
+#
+#   Return:
+#       The dataset string.
+def FileToString(path):
+    if(isStr(path)):
+        with open(path, 'r', encoding="utf8") as fileIn:
             data=fileIn.read()
-            result=data.split('#')
-            return result
+            content=data.split('#')
+            return content
     else:
         print('WRONG INPUT FOR [FileToString]')
         return None
 
-#==                    Restrict Content                   ==#
-# This funtion check a sentence and semantic pair satisfy the size restiction and return 2 values:
-# 1. boolean to validate the check
-# 2. concatenation of sentence and semantic
+#==                                  Restrict Content                            ==#
+# This funtion check a sentence and semantic pair satisfy the size restictions.
+#
+#   Inputs:
+#       max_len     => max allow length of a sentence
+#       sent        => the cleaned sentence
+#       sem         => the cleaned correspondign semantic for the sentence
+#       sen_size    => allowed size for sentences
+#       sem_size    => allowed size for semantics
+#
+#   Return:
+#       A list of a validation boolean and the string concatenation of semantic and sentece.
 def ValidateAndCreateWriteCorpus(max_len, sent, sem, sen_size, sem_size):
     if(isInt(max_len)) and (isInt(sen_size)) and (isInt(sem_size)) and (isStr(sent)) and (isNotNone(sem)):
         if (max_len < 1) or ((max_len > 0) and (len(sent) < (sen_size+1)) and (len(sem) < (sem_size+1))):
@@ -50,8 +70,14 @@ def ValidateAndCreateWriteCorpus(max_len, sent, sem, sen_size, sem_size):
         print('WRONG INPUT FOR [CreateWriteCorpus]')
         return [False, sent + sem]
 
-#==                     Filter Content                    ==#
+#==                                Filter Content                                ==#
 # This method clean up the a given amr extracted sentence from text formating markup.
+#
+#   Inputs:
+#       in_sentence => raw sentence AMR split element 
+#
+#   Returns:
+#       The cleaned sentence.
 def ClearSentence(in_sentence):
     if(isStr(in_sentence)):
         in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
@@ -65,6 +91,13 @@ def ClearSentence(in_sentence):
 #==                Reforge AMR semantic to cleaned AMR string tree               ==#
 # This function allow to clean up a raw AMR semantic string tree representation 
 # into a cleaned version of it.
+#
+#   Inputs:
+#       semantic    => raw semantic input
+#       sem_flag    => marker/delim to add to cleaned semantic
+#
+#   Returns:
+#       A tree formated string like AMR.
 def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
     if(isStr(semantic)) and (isStr(sem_flag)):
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
@@ -77,10 +110,17 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
 #==                Reforge AMR semantic to cleaned AnyTree object                ==#
 # This function allow to clean up a raw AMR semantic string tree representation 
 # into a cleaned anytree reprenstation of it.
-# Depending on the flag:
-# 1. print_console    => If True you get console output for Graphsalvage.Gatherer
-# 2. to_process       => If True you get GraphTree as AnyTree for further usage
-#                     => If False you get a JsonString for saving in file.
+#   Inputs:
+#       semantic    => raw semantic input
+#       sem_flag    => marker/delim to add to cleaned semantic
+#
+#   Options:
+#       print_console    => If True you get console output for Graphsalvage.Gatherer
+#       to_process       => If True you get GraphTree as AnyTree for further usage
+#                        => If False you get a JsonString for saving in file.
+#
+#   Returns:
+#       A reforged semantic as AnyNode object.
 def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to_process):
     if(isStr(semantic)) and (isStr(sem_flag)) and (isBool(print_console)) and (isBool(to_process)):
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
@@ -92,12 +132,21 @@ def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to
 
 #==                       Collect single dataset data pair                       ==#
 # This function collect a data pair from raw sentences and semantics.
-# Additional we have the following options:
-# 1. want_as_arm    => If True then it return a tree-like formated AMR string for the semantic entry 
-#                   => ATTENTION: this option does not support conversion with ConvertToTensorMatrices!
-# 2. isShowConsole  => If True then it show in and out of the Graphsalvage.Gatherer on console
-# 3. isNotStoring   => If True you get GraphTree as AnyTree for further usage.
-#                   => If False you get a JsonString for saving in file.
+#   Inputs:
+#       sent_flag    => defines a marker to attach to the cleaned sentence, make it easier to find later
+#       sem_flag     => defines a marker to attach to the cleaned semantic, make it easier to find later
+#       sent         => is the raw input of the AMR sentence
+#       sem          => is the raw input of the AMR semantic
+#
+#   Additional we have the following options:
+#       want_as_arm     => If True then it return a tree-like formated AMR string for the semantic entry 
+#                       => ATTENTION: this option does not support conversion with ConvertToTensorMatrices!
+#       isShowConsole   => If True then it show in and out of the Graphsalvage.Gatherer on console
+#       isNotStoring    => If True you get GraphTree as AnyTree for further usage.
+#                       => If False you get a JsonString for saving in file.
+#
+#   Returns:
+#       A single data pair like [sentence, semantic]
 def GetSingleDatasetPair(sent_flag, sem_flag, sent, sem, want_as_arm, isShowConsole, isNotStoring):
     if (isStr(sent_flag)) and (isStr(sem_flag)) and (isStr(sent)) and (isStr(sem)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
         sent = sent_flag+' '+sent
@@ -113,6 +162,16 @@ def GetSingleDatasetPair(sent_flag, sem_flag, sent, sem, want_as_arm, isShowCons
         return [None, None]
 
 #==                       Collect multi dataset data pair                       ==#
+# This function collect multiples pairs of semantic and sentence data as list of data pairs.
+# For this case we pass arrays of raw sentences and semantics where index i in both arrays point to a sentence and the corresponding semantic.
+#   Inputs: 
+#       sent_array   => Array of the raw input of the AMR sentences
+#       sem_array    => Array of the raw input of the AMR semantics
+#
+#       The other variables are same as defined in function GetSingleDatasetPair.
+#
+#   Returns:
+#       A list of data pairs results from GetSingleDatasetPair
 def GetMultiDatasetPairs(sent_flag, sem_flag, sent_array, sem_array, want_as_arm, isShowConsole, isNotStoring):
     if (isStr(sent_flag)) and (isStr(sem_flag)) and (isList(sent_array)) and (isList(sem_array)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
         dataset_pairs_sent_sem = []
@@ -124,15 +183,15 @@ def GetMultiDatasetPairs(sent_flag, sem_flag, sent_array, sem_array, want_as_arm
         print('WRONG INPUT FOR [GetMultiDatasetPair]')
         return []
 
-def GetAnyTreeDataset():
-    for i in range(min(len(sent_array), len(sem_array))):
-            #Gather sentences without linking substrings because they are not contained in the semantic graph
-            sent = sent_flag+' '+sent_array[i]
-            sent = ClearSentence(sent)
-            sem = ReforgeSemanticRepresentation(sem_array[i], sem_flag);
-
 #==        Extract sentence element from AMR input        ==#
 # This function extract the sentence element from AMR corpus element!
+#   Inputs:
+#       x_delim     =>  marker/delim to find the sentence fragment
+#       in_content  =>  raw amr string fragment from split of full AMR dataset string
+#       index       =>  position where the sentence was found
+#
+#   Returns:
+#       The extracted raw sentence at the given position.
 def ExtractSentence(x_delim, in_content, index):
     raw_start_index = in_content[index].find(x_delim)+6
     sentence = in_content[index]
@@ -141,6 +200,12 @@ def ExtractSentence(x_delim, in_content, index):
 
 #==        Extract semantics element from AMR input        ==#
 # This function extract the semantics element from AMR corpus element!
+#   Inputs:
+#       in_content  =>  raw amr string fragment from split of full AMR dataset string
+#       index       =>  position where the semantic was found
+#
+#   Returns:
+#       The extracted raw semantic at the given position.
 def ExtractSemantics(in_content, index):
     raw_content = in_content[index].split('.txt')
     raw_con_index = len(raw_content)-1
@@ -148,37 +213,63 @@ def ExtractSemantics(in_content, index):
 
 #==             Record clean_content extractor            ==#
 # This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
-# Returns:
-# 1. list of length of each sentence
-# 2. list of length of each semantic (= AMR-String-Representation) 
-# 3. list of sentences
-# 4. list of semantics (= AMR-String-Representation) 
-# => 1., 2., 3. and 4. should be equal in length!
+#   Inputs:
+#       in_content  =>  raw amr string fragment from split of full AMR dataset string
+#       x_delim     =>  marker/delim to validate fragment as raw sentence
+#       y_delim     =>  marker/delim to validate fragment as raw semantic
+#
+#   Returns:
+#       sent_lens   => list of length of each sentence
+#       sem_lens    => list of length of each semantic (= AMR-String-Representation) 
+#       sentences   => list of sentences
+#       semantics   => list of semantics (= AMR-String-Representation) 
+#       => all 4. should be equal in length!
 def ExtractContent(in_content, x_delim, y_delim):
     if isNotNone(in_content) and isStr(x_delim) and isStr(y_delim):
+        sentence = ''
+        semantic = ''
+        sentence_found = False
+        semantic_found = False
         sent_lens = []
         sem_lens = []
         sentences = []
         semantics = []
 
         for index, elem in enumerate(in_content):
-            if x_delim in elem:
+            if (x_delim in elem) and (not sentence_found):
                 sentence = ExtractSentence(x_delim, in_content, index)
-                sent_lens.append(len(sentence))
-                sentences.append(sentence)
+                sentence_found = True
 
-            if y_delim in elem:
+            if (y_delim in elem)  and (not semantic_found):
                 semantic = ExtractSemantics(in_content, index)
-                sem_lens.append(len(semantic))
-                semantics.append(semantic)
+                semantic_found = True
 
-        return [sent_lens, sem_lens, sentences, semantics]
+            if sentence_found and semantic_found:
+                sent_lens.append(len(sentence))
+                sem_lens.append(len(semantic))
+                sentences.append(sentence)
+                semantics.append(semantic)
+                sentence_found = False
+                semantic_found = False
+
+        if(len(sent_lens) == len(sem_lens) == len(sentences) == len(semantics)):
+            return [sent_lens, sem_lens, sentences, semantics]
+        else:
+            print('WRONG OUTPUT FOR [ExtractContent]... Size of outputs dont match!')
+            return None
     else:
         print('WRONG INPUT FOR [ExtractContent]')
         return None
 
 #==             Network dataset preprocessing             ==#
-def ConvertToTensorMatrices():
+# This function 
+#
+#   Inputs:
+#       data_pairs  => list of data pairs from GetSingleDatasetPair function
+#
+#   Return:
+#      
+def ConvertToTensorMatrices(data_pairs):
     print('This function is work in progress! [ConvertToTensorMatrices]')
     return None
 
@@ -188,6 +279,14 @@ def ConvertToTensorMatrices():
 
 #==                    Write AMR Dataset                  ==#
 # This function 
+#
+#   Inputs:
+#       path        => path to output file 
+#       len_sen_mw  => mean of sentences length
+#       len_sem_mw  => mean of semantics length
+#       max_len     => max length of sentences we desire to store
+#       data_pairs  => result data pairs as list
+#       
 def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
      with open(path, 'w', encoding="utf8") as fileOut:
         sen_size = min(len_sen_mw, max_len)
@@ -204,48 +303,58 @@ def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
         return None
 
 #===========================================================#
-#                          Execution                        #
+#                  End-to-End Saving-Execution              #
 #===========================================================#
 
-#                          Pipeline                         #
+#                       Save Pipeline                       #
 # This function 
-def pipeline(inpath, output_extender, max_length, save_as_arm, print_console):
-    #==                       Variables                       ==#
+#
+#   Inputs:
+#       inpath          => path of dataset text file
+#       output_extender => extender to define result filename
+#       max_length      => max allow length for sentences
+#
+#   Options:
+#       save_as_arm     => output will be save as tree like formated AMR string
+#       print_console   => show all Reforging at the Gatherer on console
+#       
+def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console):
     semantics  = []
     sentences  = []
     sents_lens = []
     sema_lens  = []
 
-    typerror = 'Entered wrong type!'
-    sentence_delim = '::snt'
-    semantik_delim = '::smt'
-    file_delim = '::file'
+    # Constants for the AMR processing
+    TYP_ERROR = 'Entered wrong type!'
+    SENTENCE_DELIM = '::snt'
+    SEMANTIC_DELIM = '::smt'
+    FILE_DELIM = '::file'
 
     max_length = setOrDefault(max_length, -1, isInt(max_length));
-    inpath  = setOrDefault(inpath, typerror, isStr(inpath));
-    outpath = setOrDefault(inpath+'.'+ output_extender , typerror, isStr(output_extender));
+    inpath  = setOrDefault(inpath, TYP_ERROR, isStr(inpath));
+    outpath = setOrDefault(inpath+'.'+ output_extender , TYP_ERROR, isStr(output_extender));
 
     print('max_length: ', max_length)
     print('inpath: ', inpath)
     print('outpath: ', outpath)
 
     #==                     Read Dataset                      ==#
-    result = FileToString(inpath)
+    dataset = FileToString(inpath)
 
     #==             Collect relevant raw_content              ==#
-    len_dataset = len(result)
-    result=result[1:len_dataset]
-    sents_lens, sema_lens, sentences, semantics = ExtractContent(result, sentence_delim, file_delim)
+    len_dataset = len(dataset)
+    dataset=dataset[1:len_dataset]
+    sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, SENTENCE_DELIM, FILE_DELIM)
 
-    #==                     Check Median                      ==#
+    #==                      Get Median                       ==#
     mw_value_sen = CalcMW(sents_lens)
     mw_value_sem = CalcMW(sema_lens)
-    print(mw_value_sen)
-    print(mw_value_sem)
+    print('Mean sentences: ', mw_value_sen)
+    print('Mean semantics: ', mw_value_sem)
 
     #==                 Sava Collected Content                ==#
 
-    data_pairs = GetMultiDatasetPairs(sentence_delim, semantik_delim, sentences, semantics, save_as_arm, print_console, True)
+    data_pairs = GetMultiDatasetPairs(SENTENCE_DELIM, SEMANTIC_DELIM, sentences, semantics, save_as_arm, print_console, True)
 
     SaveToFile(outpath,
                mw_value_sen,

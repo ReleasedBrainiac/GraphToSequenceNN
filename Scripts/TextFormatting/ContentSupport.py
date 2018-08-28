@@ -50,10 +50,7 @@ def isStr(input):
 # This function check input is a integer value.
 def isInt(input):
     return isinstance(input, int)
-
-def isComplex():
-    return isinstance(input, numbers)
-
+    
 # This function check input is a float value.
 def isFloat(input):
     return isinstance(input, float)

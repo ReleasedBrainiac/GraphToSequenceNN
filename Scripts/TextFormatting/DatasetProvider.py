@@ -296,6 +296,8 @@ def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
 
         for i in range(len(data_pairs)):
             #Restrict writing content
+            print(data_pairs[i][0])
+            print(data_pairs[i][1])
             isallowsed, out = ValidateAndCreateWriteCorpus(max_len, data_pairs[i][0], data_pairs[i][1], sen_size, sem_size)
             if (isallowsed):
                 fileOut.write(out)
@@ -310,18 +312,21 @@ def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
 #                       Pipeline                            #
 # This function collect the cleaned sentence graphs as:
 #   1. AMR string representation if save_as_arm=True
-#   2. AnyTree
+#   2. AnyTree as :
+#       1. JSON if is_not_saving = true
+#       2. AnyNode else
 #
 #   Inputs:
 #       inpath          => path of dataset text file
 #       output_extender => extender to define result filename
 #       max_length      => max allows length for sentences
+#       is_not_saving   => set result to JSON or AnyNode if save_as_arm=False
 #
 #   Options:
 #       save_as_arm     => output will be save as tree like formated AMR string
 #       print_console   => show all reforging at the Gatherer on console
 #       
-def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console):
+def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console, is_not_saving):
 
     # Carrier Arrays/Lists
     semantics  = []
@@ -354,7 +359,7 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
 
     #==                   Collected Content                   ==#
 
-    data_pairs = GetMultiDatasetPairs(SENTENCE_DELIM, SEMANTIC_DELIM, sentences, semantics, save_as_arm, print_console, True)
+    data_pairs = GetMultiDatasetPairs(SENTENCE_DELIM, SEMANTIC_DELIM, sentences, semantics, save_as_arm, print_console, is_not_saving)
 
     if(print_console):
         print('max_length: ', max_length)
@@ -380,7 +385,7 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
 #       print_console   => show all reforging at the Gatherer on console
 #       
 def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console):
-    mw_value_sen, mw_value_sem, max_length, data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console)
+    mw_value_sen, mw_value_sem, max_length, data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console, False)
     outpath = GetOutputPath(inpath, output_extender)
 
     if (print_console):
@@ -415,5 +420,5 @@ def DataPipeline(inpath, output_extender, max_length, save_as_arm, print_console
         print('Processing dataset on AMR string representation not supported! Please set [save_as_arm=FALSE]!')
         return None
     else:
-        data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console)[3]
+        data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console, True)[3]
         return GetDataSet(data_pairs)

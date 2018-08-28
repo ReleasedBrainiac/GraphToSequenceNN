@@ -272,7 +272,7 @@ def ExtractContent(in_content, max_len, x_delim, y_delim):
         semantics = []
 
         for index, elem in enumerate(in_content):
-            if (x_delim in elem) and (not sentence_found):
+            if (x_delim in elem):
                 sentence = ExtractSentence(x_delim, in_content, index)
                 sentence_found = True
 

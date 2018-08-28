@@ -409,7 +409,7 @@ def Pipeline(amr_graph, sem_flag, print_to_console):
         if(print_to_console):
             ShowGathererInfo(amr_graph, root)
 
-        return ExportToJson(root)
+        return root
     else:
         print('WRONG INPUT FOR [GatherGraphInfo]')
         return None

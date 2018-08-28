@@ -1,4 +1,4 @@
-# - *- coding: utf- 8*-
+# - *- coding: utf-8*-
 #This script was created by T.Turke for content extraction from AMR dataset.
 #~> https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
 #~> https://www.pythonsheets.com/notes/python-rexp.html

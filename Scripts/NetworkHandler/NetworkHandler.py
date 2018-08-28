@@ -1,4 +1,4 @@
-# - *- coding: utf- 8*-
+# - *- coding: utf-8*-
 
 from LambdaNodeEmbedding import GetFeaturesTensorOnly
 from keras.layers import Input, Dense, Lambda

@@ -1,4 +1,4 @@
-# - *- coding: utf- 8*-
+# - *- coding: utf-8*-
 from anytree import AnyNode
 from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex

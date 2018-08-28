@@ -1,4 +1,4 @@
-# - *- coding: utf- 8*-
+# - *- coding: utf-8*-
 # Source to build the tree like graph structure is anytree
 # ~> http://anytree.readthedocs.io/en/latest/
 import re

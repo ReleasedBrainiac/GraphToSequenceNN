@@ -1,3 +1,4 @@
+# - *- coding: utf-8*-
 import os
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF

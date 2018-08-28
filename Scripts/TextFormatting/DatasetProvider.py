@@ -6,10 +6,24 @@
 import re
 from TextFormatting.ContentSupport import *
 from GraphHandler.GraphSalvage import Gatherer
+from GraphHandler.GraphTreeConverter import GetDataSet
 
 #===========================================================#
 #                   Methods/Functions                       #
 #===========================================================#
+
+#==             Get output path on input path             ==#
+# This function return a result output path depending on the given input path and a extender.
+#
+#   Inputs:
+#       inpath              => raw data input path
+#       output_extender     => result data path extender
+#
+#   Return:
+#       The depending output path
+def GetOutputPath(inpath, output_extender):
+    TYP_ERROR_MESSAGE = 'Entered wrong type! Input is no String!'
+    return setOrDefault(inpath+'.'+ output_extender , TYP_ERROR_MESSAGE, isStr(output_extender));
 
 #==         Calculate MW for a list of numbers            ==#
 # This function calculate the mean over all values in a list.
@@ -23,7 +37,7 @@ def CalcMW(sentences_length):
     if(isList(sentences_length)):
         sent_summ = 0
 
-        for index, keys in enumerate(sentences_length):
+        for index, _ in enumerate(sentences_length):
             sent_summ += sentences_length[index]
 
         mw = int(round(sent_summ / len(sentences_length)))
@@ -54,11 +68,11 @@ def FileToString(path):
 # This funtion check a sentence and semantic pair satisfy the size restictions.
 #
 #   Inputs:
-#       max_len     => max allow length of a sentence
+#       max_len     => max allows length of a sentence
 #       sent        => the cleaned sentence
 #       sem         => the cleaned correspondign semantic for the sentence
-#       sen_size    => allowed size for sentences
-#       sem_size    => allowed size for semantics
+#       sen_size    => allowsed size for sentences
+#       sem_size    => allowsed size for semantics
 #
 #   Return:
 #       A list of a validation boolean and the string concatenation of semantic and sentece.
@@ -89,7 +103,7 @@ def ClearSentence(in_sentence):
         return in_sentence
 
 #==                Reforge AMR semantic to cleaned AMR string tree               ==#
-# This function allow to clean up a raw AMR semantic string tree representation 
+# This function allows to clean up a raw AMR semantic string tree representation 
 # into a cleaned version of it.
 #
 #   Inputs:
@@ -108,7 +122,7 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
         return in_sentence
 
 #==                Reforge AMR semantic to cleaned AnyTree object                ==#
-# This function allow to clean up a raw AMR semantic string tree representation 
+# This function allows to clean up a raw AMR semantic string tree representation 
 # into a cleaned anytree reprenstation of it.
 #   Inputs:
 #       semantic    => raw semantic input
@@ -261,18 +275,6 @@ def ExtractContent(in_content, x_delim, y_delim):
         print('WRONG INPUT FOR [ExtractContent]')
         return None
 
-#==             Network dataset preprocessing             ==#
-# This function 
-#
-#   Inputs:
-#       data_pairs  => list of data pairs from GetSingleDatasetPair function
-#
-#   Return:
-#      
-def ConvertToTensorMatrices(data_pairs):
-    print('This function is work in progress! [ConvertToTensorMatrices]')
-    return None
-
 #===========================================================#
 #                          Storing                          #
 #===========================================================#
@@ -294,8 +296,8 @@ def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
 
         for i in range(len(data_pairs)):
             #Restrict writing content
-            isAllowed, out = ValidateAndCreateWriteCorpus(max_len, data_pairs[i][0], data_pairs[i][1], sen_size, sem_size)
-            if (isAllowed):
+            isallowsed, out = ValidateAndCreateWriteCorpus(max_len, data_pairs[i][0], data_pairs[i][1], sen_size, sem_size)
+            if (isallowsed):
                 fileOut.write(out)
                 fileOut.flush()
 
@@ -303,40 +305,38 @@ def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
         return None
 
 #===========================================================#
-#                  End-to-End Saving-Execution              #
+#                End-to-End Basic-Pipe-Provider             #
 #===========================================================#
-
-#                       Save Pipeline                       #
-# This function 
+#                       Pipeline                            #
+# This function collect the cleaned sentence graphs as:
+#   1. AMR string representation if save_as_arm=True
+#   2. AnyTree
 #
 #   Inputs:
 #       inpath          => path of dataset text file
 #       output_extender => extender to define result filename
-#       max_length      => max allow length for sentences
+#       max_length      => max allows length for sentences
 #
 #   Options:
 #       save_as_arm     => output will be save as tree like formated AMR string
-#       print_console   => show all Reforging at the Gatherer on console
+#       print_console   => show all reforging at the Gatherer on console
 #       
-def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console):
+def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console):
+
+    # Carrier Arrays/Lists
     semantics  = []
     sentences  = []
     sents_lens = []
     sema_lens  = []
 
-    # Constants for the AMR processing
-    TYP_ERROR = 'Entered wrong type!'
+    # AMR preprocessing Constants
+    TYP_ERROR = 'Entered wrong type! Input is no String!'
     SENTENCE_DELIM = '::snt'
     SEMANTIC_DELIM = '::smt'
     FILE_DELIM = '::file'
 
     max_length = setOrDefault(max_length, -1, isInt(max_length));
     inpath  = setOrDefault(inpath, TYP_ERROR, isStr(inpath));
-    outpath = setOrDefault(inpath+'.'+ output_extender , TYP_ERROR, isStr(output_extender));
-
-    print('max_length: ', max_length)
-    print('inpath: ', inpath)
-    print('outpath: ', outpath)
 
     #==                     Read Dataset                      ==#
     dataset = FileToString(inpath)
@@ -346,15 +346,45 @@ def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console
     dataset=dataset[1:len_dataset]
     sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, SENTENCE_DELIM, FILE_DELIM)
 
+    # TODO implement sentence restriction right here!
+
     #==                      Get Median                       ==#
     mw_value_sen = CalcMW(sents_lens)
     mw_value_sem = CalcMW(sema_lens)
-    print('Mean sentences: ', mw_value_sen)
-    print('Mean semantics: ', mw_value_sem)
 
-    #==                 Sava Collected Content                ==#
+    #==                   Collected Content                   ==#
 
     data_pairs = GetMultiDatasetPairs(SENTENCE_DELIM, SEMANTIC_DELIM, sentences, semantics, save_as_arm, print_console, True)
+
+    if(print_console):
+        print('max_length: ', max_length)
+        print('inpath: ', inpath)
+        print('Mean sentences: ', mw_value_sen)
+        print('Mean semantics: ', mw_value_sem)
+
+    return [mw_value_sen, mw_value_sem, max_length, data_pairs]
+
+#===========================================================#
+#                  End-to-End Saving-Provider               #
+#===========================================================#
+#                       Save Pipeline                       #
+# This function calls the BasicPipeline and store the desired results.
+#
+#   Inputs:
+#       inpath          => path of dataset text file
+#       output_extender => extender to define result filename
+#       max_length      => max allows length for sentences
+#
+#   Options:
+#       save_as_arm     => output will be save as tree like formated AMR string
+#       print_console   => show all reforging at the Gatherer on console
+#       
+def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console):
+    mw_value_sen, mw_value_sem, max_length, data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console)
+    outpath = GetOutputPath(inpath, output_extender)
+
+    if (print_console):
+        print('outpath: ', outpath)
 
     SaveToFile(outpath,
                mw_value_sen,
@@ -363,3 +393,27 @@ def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console
                data_pairs)
     
     return None
+
+
+#===========================================================#
+#                  End-to-End Dataset-Provider              #
+#===========================================================#
+#                       Save Pipeline                       #
+# This function calls the BasicPipeline and return the cleaned dataset for ANN usage.
+#
+#   Inputs:
+#       inpath          => path of dataset text file
+#       output_extender => extender to define result filename
+#       max_length      => max allows length for sentences
+#
+#   Options:
+#       save_as_arm     => output will be save as tree like formated AMR string
+#       print_console   => show all reforging at the Gatherer on console
+#       
+def DataPipeline(inpath, output_extender, max_length, save_as_arm, print_console):
+    if(save_as_arm == True):
+        print('Processing dataset on AMR string representation not supported! Please set [save_as_arm=FALSE]!')
+        return None
+    else:
+        data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console)[3]
+        return GetDataSet(data_pairs)

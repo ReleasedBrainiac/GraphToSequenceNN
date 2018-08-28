@@ -64,6 +64,22 @@ def FileToString(path):
         print('WRONG INPUT FOR [FileToString]')
         return None
 
+#==                                  Restricted Saving                           ==#
+# This funtion build a simple concatenation string containing a sentence and a semantic.
+#
+#   Inputs:
+#       sent        => the cleaned sentence
+#       sem         => the cleaned correspondign semantic for the sentence
+#
+#   Return:
+#       A concatenation string of semantic and sentece.
+def SavingCorpus(sent, sem):
+    if isStr(sent) and isNotNone(sem):
+            return sent + sem
+    else:
+        print('WRONG INPUT FOR [SavingCorpus]')
+        return None
+
 #==                                  Restrict Content                            ==#
 # This funtion check a sentence and semantic pair satisfy the size restictions.
 #
@@ -75,14 +91,18 @@ def FileToString(path):
 #       sem_size    => allowsed size for semantics
 #
 #   Return:
-#       A list of a validation boolean and the string concatenation of semantic and sentece.
-def ValidateAndCreateWriteCorpus(max_len, sent, sem, sen_size, sem_size):
-    if(isInt(max_len)) and (isInt(sen_size)) and (isInt(sem_size)) and (isStr(sent)) and (isNotNone(sem)):
-        if (max_len < 1) or ((max_len > 0) and (len(sent) < (sen_size+1)) and (len(sem) < (sem_size+1))):
-            return [True, sent + sem]
+#       A list of sentence and semantic as pair.
+def RestrictionCorpus(max_len, sent, sem):
+    if isInt(max_len) and isStr(sent) and isNotNone(sem):
+
+        sen_size = max_len
+        sem_size = max_len*2
+
+        if (max_len < 1) or ((len(sent) < (sen_size+1)) and (len(sem) < (sem_size+1))):
+            return [sent, sem]
+
     else:
-        print('WRONG INPUT FOR [CreateWriteCorpus]')
-        return [False, sent + sem]
+        return None
 
 #==                                Filter Content                                ==#
 # This method clean up the a given amr extracted sentence from text formating markup.
@@ -229,6 +249,7 @@ def ExtractSemantics(in_content, index):
 # This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
 #   Inputs:
 #       in_content  =>  raw amr string fragment from split of full AMR dataset string
+#       max_len     =>  maximal allowed length of a sentence and semantics
 #       x_delim     =>  marker/delim to validate fragment as raw sentence
 #       y_delim     =>  marker/delim to validate fragment as raw semantic
 #
@@ -238,10 +259,11 @@ def ExtractSemantics(in_content, index):
 #       sentences   => list of sentences
 #       semantics   => list of semantics (= AMR-String-Representation) 
 #       => all 4. should be equal in length!
-def ExtractContent(in_content, x_delim, y_delim):
+def ExtractContent(in_content, max_len, x_delim, y_delim):
     if isNotNone(in_content) and isStr(x_delim) and isStr(y_delim):
         sentence = ''
         semantic = ''
+        result_pair = None
         sentence_found = False
         semantic_found = False
         sent_lens = []
@@ -254,17 +276,20 @@ def ExtractContent(in_content, x_delim, y_delim):
                 sentence = ExtractSentence(x_delim, in_content, index)
                 sentence_found = True
 
-            if (y_delim in elem)  and (not semantic_found):
+            if (y_delim in elem) and (not semantic_found):
                 semantic = ExtractSemantics(in_content, index)
                 semantic_found = True
 
             if sentence_found and semantic_found:
-                sent_lens.append(len(sentence))
-                sem_lens.append(len(semantic))
-                sentences.append(sentence)
-                semantics.append(semantic)
+                result_pair = RestrictionCorpus(max_len, sentence, semantic)
                 sentence_found = False
                 semantic_found = False
+
+            if isNotNone(result_pair):
+                sent_lens.append(len(result_pair[0]))
+                sem_lens.append(len(result_pair[1]))
+                sentences.append(result_pair[0])
+                semantics.append(result_pair[1])
 
         if(len(sent_lens) == len(sem_lens) == len(sentences) == len(semantics)):
             return [sent_lens, sem_lens, sentences, semantics]
@@ -291,16 +316,10 @@ def ExtractContent(in_content, x_delim, y_delim):
 #       
 def SaveToFile(path, len_sen_mw, len_sem_mw, max_len, data_pairs):
      with open(path, 'w', encoding="utf8") as fileOut:
-        sen_size = min(len_sen_mw, max_len)
-        sem_size = min(len_sem_mw, (max_len*2))
-
         for i in range(len(data_pairs)):
-            #Restrict writing content
-            print(data_pairs[i][0])
-            print(data_pairs[i][1])
-            isallowsed, out = ValidateAndCreateWriteCorpus(max_len, data_pairs[i][0], data_pairs[i][1], sen_size, sem_size)
-            if (isallowsed):
-                fileOut.write(out)
+            result = SavingCorpus(data_pairs[i][0], data_pairs[i][1])
+            if isNotNone(result):
+                fileOut.write(result)
                 fileOut.flush()
 
         print(path)
@@ -349,7 +368,7 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
     #==             Collect relevant raw_content              ==#
     len_dataset = len(dataset)
     dataset=dataset[1:len_dataset]
-    sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, SENTENCE_DELIM, FILE_DELIM)
+    sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, max_length,SENTENCE_DELIM, FILE_DELIM)
 
     # TODO implement sentence restriction right here!
 
@@ -361,11 +380,12 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
 
     data_pairs = GetMultiDatasetPairs(SENTENCE_DELIM, SEMANTIC_DELIM, sentences, semantics, save_as_arm, print_console, is_not_saving)
 
-    if(print_console):
-        print('max_length: ', max_length)
-        print('inpath: ', inpath)
-        print('Mean sentences: ', mw_value_sen)
-        print('Mean semantics: ', mw_value_sem)
+    print('Max restriction: ', max_length)
+    print('Path input: ', inpath)
+    print('Count sentences: ', len(sentences))
+    print('Count semantics: ', len(semantics))
+    print('Mean sentences: ', mw_value_sen)
+    print('Mean semantics: ', mw_value_sem)
 
     return [mw_value_sen, mw_value_sem, max_length, data_pairs]
 

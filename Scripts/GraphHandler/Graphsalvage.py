@@ -4,7 +4,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.Contentsupport import *
+from TextFormatting.ContentSupport import *
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 

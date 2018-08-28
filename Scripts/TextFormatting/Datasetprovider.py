@@ -4,8 +4,8 @@
 #~> https://www.pythonsheets.com/notes/python-rexp.html
 
 import re
-from TextFormatting.Contentsupport import *
-from GraphHandler.Graphsalvage import Gatherer
+from TextFormatting.ContentSupport import *
+from GraphHandler.GraphSalvage import Gatherer
 
 #===========================================================#
 #                   Methods/Functions                       #
@@ -115,7 +115,7 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
 #       sem_flag    => marker/delim to add to cleaned semantic
 #
 #   Options:
-#       print_console    => If True you get console output for Graphsalvage.Gatherer
+#       print_console    => If True you get console output for GraphSalvage.Gatherer
 #       to_process       => If True you get GraphTree as AnyTree for further usage
 #                        => If False you get a JsonString for saving in file.
 #
@@ -141,7 +141,7 @@ def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to
 #   Additional we have the following options:
 #       want_as_arm     => If True then it return a tree-like formated AMR string for the semantic entry 
 #                       => ATTENTION: this option does not support conversion with ConvertToTensorMatrices!
-#       isShowConsole   => If True then it show in and out of the Graphsalvage.Gatherer on console
+#       isShowConsole   => If True then it show in and out of the GraphSalvage.Gatherer on console
 #       isNotStoring    => If True you get GraphTree as AnyTree for further usage.
 #                       => If False you get a JsonString for saving in file.
 #

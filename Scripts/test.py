@@ -1,4 +1,4 @@
-from TextFormatting.Datasetprovider import SavePipeline as pipe
+from TextFormatting.DatasetProvider import SavePipeline as Pipe
 
 #===========================================================#
 #                            Test                           #
@@ -9,4 +9,4 @@ inpath = '../Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-dev.txt'
 save_as_arm = True
 print_activated = False
 
-pipe(inpath, output_extender, max_length, save_as_arm, print_activated)
+Pipe(inpath, output_extender, max_length, save_as_arm, print_activated)

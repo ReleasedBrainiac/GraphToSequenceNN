@@ -1,5 +1,9 @@
 # - *- coding: utf-8*-
-import numpy as np
+'''
+    Used Resources:
+        => https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.empty.html
+'''
+
 from TextFormatting.ContentSupport import GetType
 from TextFormatting.ContentSupport import isAnyNode, isNone, isNotNone, isList
 '''

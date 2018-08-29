@@ -4,7 +4,8 @@
 #~> https://www.pythonsheets.com/notes/python-rexp.html
 
 import re
-from TextFormatting.ContentSupport import *
+from TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone
+from TextFormatting.ContentSupport import setOrDefault
 from GraphHandler.GraphSalvage import Gatherer
 from GraphHandler.GraphTreeConverter import GetDataSet
 
@@ -23,7 +24,7 @@ from GraphHandler.GraphTreeConverter import GetDataSet
 #       The depending output path
 def GetOutputPath(inpath, output_extender):
     TYP_ERROR_MESSAGE = 'Entered wrong type! Input is no String!'
-    return setOrDefault(inpath+'.'+ output_extender , TYP_ERROR_MESSAGE, isStr(output_extender));
+    return setOrDefault(inpath+'.'+ output_extender , TYP_ERROR_MESSAGE, isStr(output_extender))
 
 #==         Calculate MW for a list of numbers            ==#
 # This function calculate the mean over all values in a list.
@@ -120,7 +121,7 @@ def ClearSentence(in_sentence):
         return in_sentence+'\n'
     else:
         print('WRONG INPUT FOR [ClearSentence]')
-        return in_sentence
+        return None
 
 #==                Reforge AMR semantic to cleaned AMR string tree               ==#
 # This function allows to clean up a raw AMR semantic string tree representation 
@@ -139,7 +140,7 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
         return out
     else:
         print('WRONG INPUT FOR [ReforgeSemanticRepresentationToCleanARM]')
-        return in_sentence
+        return None
 
 #==                Reforge AMR semantic to cleaned AnyTree object                ==#
 # This function allows to clean up a raw AMR semantic string tree representation 
@@ -162,7 +163,7 @@ def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to
         return Gatherer(out, sem_flag, print_console, to_process)
     else:
         print('WRONG INPUT FOR [ReforgeSemanticRepresentationToAnyTree]')
-        return in_sentence
+        return None
 
 #==                       Collect single dataset data pair                       ==#
 # This function collect a data pair from raw sentences and semantics.
@@ -186,10 +187,10 @@ def GetSingleDatasetPair(sent_flag, sem_flag, sent, sem, want_as_arm, isShowCons
         sent = sent_flag+' '+sent
         sent = ClearSentence(sent)
         if(want_as_arm):
-            sem = ReforgeSemanticRepresentationToCleanARM(sem, sem_flag);
+            sem = ReforgeSemanticRepresentationToCleanARM(sem, sem_flag)
             return [sent, sem]
         else:
-            sem = ReforgeSemanticRepresentationToAnyTree(sem, sem_flag, isShowConsole, isNotStoring);
+            sem = ReforgeSemanticRepresentationToAnyTree(sem, sem_flag, isShowConsole, isNotStoring)
             return [sent, sem]
     else:
         print('WRONG INPUT FOR [GetSingleDatasetPair]')
@@ -359,8 +360,8 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
     SEMANTIC_DELIM = '::smt'
     FILE_DELIM = '::file'
 
-    max_length = setOrDefault(max_length, -1, isInt(max_length));
-    inpath  = setOrDefault(inpath, TYP_ERROR, isStr(inpath));
+    max_length = setOrDefault(max_length, -1, isInt(max_length))
+    inpath  = setOrDefault(inpath, TYP_ERROR, isStr(inpath))
 
     #==                     Read Dataset                      ==#
     dataset = FileToString(inpath)

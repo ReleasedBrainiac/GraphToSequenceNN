@@ -67,6 +67,10 @@ def isDict(input):
 def isSet(input):
     return isinstance(input, set)
 
+# This funtion return the type input
+def GetType(input):
+    return type(input) 
+
 # This function a string dos not contain a subsequence.
 # A subsequence could be a char, string, or a value!
 def isNotInStr(seq , string):

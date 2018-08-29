@@ -1,6 +1,9 @@
 # - *- coding: utf-8*-
-# Source to build the tree like graph structure is anytree
-# ~> http://anytree.readthedocs.io/en/latest/
+'''
+    Used Resources:
+        => http://anytree.readthedocs.io/en/latest/
+'''
+
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
@@ -9,6 +12,11 @@ from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone
 from TextFormatting.ContentSupport import toInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
+
+'''
+    This class library allow to extract content from AMR String representation.
+    The result will provide as AnyNode or Json-AnyNode representation.
+'''
 
 #===========================================================#
 #==                    Conversion Methods                 ==#

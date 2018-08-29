@@ -1,7 +1,17 @@
 # - *- coding: utf-8*-
+'''
+    Used Resources:
+        => https://www.tensorflow.org/api_docs/python/tf
+'''
 
 import numpy as np
 import tensorflow as tf
+
+'''
+    This class library allow to use tensorflow api, 
+    to get the direct node neigbour embedding of graph nodes 
+    depending on the nodes feature vectors.
+'''
 
 def GetMaxColIndexFromTensor(tensor_x):
     count = tensor_x.get_shape()[0]

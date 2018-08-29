@@ -1,4 +1,13 @@
 # - *- coding: utf-8*-
+'''
+    Used Resources:
+        => https://www.geeksforgeeks.org/type-isinstance-python/
+        => https://anytree.readthedocs.io/en/latest/
+        => https://pypi.org/project/ordereddict/#description
+        => https://pymotw.com/2/collections/ordereddict.html
+        => https://docs.python.org/3.6/library/numbers.html
+'''
+
 from anytree import AnyNode
 from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex

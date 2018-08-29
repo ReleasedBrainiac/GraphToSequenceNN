@@ -1,7 +1,16 @@
 # - *- coding: utf-8*-
+'''
+    Used Resources:
+        => https://www.tensorflow.org/api_docs/python/tf
+        => https://keras.io/getting-started/functional-api-guide/
+'''
 
 from LambdaNodeEmbedding import GetFeaturesTensorOnly
 from keras.layers import Input, Dense, Lambda
+
+'''
+    This class library provide a pipeline to use keras, to build the model pipeline for Graph2Sequence encoding decoding.
+'''
 
 def GetKerasInputLayerPairs(shape_in1, name1, shape_in2, name2):
     inputs1 = Input(shape=shape_in1, name=name1)

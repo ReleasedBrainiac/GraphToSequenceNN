@@ -1,7 +1,9 @@
 # - *- coding: utf-8*-
-#This script was created by T.Turke for content extraction from AMR dataset.
-#~> https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
-#~> https://www.pythonsheets.com/notes/python-rexp.html
+'''
+    Used Resources:
+        => https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
+        => https://www.pythonsheets.com/notes/python-rexp.html
+'''
 
 import re
 from TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone
@@ -9,6 +11,9 @@ from TextFormatting.ContentSupport import setOrDefault
 from GraphHandler.GraphSalvage import Gatherer
 from GraphHandler.GraphTreeConverter import GetDataSet
 
+'''
+    This class library is used for content extraction from AMR dataset.
+'''
 #===========================================================#
 #                   Methods/Functions                       #
 #===========================================================#
@@ -370,8 +375,6 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
     len_dataset = len(dataset)
     dataset=dataset[1:len_dataset]
     sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, max_length,SENTENCE_DELIM, FILE_DELIM)
-
-    # TODO implement sentence restriction right here!
 
     #==                      Get Median                       ==#
     mw_value_sen = CalcMW(sents_lens)

@@ -4,7 +4,9 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from TextFormatting.ContentSupport import *
+from TextFormatting.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone
+from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone
+from TextFormatting.ContentSupport import toInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 
@@ -67,7 +69,7 @@ def GetSplittedContent(str):
 # This function clean up the whitespacing in the AMR Graphstring by a given value.
 def AddLeadingWhitespaces(str, amount):
     if(isStr(str)) and (isInt(amount)):
-        for i in range(amount):
+        for _ in range(amount):
             str = ' '+str
 
         ws_count = len(str) - len(str.lstrip(' '))
@@ -341,7 +343,7 @@ def SingleNodeReforge(graph_root, node):
 def GraphReforge(root):
     if (isAnyNode(root)) and (isNotNone(root.children)):
         for node in PreOrderIter(root):
-            SingleNodeReforge(root, node);
+            SingleNodeReforge(root, node)
     else:
         print('WRONG INPUT FOR [ReforgeGraphContent]')
 

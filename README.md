@@ -12,6 +12,7 @@ This Repo is in proceeding. It will provide an example of Graph2Sequence encodin
 - Pydot Version:        1.2.4 => https://pypi.org/project/pydot/
 - Graphviz Version:     0.8.4 => https://pypi.org/project/graphviz/
 - H5PY                        => http://docs.h5py.org/en/latest/build.html
+- Jupyter Notebook            => http://jupyter.org/install 
 
 ## Current developement status
 

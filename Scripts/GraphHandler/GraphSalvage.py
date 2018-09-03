@@ -224,6 +224,9 @@ def BuildTreeLikeGraphFromRLDAG(orderedNodesDepth, orderedNodesContent):
 
                 #Handle the subgraph parts
                 else:
+                    if label is '':
+                        print('ERROR! => [', orderedNodesContent[index], ']')
+
                     prev_node = BuildNextNode( prev_node,
                                        index,
                                        orderedNodesDepth[prev_index],
@@ -296,11 +299,14 @@ def NormalState(node):
     if isAnyNode(node):
         if (node.is_leaf) and not (node.is_root):
             node.state = 'destination'
+            node.name = 'destination_' + str(node.id)
         elif(node.is_root):
             node.state = 'root'
+            node.name = 'root_' + str(node.id)
             node.parent = None
         else:
             node.state = 'subnode'
+            node.name = 'subnode_' + str(node.id)
     else:
         print('WRONG INPUT FOR [NormalState]')
 
@@ -313,14 +319,27 @@ def NavigateState(graph_root, node):
     if isAnyNode(graph_root) and isAnyNode(node):
         if isNotNone(node.label) and isNone(node.content):
             label = node.label
-            desired =findall(graph_root, lambda node: node.label in label)
-            if(len(desired) == 1):
+            regex = str('\\b'+label+'\\b')
+            desired = []
+
+            tmp_desired =findall(graph_root, lambda node: node.label in label)
+
+            for i in tmp_desired:
+                match = re.findall(regex, i.label)
+                if len(match) > 0:
+                    desired.append(i)
+
+            if(len(desired) < 1):
+                print( node.state )
+                print('CONTROL: ', ShowRLDAGTree(graph_root))
+            elif(len(desired) == 1):
                 NormalState(node)
             else:
                 node.followerNodes = desired[0].followerNodes
                 node.hasFollowerNodes = desired[0].hasFollowerNodes
                 node.hasInputNode = desired[0].hasInputNode
-                node.state = ('navigator')
+                node.state = 'navigator'
+                node.name = 'navigator_' + str(node.id)
         else:
             NormalState(node)
     else:
@@ -399,6 +418,10 @@ def AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content):
 
                 nodes_depth[k] = toInt(t)
                 nodes_content[k] = CleanNodeSequence(line)
+
+                if nodes_content[k] is '':
+                    print('Raw: ', line)
+
                 k = k + 1
     else:
         print('WRONG INPUT FOR [AMRPreprocessor]')

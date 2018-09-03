@@ -52,7 +52,10 @@ def ImportAsJson(json):
 def ExtractRawNodeSequence(sequence):
     if(isStr(sequence)):
         node_sent = re.sub(' +',' ',sequence+')')
-        return node_sent[node_sent.find("(")+1:node_sent.find(")")]
+        result = node_sent[node_sent.find("(")+1:node_sent.find(")")]
+        if isInStr("(", result) or isInStr(")", result):
+            print("ERROR: ", result)
+        return result 
     else:
         print('WRONG INPUT FOR [ExtractSentence]')
         return None
@@ -87,32 +90,37 @@ def AddLeadingWhitespaces(str, amount):
         print('WRONG INPUT FOR [AddLeadingWhitespaces]')
         return None
 
+def CleanSubSequence(elements):
+    results = []
+
+    if isNotNone(elements) and isList(elements):
+        # Clean the content
+        for value in elements:
+            if(isInStr("-", value)) or (isInStr(":", value)):
+                if(isInStr("-", value)) and (isNotInStr(":", value)):
+                    str1 = value[0: value.rfind('-')]
+                    if(len(str1) > 0):
+                        results.append(str1)
+                else:
+                    continue
+            else:
+                if(len(value) > 0):
+                    results.append(value)
+    else:
+        print('No content is given!')
+
+    return results
+
 #==          Cleaning nodes sequence from garbage         ==#
 # This function allow to clean the node sequence from all staff so it return label and content only.
 # It will also cut of word extensions so we just get the basis word of a nodes content!
 def CleanNodeSequence(sequence):
     if (isStr(sequence)):
         node_seq = ExtractRawNodeSequence(sequence)
-
         # If we have more then just a label
         if(isInStr(' ', node_seq)):
             elements = node_seq.split(' ')
-            results = []
-        
-            # Clean the content
-            for value in elements:
-                if(isInStr("-", value)) or (isInStr(":", value)):
-                    if(isInStr("-", value)) and (isNotInStr(":", value)):
-                        str1 = value[0: value.rfind('-')]
-                        if(len(str1) > 0):
-                            # Control Structure
-                            #print("[Raw: ", node_seq, "| Value: ",value,"| Clean: ",str1,"]")
-                            results.append(str1)
-                    else:
-                        continue
-                else:
-                    if(len(value) > 0):
-                        results.append(value)
+            results = CleanSubSequence(elements)
             node_seq = ' '.join(results)
         else:   
             # If we just have label
@@ -331,7 +339,7 @@ def NavigateState(graph_root, node):
 
             if(len(desired) < 1):
                 print( node.state )
-                print('CONTROL: ', ShowRLDAGTree(graph_root))
+                #print('CONTROL: ', ShowRLDAGTree(graph_root))
             elif(len(desired) == 1):
                 NormalState(node)
             else:

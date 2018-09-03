@@ -6,6 +6,7 @@
 
 from TextFormatting.ContentSupport import GetType
 from TextFormatting.ContentSupport import isAnyNode, isNone, isNotNone, isList
+import numpy as np
 
 '''
     This class library allow to convert GraphTree's of type AnyNode from anytree library into a matrix representation.
@@ -29,8 +30,11 @@ def GetNeighbourhoodMatrices(tree_graph):
 
 def GetTensorMatricesFromGraphTree(tree_graph):
     if isNotNone(tree_graph) and isAnyNode(tree_graph):
-        print('This function is work in progress! [GetTensorMatricesFromGraphTree]')
-        return None
+        if len(tree_graph.children) < 1 and tree_graph.is_root:
+            return np.array([1])
+        #elif():
+
+        
     else:
         print('WRONG INPUT FOR [GetTensorMatricesFromGraphTree]')
         return None
@@ -48,12 +52,12 @@ def GetDataSet(data_pairs):
             data_pair_edge_lists.append(edge_lists)
             data_pair_features.append(sentence)
 
-            print('General typ: ',GetType(data_pairs))
-            print('Sentence typ: ',GetType(sentence))
-            print('Semantic typ: ',GetType(semantic))
+            #print('General typ: ',GetType(data_pairs))
+            #print('Sentence typ: ',GetType(sentence))
+            #print('Semantic typ: ',GetType(semantic))
 
-        print(data_pair_edge_lists[0])
-        print('This function is work in progress! [GetDataSet]')
+        #print(data_pair_edge_lists[0])
+        #print('This function is work in progress! [GetDataSet]')
         return None
     else:
         print('WRONG INPUT FOR [GetDataSet]')

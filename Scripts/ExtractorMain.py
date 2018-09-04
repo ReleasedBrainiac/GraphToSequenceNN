@@ -2,6 +2,7 @@
 from TextFormatting.NodeStringExtractor import CheckOpenEnclosing, BuildCleanDefinedAMR
 open_par = '('
 closing_par = ')'
+
 content_example = """(c / cause-01
       :ARG1 (l / live-01
             :ARG0 (i / i
@@ -25,11 +26,4 @@ content_example = """(c / cause-01
 
 print('Open-Close valid? [',CheckOpenEnclosing(content_example, '(', ')'),']')
 print(content_example)
-
-#pairs = GetParenthesisIndexPairs(content_example, open_par, closing_par)
-#for pair in pairs:
-#    print('[', content_example[pair[0]:pair[1]+1] ,'] in depth [',pair[2],']') 
-
-#print(GetNodes(content_example, content_example, 0, pairs, open_par, closing_par))
-
 print(BuildCleanDefinedAMR(content_example, open_par, closing_par))

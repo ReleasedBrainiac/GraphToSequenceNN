@@ -78,3 +78,5 @@ class NodeStringExtractorTest:
                 react_none_close    and 
                 react_fail_str      and 
                 react_valid_str)
+
+    def Tets():

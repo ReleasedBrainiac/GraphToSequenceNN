@@ -32,9 +32,11 @@ def GetEnclosedContent(content, open_par, closing_par):
         return None
 
 
-def ExploreAdditionalcontent(substring):
-    if isStr(substring):
-        print()
+def ExploreAdditionalcontent(string_raw):
+    if isStr(string_raw) and isInStr(':', string_raw) and isInStr(' ', string_raw):
+        sub_line = string_raw[string_raw.find(':'):len(string_raw)]
+        
+        
     else:
         print('WRONG INPUT FOR [ExploreAdditionalcontent]')
         return None
@@ -71,10 +73,7 @@ def RuleFormatting(amr_str, open_par, closing_par):
                 depth = depth - occourences
             
             if isInStr(':', new_line):
-                start_occourence = new_line.find(':')
-                end_line = len(new_line)
-                sub_line = new_line[start_occourence:end_line]
-                print(sub_line, 'contain whites => ', isInStr(' ', sub_line))
+                ExploreAdditionalcontent(new_line)
             
             #print(new_line)
             struct_contain.append(new_line)
@@ -94,3 +93,5 @@ def BuildCleanDefinedAMR(raw_amr, open_par, closing_par):
     else:
         print('WRONG INPUT FOR [BuildCleanDefinedAMR]')
         return None
+
+# REGEX = \B\:(?=\S*[+-]*)([a-zA-Z*-]+)+

@@ -1,11 +1,13 @@
 # - *- coding: utf-8*-
 from TextFormatting.ContentSupport import isNotNone, isList, isBool, isStr
+import inspect
 
 def ReportTestProgress(check_value, test_name):
-    print('Assert', test_name, '!')
+    
     if check_value: 
         return True
     else:
+        print(test_name, '[FAILED!]')
         return False
 
 def RunTests(class_name):
@@ -14,8 +16,12 @@ def RunTests(class_name):
 
     for func in functions:
         if '__' not in func:
-            TestCases.append([getattr(class_name, func)(), func])  
-    
+            func_placeholder = getattr(class_name, func)
+
+            if inspect.isfunction(func_placeholder):
+                print('Running tests [',func,']')
+                TestCases.append([func_placeholder(), func])
+
     return TestCases
 
 def EvaluateTests(TestResults):

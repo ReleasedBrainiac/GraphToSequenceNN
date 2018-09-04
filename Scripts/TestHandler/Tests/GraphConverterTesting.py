@@ -34,7 +34,7 @@ class GraphTests:
         d2 = NewAnyNode(    3, 'destination',   2, True,    s1,     False,  [],      'k',   'king')
         print(RenderTree(root))
 
-        result = True
+        #result = True
         result = ReportTestProgress(result, 'MultiCorrectResult')
         return result
 
@@ -47,7 +47,7 @@ class GraphTests:
         s2 = NewAnyNode(    3, 'subnode',       1, True,    root,   True,  [d2],    'j',    'joli')
         d2 = NewAnyNode(    4, 'destination',   2, True,    s2,     False, [],      'k',    'king')
 
-        result = True
+        #result = True
         result = ReportTestProgress(result, 'RedirectCorrectResult')
         return result
 
@@ -60,7 +60,7 @@ class GraphTests:
         s2 = NewAnyNode(    4, 'subnode',       1, True,    root,   True,  [d2],    'j',    'joli')
         d2 = NewAnyNode(    5, 'destination',   2, True,    s2,     False, [],      'k',    'king')
 
-        result = True
+        #result = True
         result = ReportTestProgress(result, 'RedirectCorrectResult')
         return result
 

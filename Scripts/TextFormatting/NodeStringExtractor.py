@@ -1,101 +1,96 @@
-from ContentSupport import isInStr, isNotInStr, isNotNone, isStr
+# - *- coding: utf-8*-
+from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt
 
-def CheckEqualOpenEnclosingParenthesis(content, open_par, closing_par):
-    count_open = content.count(open_par)
-    count_close = content.count(closing_par)
+def CountSubsStrInStr(content_str, search_element):
+    if isStr(content_str) and isStr(search_element):
+        return content_str.count(search_element)
+    else: 
+        print('WRONG INPUT FOR [CountSubsStrInStr]')
+        return 0
 
-    if (count_open == count_close):
-        return True
+def CheckOpenEnclosing(content, open_par, closing_par):
+    if isStr(content) and isStr(open_par) and isStr(closing_par):
+        count_open = CountSubsStrInStr(content,open_par)
+        count_close = CountSubsStrInStr(content,closing_par)
+
+        if (count_open == count_close):
+            return True
+        else:
+            return False
     else:
-        return False
+        print('WRONG INPUT FOR [CheckOpenEnclosing]')
+        return None
 
 def GetEnclosedContent(content, open_par, closing_par):
-    pos_open = content.index(open_par)
-    pos_close = content.rfind(closing_par)
+    if  isStr(content) and isStr(open_par) and isStr(closing_par) and isInStr(open_par, content) and isInStr(closing_par, content):
 
-    return content[pos_open+1:pos_close-1]
-
-def GetParenthesisIndexPairs(content, open_par, closing_par):
-    open_indices = []
-    pairs = []
-
-    for index in range(len(content)):
-        char = content[index]
-        if char is open_par:
-            open_indices.append(index)
-
-        if char is closing_par:
-            pairs.append([open_indices.pop(), index, len(open_indices)])
-
-    return pairs
-
-def GetNodes(content, remain, index, pairs, open_par, closing_par):
-    pair = pairs[index]
-    raw = content[pair[0]:pair[1]+1]
-    result = GetEnclosedContent(raw, open_par, closing_par)
-
-    if open_par in result and closing_par in result:
-        print('Outer: ',result)
-        GetNodes(content, remain, index+1, pairs, open_par, closing_par)
+        pos_open = content.index(open_par)
+        pos_close = content.rfind(closing_par)
+        return content[pos_open+1:pos_close]
     else:
-        print('Most_Inner: ',result)
-        pairs.remove(index)
-        GetNodes(content, remain, 0, pairs, open_par, closing_par)
-
-        
+        print('WRONG INPUT FOR [GetEnclosedContent]')
+        return None
 
 
+def ExploreAdditionalcontent(substring):
+    if isStr(substring):
+        print()
+    else:
+        print('WRONG INPUT FOR [ExploreAdditionalcontent]')
+        return None
+
+def GetUnformatedAMRString(raw_amr):
+    if isNotNone(raw_amr) and isStr(raw_amr):
+        return ' '.join(raw_amr.split())
+    else:
+        print('WRONG INPUT FOR [GetUnformatedAMRString]')
+        return None
+
+def AddLeadingSpace(str, amount):
+    if(isStr(str)) and (isInt(amount)):
+        for _ in range(amount):
+            str = '      '+str
+        return str
+
+    else:
+        print('WRONG INPUT FOR [AddLeadingSpace]')
+        return None
+
+def RuleFormatting(amr_str, open_par, closing_par):
+    if isNotNone(amr_str) and isStr(amr_str):
+        depth = -1
+        openings = amr_str.split(open_par)
+        struct_contain = []
+
+        for line in openings:
+            depth = depth + 1
+            new_line = AddLeadingSpace((open_par + line), depth)
+
+            if isInStr(closing_par, new_line):
+                occourences = CountSubsStrInStr(new_line, closing_par)
+                depth = depth - occourences
+            
+            if isInStr(':', new_line):
+                start_occourence = new_line.find(':')
+                end_line = len(new_line)
+                sub_line = new_line[start_occourence:end_line]
+                print(sub_line, 'contain whites => ', isInStr(' ', sub_line))
+            
+            #print(new_line)
+            struct_contain.append(new_line)
+
+        return None
+
+    else:
+        print('WRONG INPUT FOR [RuleFormatting]')
+        return None
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-open_par = '('
-closing_par = ')'
-content_example = """(c / cause-01
-      :ARG1 (l / live-01
-            :ARG0 (i / i
-                  :ARG0-of (t3 / talk-01 :polarity -
-                        :ARG2 (a5 / anyone)
-                        :ARG1-of (r / real-04)))
-            :ARG1 (l2 / life
-                  :poss i)
-            :manner (a / alone)
-            :duration (u / until
-                  :op1 (h / have-06
-                        :ARG0 i
-                        :ARG1 (a3 / accident
-                              :mod (p / plane))
-                        :location (d / desert :wiki "Sahara" :name (n / name :op1 "Desert" :op2 "of" :op3 "Sahara"))
-                        :time (b / before
-                              :op1 (n2 / now)
-                              :quant (t2 / temporal-quantity :quant 6
-                                    :unit (y / year)))))))"""
-
-
-print(CheckEqualOpenEnclosingParenthesis(content_example, '(', ')'))
-#print(GetEnclosedContent(content_example, open_par, closing_par))
-pairs = GetParenthesisIndexPairs(content_example, open_par, closing_par)
-print(pairs)
-print(content_example)
-
-#for pair in pairs:
-#    print('[', content_example[pair[0]:pair[1]+1] ,'] in depth [',pair[2],']') 
-
-print(GetNodes(content_example, content_example, 0, pairs, open_par, closing_par))
+def BuildCleanDefinedAMR(raw_amr, open_par, closing_par):
+    if isNotNone(raw_amr) and isStr(raw_amr):
+        amr_str = GetEnclosedContent(GetUnformatedAMRString(raw_amr), open_par, closing_par)
+        new_amr = RuleFormatting(amr_str, open_par, closing_par)
+        #return (open_par + new_amr + closing_par)
+    else:
+        print('WRONG INPUT FOR [BuildCleanDefinedAMR]')
+        return None

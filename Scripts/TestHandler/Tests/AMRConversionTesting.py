@@ -1,5 +1,7 @@
+# - *- coding: utf-8*-
 from TestHandler.TestCores import ReportTestProgress as RTP
 from TextFormatting.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
+from TextFormatting.NodeStringExtractor import GetFlagMatch
 from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('
@@ -79,4 +81,25 @@ class NodeStringExtractorTest:
                 react_fail_str      and 
                 react_valid_str)
 
-    def Tets():
+    def TestMatcher():
+        str_no_flag = 'a / ahead'
+        str_with_flag_and_minus = r'a / ahead :ARG1-of'
+        str_only_flag           = r'k / cool :op1'
+        str_multi_flag          = r'n / name :op1 "Desert" :op2 "of" :op3 "Sahara"'
+        
+        react_none_content      = RTP(isNone(GetFlagMatch(None)), NONE_CONTENT)
+        react_no_flag           = RTP(isNone(GetFlagMatch(str_no_flag)), NONE_CONTENT)
+        print('Test: ',GetFlagMatch(str_only_flag))
+        #react_only_flag         = RTP([':op1', 9, 13] == GetFlagMatch(str_only_flag), NONE_CONTENT)
+        #print(GetFlagMatch(str_with_flag_and_minus))
+        #react_flag_minus        = RTP([':ARG1-of', 10, 18] == GetFlagMatch(str_with_flag_and_minus), NONE_CONTENT)
+        #print(GetFlagMatch(str_multi_flag))
+        #react_multi_flag_minus  = RTP([None, None, None] == GetFlagMatch(str_multi_flag), NONE_CONTENT)
+
+        # Test cases for the methods with report to console
+        # United result
+        return (react_none_content  and 
+                react_no_flag       and 
+                react_only_flag     and 
+                react_flag_minus)    #and 
+                #react_multi_flag_minus)

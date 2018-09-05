@@ -1,5 +1,5 @@
 # - *- coding: utf-8*-
-from TextFormatting.NodeStringExtractor import CheckOpenEnclosing, BuildCleanDefinedAMR
+from TextFormatting.NodeStringExtractor import CheckOpenEnclosing, GenerateCleanAMR
 open_par = '('
 closing_par = ')'
 
@@ -26,4 +26,4 @@ content_example = """(c / cause-01
 
 print('Open-Close valid? [',CheckOpenEnclosing(content_example, '(', ')'),']')
 print(content_example)
-print(BuildCleanDefinedAMR(content_example, open_par, closing_par))
+print(GenerateCleanAMR(content_example, open_par, closing_par))

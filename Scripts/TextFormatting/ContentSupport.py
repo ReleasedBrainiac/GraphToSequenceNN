@@ -12,10 +12,6 @@ from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex
 import random as rnd
 
-#####################
-# Check and Support #
-#####################
-
 def isComplex(input):
     """
     This function check input is a complex number value.
@@ -139,9 +135,9 @@ def isIterable(input):
         :param input: unknown type object
     """
     try:
-        input_iterator = iter(input)
+        _ = iter(input)
         return True
-    except TypeError as te:
+    except TypeError:
         return False
 
 def getType(input):
@@ -151,43 +147,70 @@ def getType(input):
     """
     return type(input)
 
-# This function return a int between min and max
-# If min and max no integer it return an integer between 0 and 100
 def GetRandomInt(min, max):
-    if isInt(min) and isInt(max) and (min < max):
+    """
+    This function return a int between min and max
+    If min and max no integer it return an integer between 0 and 100
+        :param min: number 
+        :param max: number >= min
+    """
+    if isInt(min) and isInt(max) and (min <= max):
         return rnd.randint(min, max)
     else:
         return rnd.randint(0,100)
 
-# This function a string dos not contain a subsequence.
-# A subsequence could be a char, string, or a value!
-def isNotInStr(seq , string):
-    if(isStr(string)) and (isNotNone(seq)):
-        return (seq not in string)
+def isNotInStr(search , content):
+    """
+    This function a string dos not contain a subsequence.
+    A subsequence could be a char, string, or a value!
+        :param search: string search element 
+        :param content: string content element
+    """
+    if(isStr(content)) and (isNotNone(search)):
+        if (len(content) >= len(search)):
+            return (search not in content)
+        else:
+            return False
     else:
         print('WRONG INPUT FOR [isNotInStr]')
         return False
-    
 
-# This function check a string contains a subsequence.
-# A subsequence could be a char, string, or a value!
 def isInStr(search , content):
+    """
+    This function check a string contains a subsequence.
+    A subsequence could be a char, string, or a value!
+        :param search: string search element
+        :param content: string content element
+    """
     if(isStr(content)) and (isNotNone(search)):
-        return (search in content)
+        if (len(content) >= len(search)):
+            return (search in content)
+        else:
+            return False
     else:
+        print(content, len(content))
+        print(search, len(search))
         print('WRONG INPUT FOR [isInStr]')
         return False
 
-# This function check a dictionary contain a specified key.
 def singleHasKey(key, input):
+    """
+    This function check a dictionary contain a specified key.
+        :param key: unknown type object
+        :param input: a set
+    """
     if((isDict(input)) or (isSet(input))) and (isNotNone(key)):
         return(key in input)
     else:
         print('WRONG INPUT FOR [singleHasKey]')
         return False
 
-# This function check a input is a list where each dictionary contain a spezified key.
 def multiHasKey(key, input):
+    """
+    This function check a input is a list where each dictionary contain a spezified key.
+        :param key: unknown type object
+        :param input: a set
+    """
     if(isList(input)) and (isNotNone(key)):
         for element in input:
             if(not singleHasKey(key, element)):
@@ -198,8 +221,11 @@ def multiHasKey(key, input):
         print('WRONG INPUT FOR [multiHasKey]')
         return False
         
-# This function check a input is a list of dictionaries.
 def multiIsDict(inputs):
+    """
+    This function check a input is a list of dictionaries.
+        :param inputs: a set of objects
+    """
     if(isList(inputs)):
         for input in inputs:
             if(not isDict(input)):
@@ -210,9 +236,14 @@ def multiIsDict(inputs):
         print('WRONG INPUT FOR [multiIsDict]')
         return False
 
-# This function allow to set an input or default by a switch value.
 def setOrDefault(input, default, wantSet):
-    if(isXTypeEqualYType(input, default)) and (isBool(wantSet)):
+    """
+    This function allow to set an input or default by a switch value.
+        :param input: old value of unknown type object
+        :param default: default value unknown type object
+        :param wantSet: desired value unknown type object
+    """
+    if(isXTypeEqualY(input, default)) and (isBool(wantSet)):
         if(wantSet):
             return input
         else:
@@ -221,26 +252,36 @@ def setOrDefault(input, default, wantSet):
         print('WRONG INPUT FOR [setOrDefault]')
         return input
 
-# This function converts a float or integer to an integer value.
 def toInt(input):
+    """
+    This function converts a float or integer to an integer value.
+        :param input: a number string 
+    """
     if(isFloat(input)) or (isInt(input)):
         return int(input)
     else:
         print('WRONG INPUT FOR [toInt]')
         return None
 
-# This function check input type x and input type y are equal.
-def isXTypeEqualYType(in_x, in_y):
-    if(isNotNone(in_x)) and (isNotNone(in_y)):
-        return (type(in_x) == type(in_y))
+def isXTypeEqualY(object_x, object_y):
+    """
+    This function check input type x and input type y are equal.
+        :param object_x: unknown type object
+        :param object_y: unknown type object
+    """
+    if(isNotNone(object_x)) and (isNotNone(object_y)):
+        return (type(object_x) == type(object_y))
     else:
-        print('WRONG INPUT FOR [isXTypeEqualYType]')
+        print('WRONG INPUT FOR [isXTypeEqualY]')
         return None
 
-# This function return the size of a files content.
-def getFileLength(fname):
-    if isStr(fname):
-        with open(fname, 'r', encoding="utf8") as f:
+def getFileLength(path):
+    """
+    This function return the size of a files content.
+        :param path: path as string
+    """
+    if isStr(path):
+        with open(path, 'r', encoding="utf8") as f:
             for i in enumerate(f):
                 pass
         return i + 1

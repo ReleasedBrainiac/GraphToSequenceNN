@@ -3,7 +3,7 @@ from GraphHandler.NodeStringExtractor import CheckOpenEnclosing, GenerateCleanAM
 open_par = '('
 closing_par = ')'
 
-content_example = """(c / cause-01
+example_1 = """(c / cause-01
       :ARG1 (l / live-01 :polarity -
             :ARG0 (i / i
                   :ARG0-of (t3 / talk-01 :polarity -
@@ -24,6 +24,16 @@ content_example = """(c / cause-01
                                     :unit (y / year)))))))"""
 
 
-print('Open-Close valid? [',CheckOpenEnclosing(content_example, '(', ')'),']')
-print(content_example)
-print(GenerateCleanAMR(content_example, open_par, closing_par))
+example_2 = """(c / chapter
+  :mod 1)
+"""
+
+print(example_1)
+result = GenerateCleanAMR(example_1, open_par, closing_par)
+print(result)
+print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
+
+print(example_2)
+result = GenerateCleanAMR(example_2, open_par, closing_par)
+print(result)
+print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')

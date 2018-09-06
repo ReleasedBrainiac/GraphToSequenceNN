@@ -107,8 +107,6 @@ def CheckOpenEnclosing(content, open_par, close_par):
         else:
             return False
     else:
-        print(isInStr(open_par, content))
-        print(isInStr(close_par, content))
         print('WRONG INPUT FOR [CheckOpenEnclosing]')
         return None
 
@@ -127,7 +125,6 @@ def GetEnclosedContent(content, open_par, close_par):
         else:
             return content
     else:
-        print('test', content)
         print('WRONG INPUT FOR [GetEnclosedContent]')
         return None
 

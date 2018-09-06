@@ -6,24 +6,52 @@ from TextFormatting.ContentSupport import hasContent, GetRandomInt
 
 INDENTATION = 6
 
+COLON = ':'
+MINUS = '-'
+QUOTATION_MARK = '"'
+
+EXTENSIO_REGEX = '\-\d+'
+POLARITY_SIGN_REGEX = '\s+\-\s*'
+QUALIFIED_STR_REGEX = '\B(\"\w+( \w+)*\")'
+FLAG_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
+ARGS_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
+
 def CreateNewLabel(number):
+    """
+    This function create a label with a upper-case post- and pre-element.
+    The passed number (maybe an iteration value) is placed between them.
+        :param number: a number which is placed in the label
+    """
     inner_index = GetRandomInt(0, 50)
     if isNumber(number) and (number > -1):
         inner_index = number
         
     return 'Y' + str(inner_index) + 'Z'
 
-def CreateNewDefinedNode(label , content, open_par, closing_par):
-    if isStr(label) and isStr(open_par) and isStr(closing_par):
+def CreateNewDefinedNode(label , content, open_par, close_par):
+    """
+    This function defines a new AMR converted node element.
+    Depending on the content it returns a node with label and content or just containing a label.
+        :param label: the desired node label
+        :param content: the corresponding content
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
+    if isStr(label) and isStr(open_par) and isStr(close_par):
         if isStr(content):
-            return open_par + label + ' / ' + content + closing_par
+            return open_par + label + ' / ' + content + close_par
         else:
-            return open_par + label + closing_par
+            return open_par + label + close_par
     else:
         print('WRONG INPUT FOR [CreateNewDefinedNode]')
         return None
 
 def CountLeadingWhiteSpaces(raw_line):
+    """
+    This function count leading whitespaces in raw line of a raw or indentation cleaned AMR string.
+    Remind the input should not be preformated (e.g. cleaning from whitespaces).
+        :param raw_line: a raw or indentation cleaned AMR string.
+    """
     if isStr(raw_line):
         if isInStr(' ', raw_line):
             return (len(raw_line) - len(raw_line.lstrip(' ')))
@@ -34,6 +62,12 @@ def CountLeadingWhiteSpaces(raw_line):
         return None
 
 def GetCurrentDepth(raw_line):
+    """
+    This function calculate the depth of a AMR strig node element depending on:
+    1. the amount of leading whitespaces
+    2. the global defined INDENTATION constant
+        :param raw_line: a raw or indentation cleaned AMR string.
+    """
     if isStr(raw_line):
         if isInStr('', raw_line):
             return toInt(CountLeadingWhiteSpaces(raw_line) / INDENTATION)
@@ -43,25 +77,22 @@ def GetCurrentDepth(raw_line):
         print('WRONG INPUT FOR [GetCurrentDepth]')
         return None
 
-def CreateEncapsulatedDepthRefinedReplacement(raw_origin_line, replacement):
-    if isStr(raw_origin_line):
-        depth = GetCurrentDepth(raw_origin_line)
-        return ('\n'+AddLeadingSpace(replacement.lstrip(' '), (depth+1)))
-    else:
-        print('WRONG INPUT FOR [CreateEncapsulatedDepthRefinedReplacement]')
-        return None
-
 def CountSubsStrInStr(content_str, search_element):
-    if isStr(content_str) and isStr(search_element):
+    """
+    This function count occourences of srtings inside another string.
+        :param content_str: the string were want to discover occourences
+        :param search_element: the string we are searching for
+    """
+    if isStr(content_str) and isStr(search_element) and (len(content_str) > len(search_element)):
         return content_str.count(search_element)
     else: 
         print('WRONG INPUT FOR [CountSubsStrInStr]')
         return 0
 
-def CheckOpenEnclosing(content, open_par, closing_par):
-    if isStr(content) and isStr(open_par) and isStr(closing_par):
+def CheckOpenEnclosing(content, open_par, close_par):
+    if isStr(content) and isStr(open_par) and isStr(close_par):
         count_open = CountSubsStrInStr(content,open_par)
-        count_close = CountSubsStrInStr(content,closing_par)
+        count_close = CountSubsStrInStr(content,close_par)
 
         if (count_open == count_close):
             return True
@@ -71,11 +102,11 @@ def CheckOpenEnclosing(content, open_par, closing_par):
         print('WRONG INPUT FOR [CheckOpenEnclosing]')
         return None
 
-def GetEnclosedContent(content, open_par, closing_par):
-    if  isStr(content) and isStr(open_par) and isStr(closing_par):
-        if isInStr(open_par, content) and isInStr(closing_par, content):
+def GetEnclosedContent(content, open_par, close_par):
+    if  isStr(content) and isStr(open_par) and isStr(close_par):
+        if isInStr(open_par, content) and isInStr(close_par, content):
             pos_open = content.index(open_par)
-            pos_close = content.rfind(closing_par)
+            pos_close = content.rfind(close_par)
             return content[pos_open+1:pos_close]
         else:
             return content
@@ -84,10 +115,8 @@ def GetEnclosedContent(content, open_par, closing_par):
         return None
 
 def EncloseSoloLabels(raw_line):
-    COLON = ':'
     if isStr(raw_line):
         if isInStr(COLON, raw_line):
-            ARGS_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
             loot = re.findall(ARGS_REGEX, raw_line)
 
             for loot_elem in loot:
@@ -100,10 +129,7 @@ def EncloseSoloLabels(raw_line):
         print('WRONG INPUT FOR [EncloseSoloLabels]')
         return None
 
-def EncloseQualifiedStringInforamtions(raw_line, open_par, closing_par):
-    QUOTATION_MARK = '"'
-    SLASH = ' / '
-    QUALIFIED_STR_REGEX = '\B(\"\w+( \w+)*\")'
+def EncloseQualifiedStringInforamtions(raw_line, open_par, close_par):
     New_Nodes_Dict = {}
 
     if isStr(raw_line):
@@ -124,10 +150,10 @@ def EncloseQualifiedStringInforamtions(raw_line, open_par, closing_par):
                     else:     
                         run_iter = run_iter + 1
                         label = CreateNewLabel(run_iter)
-                        content = re.sub('"','',found_elem)
+                        content = re.sub(QUOTATION_MARK,'',found_elem)
                         New_Nodes_Dict[found_elem] = label
                     
-                    replace = CreateNewDefinedNode(label, content, open_par, closing_par)
+                    replace = CreateNewDefinedNode(label, content, open_par, close_par)
                     raw_line = raw_line.replace(found_elem, replace, 1)
 
                 else:
@@ -141,9 +167,7 @@ def EncloseQualifiedStringInforamtions(raw_line, open_par, closing_par):
 
 def DeleteFlags(raw_line):
     if isStr(raw_line):
-        if isInStr(':', raw_line):
-
-            FLAG_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
+        if isInStr(COLON, raw_line):
             return re.sub(FLAG_REGEX, '', raw_line)            
         else:
             return raw_line
@@ -153,8 +177,7 @@ def DeleteFlags(raw_line):
 
 def ReplacePolarity(raw_line):
     if isStr(raw_line):
-        if isInStr('-', raw_line):
-            POLARITY_SIGN_REGEX = '\s+\-\s*'
+        if isInStr(MINUS, raw_line):
             depth = GetCurrentDepth(raw_line)
             replacement = AddLeadingSpace('(not)', (depth+1))
             return re.sub(POLARITY_SIGN_REGEX, ('\n'+ replacement), raw_line)
@@ -166,8 +189,7 @@ def ReplacePolarity(raw_line):
 
 def DeleteWordExtension(raw_line):
     if isStr(raw_line):
-        if isInStr('-', raw_line):
-            EXTENSIO_REGEX = '\-\d+'
+        if isInStr(MINUS, raw_line):
             return re.sub(EXTENSIO_REGEX,'', raw_line)
         else:
             return raw_line
@@ -179,9 +201,9 @@ def ExploreAdditionalcontent(string_raw):
     if isStr(string_raw):
         result = string_raw
 
-        if isInStr(':', result):
+        if isInStr(COLON, result):
             result = DeleteFlags(result)
-        if isInStr('-', result):
+        if isInStr(MINUS, result):
             result = ReplacePolarity(result)
             result = DeleteWordExtension(result)
                 
@@ -207,8 +229,8 @@ def AddLeadingSpace(str, amount):
         print('WRONG INPUT FOR [AddLeadingSpace]')
         return None
 
-def NiceFormatting(amr_str, open_par, closing_par):
-    if isStr(amr_str) and isStr(open_par) and isStr(closing_par):
+def NiceFormatting(amr_str, open_par, close_par):
+    if isStr(amr_str) and isStr(open_par) and isStr(close_par):
         depth = -1
         openings = amr_str.split(open_par)
         struct_contain = []
@@ -217,11 +239,11 @@ def NiceFormatting(amr_str, open_par, closing_par):
             depth = depth + 1
             new_line = AddLeadingSpace((open_par + line), depth)
 
-            if isInStr(closing_par, new_line):
-                occourences = CountSubsStrInStr(new_line, closing_par)
+            if isInStr(close_par, new_line):
+                occourences = CountSubsStrInStr(new_line, close_par)
                 depth = depth - occourences
             
-            if isInStr(':', new_line):
+            if isInStr(COLON, new_line):
                 new_line = ExploreAdditionalcontent(new_line)
             
             struct_contain.append(new_line)
@@ -233,13 +255,13 @@ def NiceFormatting(amr_str, open_par, closing_par):
         print('WRONG INPUT FOR [NiceFormatting]')
         return None
 
-def GenerateCleanAMR(raw_amr, open_par, closing_par):
-    if isStr(raw_amr) and isStr(open_par) and isStr(closing_par):
+def GenerateCleanAMR(raw_amr, open_par, close_par):
+    if isStr(raw_amr) and isStr(open_par) and isStr(close_par):
         unformated_str = GetUnformatedAMRString(raw_amr)
         node_enclosed_str = EncloseSoloLabels(unformated_str)
-        name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, closing_par)
-        amr_str = GetEnclosedContent(name_enclosed_str, open_par, closing_par)
-        return NiceFormatting(amr_str, open_par, closing_par) 
+        name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
+        amr_str = GetEnclosedContent(name_enclosed_str, open_par, close_par)
+        return NiceFormatting(amr_str, open_par, close_par) 
     else:
         print('WRONG INPUT FOR [GenerateCleanAMR]')
         return None

@@ -144,8 +144,8 @@ def EncloseSoloLabels(raw_line):
                 joined_elem_regex = ''.join(loot_elem)
                 joined_elem_replace = ''.join([loot_elem[0], '('+loot_elem[1].lstrip(' ')+')'])
                 raw_line = re.sub(joined_elem_regex, joined_elem_replace, raw_line)      
-
-            return raw_line
+    
+        return raw_line
     else:
         print('WRONG INPUT FOR [EncloseSoloLabels]')
         return None
@@ -275,7 +275,7 @@ def GetUnformatedAMRString(raw_amr):
         :param raw_amr: a raw AMR (graph-) string from AMR Dataset
     """
     if isStr(raw_amr):
-        return ' '.join(raw_amr.split())
+        return (' '.join(raw_amr.split()))
     else:
         print('WRONG INPUT FOR [GetUnformatedAMRString]')
         return None
@@ -342,6 +342,11 @@ def GenerateCleanAMR(raw_amr, open_par, close_par):
             node_enclosed_str = EncloseSoloLabels(unformated_str)
             name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
             amr_str = GetEnclosedContent(name_enclosed_str, open_par, close_par)
+
+            print('unformated_str:', unformated_str)
+            print('node_enclosed_str:',node_enclosed_str)
+            print('name_enclosed_str:',name_enclosed_str)
+            print('amr_str:',amr_str)
             return NiceFormatting(amr_str, open_par, close_par) 
         else:
             print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')

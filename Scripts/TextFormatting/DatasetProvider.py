@@ -10,6 +10,7 @@ from TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool,
 from TextFormatting.ContentSupport import setOrDefault
 from GraphHandler.GraphSalvage import Gatherer
 from GraphHandler.GraphTreeConverter import GetDataSet
+from GraphHandler.NodeStringExtractor import GenerateCleanAMR
 
 '''
     This class library is used for content extraction from AMR dataset.
@@ -105,23 +106,21 @@ def CleanSentence(in_sentence):
         print('WRONG INPUT FOR [CleanSentence]')
         return None
 
-#==                Reforge AMR semantic to cleaned AMR string tree               ==#
-# 
-#
-#   Inputs:
-#       semantic    => raw semantic input
-#       sem_flag    => marker/delim to add to cleaned semantic
-#
-#   Returns:
-#       A tree formated string like AMR.
 def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
     """
     This function allows to clean up a raw AMR semantic string tree representation 
     into a cleaned version of it.
-        :param semantic: 
-        :param sem_flag: 
+        :param semantic: raw semantic input
+        :param sem_flag: marker/delim to add to cleaned semantic
     """
-    if(isStr(semantic)) and (isStr(sem_flag)):
+    if isStr(semantic) and isStr(sem_flag):
+        store = semantic
+        print('semantic', semantic)
+        semantic = GenerateCleanAMR(semantic, '(', ')')
+
+        if isNone(semantic):
+            print(store)
+
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
         out = half_cleaned_sem+'\n'
         return out
@@ -129,21 +128,15 @@ def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
         print('WRONG INPUT FOR [ReforgeSemanticRepresentationToCleanARM]')
         return None
 
-#==                Reforge AMR semantic to cleaned AnyTree object                ==#
-# This function allows to clean up a raw AMR semantic string tree representation 
-# into a cleaned anytree reprenstation of it.
-#   Inputs:
-#       semantic    => raw semantic input
-#       sem_flag    => marker/delim to add to cleaned semantic
-#
-#   Options:
-#       print_console    => If True you get console output for GraphSalvage.Gatherer
-#       to_process       => If True you get GraphTree as AnyTree for further usage
-#                        => If False you get a JsonString for saving in file.
-#
-#   Returns:
-#       A reforged semantic as AnyNode object.
 def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to_process):
+    """
+    This function allows to clean up a raw AMR semantic string tree representation 
+    into a cleaned anytree reprenstation of it.
+        :param semantic: raw semantic input
+        :param sem_flag: marker/delim to add to cleaned semantic
+        :param print_console: If True you get console output for GraphSalvage.Gatherer
+        :param to_process: If False you get a JsonString for saving in file.
+    """
     if(isStr(semantic)) and (isStr(sem_flag)) and (isBool(print_console)) and (isBool(to_process)):
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
         out = half_cleaned_sem+'\n'

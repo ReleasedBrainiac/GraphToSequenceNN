@@ -1,7 +1,7 @@
 # - *- coding: utf-8*-
 from TestHandler.TestCores import ReportTestProgress as RTP
 from GraphHandler.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
-from GraphHandler.NodeStringExtractor import DeleteFlags
+from GraphHandler.NodeStringExtractor import DeleteFlags, GenerateCleanAMR
 from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('
@@ -110,3 +110,79 @@ class NodeStringExtractorTest:
                 react_only_flag     and 
                 react_flag_minus    and 
                 react_multi_flag_minus)
+
+    def TestFullExtractor():
+
+        example_1 = """(c / cause-01
+      :ARG1 (l / live-01 :polarity -
+            :ARG0 (i / i
+                  :ARG0-of (t3 / talk-01 :polarity -
+                        :ARG2 (a5 / anyone)
+                        :ARG1-of (r / real-04)))
+            :ARG1 (l2 / life
+                  :poss i)
+            :manner (a / alone)
+            :duration (u / until
+                  :op1 (h / have-06
+                        :ARG0 i
+                        :ARG1 (a3 / accident
+                              :mod (p / plane))
+                        :location (d / desert :wiki "Sahara" :name (n / name :op1 "Desert" :op2 "of" :op3 "Sahara"))
+                        :time (b / before
+                              :op1 (n2 / now)
+                              :quant (t2 / temporal-quantity :quant 6
+                                    :unit (y / year)))))))"""
+
+        result_1 = """(c / cause  
+      (l / live
+            (NT0 / not)
+            (i / i  
+                  (t3 / talk
+                        (NT0)
+                        (a5 / anyone)  
+                        (r / real)))  
+            (l2 / life 
+                  (i))  
+            (a / alone)  
+            (u / until  
+                  (h / have 
+                        (i)  
+                        (a3 / accident  
+                              (p / plane))  
+                        (d / desert  
+                              (Y0Z / Sahara)  
+                              (n / name  
+                                    (Y1Z / Desert)  
+                                    (Y2Z / of)  
+                                    (Y0Z)))  
+                        (b / before  
+                              (n2 / now)  
+                              (t2 / temporal-quantity   
+                                    (y / year)))))))"""
+
+
+        example_2 = """(c / chapter :mod 1)"""
+        result_2 = """(c / chapter )"""
+        example_3 = """(y2 / yes)"""
+
+
+        react_none_content  = RTP(isNone(GenerateCleanAMR(None, OPEN_PAR, CLOSING_PAR)), NONE_CONTENT + '_NONE_CONTENT')
+
+        react_none_open     = RTP(isNone(GenerateCleanAMR(example_3, None, CLOSING_PAR)), NONE_CONTENT + '_NONE_OPEN')
+
+        react_none_close    = RTP(isNone(GenerateCleanAMR(example_3, OPEN_PAR, None)), NONE_CONTENT + '_NONE_CLOSE')
+
+        react_no_flag       = RTP(example_3 == GenerateCleanAMR(example_3, OPEN_PAR, CLOSING_PAR), IS_ERROR + '_NO_FLAG')
+
+        react_single_flag   = RTP(result_2 == GenerateCleanAMR(example_2, OPEN_PAR, CLOSING_PAR), IS_VALID + '_SINGLE_FLAG')
+
+        react_multi         = RTP(result_1 == GenerateCleanAMR(example_1, OPEN_PAR, CLOSING_PAR), IS_VALID + '_MULTI')
+
+        # Test cases for the methods with report to console
+        # United result
+        return (react_none_content   and 
+                react_none_open      and 
+                react_none_close     and 
+                react_no_flag        and 
+                react_single_flag    and
+                react_multi)

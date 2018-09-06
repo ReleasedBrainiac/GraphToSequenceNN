@@ -3,12 +3,14 @@ import re
 from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber
 from TextFormatting.ContentSupport import hasContent, GetRandomInt
 
-
+# Gathered definitions of AMR semantic strings from AMR Datasets
 INDENTATION = 6
-
 COLON = ':'
-MINUS = '-'
 QUOTATION_MARK = '"'
+NEG_POLARITY = 'not'
+NEG_POL_LABEL = 'NT0'
+
+NEW_NODES_DICT = {}
 
 EXTENSIO_REGEX = '\-\d+'
 POLARITY_SIGN_REGEX = '\s+\-\s*'
@@ -90,7 +92,13 @@ def CountSubsStrInStr(content_str, search_element):
         return 0
 
 def CheckOpenEnclosing(content, open_par, close_par):
-    if isStr(content) and isStr(open_par) and isStr(close_par):
+    """
+    This function check the equal amount of opened and closed parenthesis depending on the given parenthesis definition.
+        :param content: raw string containing desired parenthesis
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
+    if isStr(content) and isStr(open_par) and isStr(close_par) and isInStr(open_par, content) and isInStr(close_par, content) :
         count_open = CountSubsStrInStr(content,open_par)
         count_close = CountSubsStrInStr(content,close_par)
 
@@ -103,6 +111,12 @@ def CheckOpenEnclosing(content, open_par, close_par):
         return None
 
 def GetEnclosedContent(content, open_par, close_par):
+    """
+    This function return the most outer nested content in a string by given desired parenthesis strings.
+        :param content: string containing content nested in desired parenthesis.
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
     if  isStr(content) and isStr(open_par) and isStr(close_par):
         if isInStr(open_par, content) and isInStr(close_par, content):
             pos_open = content.index(open_par)
@@ -115,6 +129,10 @@ def GetEnclosedContent(content, open_par, close_par):
         return None
 
 def EncloseSoloLabels(raw_line):
+    """
+    This function create new AMR nodes on argument flags following unenclosed labels.
+        :param raw_line: a string containing argument flags following unenclosed labels
+    """
     if isStr(raw_line):
         if isInStr(COLON, raw_line):
             loot = re.findall(ARGS_REGEX, raw_line)
@@ -130,8 +148,12 @@ def EncloseSoloLabels(raw_line):
         return None
 
 def EncloseQualifiedStringInforamtions(raw_line, open_par, close_par):
-    New_Nodes_Dict = {}
-
+    """
+    This function creates new AMR nodes with desired parenthesis for Qualified Names enclosed in quotation marks.
+        :param raw_line: a string with (at least one) qualified name(s)
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
     if isStr(raw_line):
         if isInStr(QUOTATION_MARK, raw_line):
             loot = re.findall(QUALIFIED_STR_REGEX, raw_line)
@@ -143,15 +165,15 @@ def EncloseQualifiedStringInforamtions(raw_line, open_par, close_par):
                 content = None
 
                 if isNotNone(found_elem) and hasContent(found_elem) and found_elem.count(QUOTATION_MARK) == 2:
-                    if found_elem in New_Nodes_Dict:
-                        label = New_Nodes_Dict[found_elem]
+                    if found_elem in NEW_NODES_DICT:
+                        label = NEW_NODES_DICT[found_elem]
                         content = None
 
                     else:     
                         run_iter = run_iter + 1
                         label = CreateNewLabel(run_iter)
                         content = re.sub(QUOTATION_MARK,'',found_elem)
-                        New_Nodes_Dict[found_elem] = label
+                        NEW_NODES_DICT[found_elem] = label
                     
                     replace = CreateNewDefinedNode(label, content, open_par, close_par)
                     raw_line = raw_line.replace(found_elem, replace, 1)
@@ -165,7 +187,41 @@ def EncloseQualifiedStringInforamtions(raw_line, open_par, close_par):
         print('WRONG INPUT FOR [EncloseQualifiedStringInforamtions]')
         return None
 
+def ReplacePolarity(raw_line, open_par, close_par):
+    """
+    This function replace negative polarity (-) signs in a raw semantic line with a new AMR node.
+        :param raw_line: string containing (at least on) AMR polarity sign
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
+    if isStr(raw_line):
+        if isInStr(' - ', raw_line):
+            next_depth = GetCurrentDepth(raw_line) + 1 
+            label = None
+            content = None
+
+            if NEG_POLARITY in NEW_NODES_DICT:
+                label = NEW_NODES_DICT[NEG_POLARITY]
+                content = None
+            else:
+                label = NEG_POL_LABEL
+                content = NEG_POLARITY
+                NEW_NODES_DICT[NEG_POLARITY] = NEG_POL_LABEL
+
+            replace_node_str = CreateNewDefinedNode(label, content, open_par, close_par)
+            replace = AddLeadingSpace(replace_node_str, next_depth)
+            return re.sub(POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
+        else:
+            return raw_line   
+    else:
+        print('WRONG INPUT FOR [ReplacePolarity]')
+        return None
+
 def DeleteFlags(raw_line):
+    """
+    This function delete AMR flags and only keep the informations they were flagged.
+        :param raw_line: string with (at least on) AMR flag(s)
+    """
     if isStr(raw_line):
         if isInStr(COLON, raw_line):
             return re.sub(FLAG_REGEX, '', raw_line)            
@@ -175,21 +231,13 @@ def DeleteFlags(raw_line):
         print('WRONG INPUT FOR [DeleteFlags]')
         return None
 
-def ReplacePolarity(raw_line):
-    if isStr(raw_line):
-        if isInStr(MINUS, raw_line):
-            depth = GetCurrentDepth(raw_line)
-            replacement = AddLeadingSpace('(not)', (depth+1))
-            return re.sub(POLARITY_SIGN_REGEX, ('\n'+ replacement), raw_line)
-        else:
-            return raw_line   
-    else:
-        print('WRONG INPUT FOR [ReplacePolarity]')
-        return None
-
 def DeleteWordExtension(raw_line):
+    """
+    This function delete word extensions from node content in a AMR semantic line fragment.
+        :param raw_line: a AMR semantic line fragment
+    """
     if isStr(raw_line):
-        if isInStr(MINUS, raw_line):
+        if isInStr('-', raw_line):
             return re.sub(EXTENSIO_REGEX,'', raw_line)
         else:
             return raw_line
@@ -197,14 +245,20 @@ def DeleteWordExtension(raw_line):
         print('WRONG INPUT FOR [DeleteWordExtension]')
         return None
     
-def ExploreAdditionalcontent(string_raw):
-    if isStr(string_raw):
-        result = string_raw
+def ExploreAdditionalcontent(raw_line, open_par, close_par):
+    """
+    This function search in a AMR line fragment about additional context for the AMR node.
+        :param raw_line: a AMR line fragment with a node and maybe additional context 
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
+    if isStr(raw_line):
+        result = raw_line
 
         if isInStr(COLON, result):
             result = DeleteFlags(result)
-        if isInStr(MINUS, result):
-            result = ReplacePolarity(result)
+        if isInStr('-', result):
+            result = ReplacePolarity(result, open_par, close_par)
             result = DeleteWordExtension(result)
                 
         return result
@@ -213,15 +267,25 @@ def ExploreAdditionalcontent(string_raw):
         return None
 
 def GetUnformatedAMRString(raw_amr):
+    """
+    This function replace all line and space formatting in raw AMR (graph-) string with a sigle whitespace.
+        :param raw_amr: a raw AMR (graph-) string from AMR Dataset
+    """
     if isStr(raw_amr):
         return ' '.join(raw_amr.split())
     else:
         print('WRONG INPUT FOR [GetUnformatedAMRString]')
         return None
 
-def AddLeadingSpace(str, amount):
-    if(isStr(str)) and (isInt(amount)):
-        for _ in range((amount * INDENTATION)):
+def AddLeadingSpace(str, depth):
+    """
+    This function add a desired depth to a cleaned AMR line fragment by means of leading whitespaces.
+    This will keep the AMR datasets indentation definition of a AMR semantice (graph) string.
+        :param str: the cleaned AMR semantic line fragment
+        :param depth: the desired depth rather intended position in the string
+    """
+    if(isStr(str)) and (isInt(depth)):
+        for _ in range((depth * INDENTATION)):
             str = ' '+str
         return str
 
@@ -230,6 +294,13 @@ def AddLeadingSpace(str, amount):
         return None
 
 def NiceFormatting(amr_str, open_par, close_par):
+    """
+    This function format and clean up a raw AMR semantic (graph-) string.
+    This allow to clean up format definitions and remove [for this project] uninteresting content!
+        :param amr_str: a raw AMR semantic (graph-) string
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
     if isStr(amr_str) and isStr(open_par) and isStr(close_par):
         depth = -1
         openings = amr_str.split(open_par)
@@ -244,7 +315,7 @@ def NiceFormatting(amr_str, open_par, close_par):
                 depth = depth - occourences
             
             if isInStr(COLON, new_line):
-                new_line = ExploreAdditionalcontent(new_line)
+                new_line = ExploreAdditionalcontent(new_line, open_par, close_par)
             
             struct_contain.append(new_line)
 
@@ -256,6 +327,12 @@ def NiceFormatting(amr_str, open_par, close_par):
         return None
 
 def GenerateCleanAMR(raw_amr, open_par, close_par):
+    """
+    This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
+        :param raw_amr: a raw AMR semantic (graph-) string
+        :param open_par: string of desired parenthesis type style "open"
+        :param close_par: string of desired parenthesis type style "close"
+    """
     if isStr(raw_amr) and isStr(open_par) and isStr(close_par):
         unformated_str = GetUnformatedAMRString(raw_amr)
         node_enclosed_str = EncloseSoloLabels(unformated_str)

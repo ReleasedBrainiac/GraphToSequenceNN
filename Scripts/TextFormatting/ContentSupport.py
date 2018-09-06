@@ -7,7 +7,7 @@
         => https://pymotw.com/2/collections/ordereddict.html
         => https://docs.python.org/3.6/library/numbers.html
 '''
-
+import random as rnd
 from anytree import AnyNode
 from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex
@@ -75,10 +75,35 @@ def isDict(input):
 # This function check input is a set object.
 def isSet(input):
     return isinstance(input, set)
+    
+# This function check sequences/collections containing at least min 1 value.
+def hasContent(input):
+    if isNotNone(input) and isIterable(input):
+        return (len(input) > 0)
+    else:
+        print('WRONG INPUT FOR [hasContent]')
+        return False
+
+# This function check a input is iterable 
+# => only possible for sequences and collections.
+def isIterable(input):
+    try:
+        input_iterator = iter(input)
+        return True
+    except TypeError as te:
+        return False
 
 # This funtion return the type input
 def GetType(input):
-    return type(input) 
+    return type(input)
+
+# This function return a int between min and max
+# If min and max no integer it return an integer between 0 and 100
+def GetRandomInt(min, max):
+    if isInt(min) and isInt(max):
+        return rnd.randint(min, max)
+    else:
+        return rnd.randint(0,100)
 
 # This function a string dos not contain a subsequence.
 # A subsequence could be a char, string, or a value!

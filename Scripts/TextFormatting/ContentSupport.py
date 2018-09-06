@@ -152,9 +152,9 @@ def GetRandomInt(min, max):
     This function return a int between min and max
     If min and max no integer it return an integer between 0 and 100
         :param min: number 
-        :param max: number >= min
+        :param max: number > min
     """
-    if isInt(min) and isInt(max) and (min <= max):
+    if isInt(min) and isInt(max) and (min < max):
         return rnd.randint(min, max)
     else:
         return rnd.randint(0,100)

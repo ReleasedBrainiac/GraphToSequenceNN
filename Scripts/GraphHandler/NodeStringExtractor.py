@@ -107,6 +107,8 @@ def CheckOpenEnclosing(content, open_par, close_par):
         else:
             return False
     else:
+        print(isInStr(open_par, content))
+        print(isInStr(close_par, content))
         print('WRONG INPUT FOR [CheckOpenEnclosing]')
         return None
 
@@ -125,6 +127,7 @@ def GetEnclosedContent(content, open_par, close_par):
         else:
             return content
     else:
+        print('test', content)
         print('WRONG INPUT FOR [GetEnclosedContent]')
         return None
 
@@ -182,7 +185,7 @@ def EncloseQualifiedStringInforamtions(raw_line, open_par, close_par):
                     print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseQualifiedStringInforamtions]')
                     continue   
 
-            return raw_line
+        return raw_line
     else:
         print('WRONG INPUT FOR [EncloseQualifiedStringInforamtions]')
         return None
@@ -319,7 +322,7 @@ def NiceFormatting(amr_str, open_par, close_par):
             
             struct_contain.append(new_line)
 
-        returning = '\n'.join(struct_contain)
+        returning = '\n'.join(struct_contain) + ')'
         return returning
 
     else:
@@ -335,10 +338,14 @@ def GenerateCleanAMR(raw_amr, open_par, close_par):
     """
     if isStr(raw_amr) and isStr(open_par) and isStr(close_par):
         unformated_str = GetUnformatedAMRString(raw_amr)
-        node_enclosed_str = EncloseSoloLabels(unformated_str)
-        name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
-        amr_str = GetEnclosedContent(name_enclosed_str, open_par, close_par)
-        return NiceFormatting(amr_str, open_par, close_par) 
+        if CheckOpenEnclosing(unformated_str, open_par, close_par):
+            node_enclosed_str = EncloseSoloLabels(unformated_str)
+            name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
+            amr_str = GetEnclosedContent(name_enclosed_str, open_par, close_par)
+            return NiceFormatting(amr_str, open_par, close_par) 
+        else:
+            print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')
+            return None
     else:
         print('WRONG INPUT FOR [GenerateCleanAMR]')
         return None

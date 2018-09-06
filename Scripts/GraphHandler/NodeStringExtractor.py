@@ -343,10 +343,6 @@ def GenerateCleanAMR(raw_amr, open_par, close_par):
             name_enclosed_str = EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
             amr_str = GetEnclosedContent(name_enclosed_str, open_par, close_par)
 
-            print('unformated_str:', unformated_str)
-            print('node_enclosed_str:',node_enclosed_str)
-            print('name_enclosed_str:',name_enclosed_str)
-            print('amr_str:',amr_str)
             return NiceFormatting(amr_str, open_par, close_par) 
         else:
             print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')

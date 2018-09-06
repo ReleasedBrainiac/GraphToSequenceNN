@@ -3,7 +3,11 @@ from TextFormatting.ContentSupport import isNotNone, isList, isBool, isStr
 import inspect
 
 def ReportTestProgress(check_value, test_name):
-    
+    """
+    This function report a console info if the passed test failed.
+        :param check_value: result of the test
+        :param test_name: name of the test
+    """
     if check_value: 
         return True
     else:
@@ -11,6 +15,10 @@ def ReportTestProgress(check_value, test_name):
         return False
 
 def RunTests(class_name):
+    """
+    This function execute all tests in a test file by calling the class.
+        :param class_name: name of class.
+    """
     functions = dir(class_name)
     TestCases = []
 
@@ -25,6 +33,10 @@ def RunTests(class_name):
     return TestCases
 
 def EvaluateTests(TestResults):
+    """
+    This function evaluates all processed tests by list full of booleans representing the test reults.
+        :param TestResults: list of booleans representing the test reults
+    """
     ALL_TEST_SUCCEED = True
     ALL_FAILED_TEST = []
 

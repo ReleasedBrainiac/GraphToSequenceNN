@@ -1,7 +1,7 @@
 # - *- coding: utf-8*-
 from TestHandler.TestCores import ReportTestProgress as RTP
-from TextFormatting.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
-from TextFormatting.NodeStringExtractor import GetFlagMatch
+from GraphHandler.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
+from GraphHandler.NodeStringExtractor import GetFlagMatch
 from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('

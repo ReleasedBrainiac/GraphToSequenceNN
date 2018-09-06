@@ -28,12 +28,21 @@ example_2 = """(c / chapter
   :mod 1)
 """
 
-#print(example_1)
-#result = GenerateCleanAMR(example_1, open_par, closing_par)
-#print(result)
-#print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
+example_3 = """(y2 / yes)"""
+
+print(example_1)
+result = GenerateCleanAMR(example_1, open_par, closing_par)
+print(result)
+print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
+print('\n#####################################\n')
 
 print(example_2)
 result = GenerateCleanAMR(example_2, open_par, closing_par)
+print(result)
+print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
+print('\n#####################################\n')
+
+print(example_3)
+result = GenerateCleanAMR(example_3, open_par, closing_par)
 print(result)
 print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')

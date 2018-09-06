@@ -1,5 +1,5 @@
 # - *- coding: utf-8*-
-from TextFormatting.NodeStringExtractor import CheckOpenEnclosing, GenerateCleanAMR
+from GraphHandler.NodeStringExtractor import CheckOpenEnclosing, GenerateCleanAMR
 open_par = '('
 closing_par = ')'
 

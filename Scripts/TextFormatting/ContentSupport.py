@@ -117,9 +117,9 @@ def isNotInStr(seq , string):
 
 # This function check a string contains a subsequence.
 # A subsequence could be a char, string, or a value!
-def isInStr(seq , string):
-    if(isStr(string)) and (isNotNone(seq)):
-        return (seq in string)
+def isInStr(search , content):
+    if(isStr(content)) and (isNotNone(search)):
+        return (search in content)
     else:
         print('WRONG INPUT FOR [isInStr]')
         return False

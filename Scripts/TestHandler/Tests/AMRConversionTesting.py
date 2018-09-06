@@ -1,7 +1,7 @@
 # - *- coding: utf-8*-
 from TestHandler.TestCores import ReportTestProgress as RTP
 from GraphHandler.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
-from GraphHandler.NodeStringExtractor import GetFlagMatch
+from GraphHandler.NodeStringExtractor import DeleteFlags
 from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('
@@ -70,7 +70,7 @@ class NodeStringExtractorTest:
 
         react_none_close = RTP(isNone(GetEnclosedContent(valid, OPEN_PAR, None)), NONE_CLOSE)
 
-        react_fail_str = RTP(isNone(GetEnclosedContent(error, OPEN_PAR, CLOSING_PAR)), IS_ERROR)
+        react_fail_str = RTP(error == GetEnclosedContent(error, OPEN_PAR, CLOSING_PAR), IS_ERROR)
 
         react_valid_str = RTP(inside_valid == GetEnclosedContent(valid, OPEN_PAR, CLOSING_PAR), IS_VALID)
 
@@ -81,25 +81,32 @@ class NodeStringExtractorTest:
                 react_fail_str      and 
                 react_valid_str)
 
-    def TestMatcher():
+    def TestDeleteFlags():
         str_no_flag = 'a / ahead'
+
         str_with_flag_and_minus = r'a / ahead :ARG1-of'
+        str_with_f_and_m_result = r'a / ahead '
+
         str_only_flag           = r'k / cool :op1'
+        str_only_flag_result    = r'k / cool '
+
         str_multi_flag          = r'n / name :op1 "Desert" :op2 "of" :op3 "Sahara"'
+        str_multi_flag_result   = r'n / name  "Desert"  "of"  "Sahara"'
         
-        react_none_content      = RTP(isNone(GetFlagMatch(None)), NONE_CONTENT)
-        react_no_flag           = RTP(isNone(GetFlagMatch(str_no_flag)), NONE_CONTENT)
-        print('Test: ',GetFlagMatch(str_only_flag))
-        #react_only_flag         = RTP([':op1', 9, 13] == GetFlagMatch(str_only_flag), NONE_CONTENT)
-        #print(GetFlagMatch(str_with_flag_and_minus))
-        #react_flag_minus        = RTP([':ARG1-of', 10, 18] == GetFlagMatch(str_with_flag_and_minus), NONE_CONTENT)
-        #print(GetFlagMatch(str_multi_flag))
-        #react_multi_flag_minus  = RTP([None, None, None] == GetFlagMatch(str_multi_flag), NONE_CONTENT)
+        react_none_content      = RTP(isNone(DeleteFlags(None)), NONE_CONTENT)
+
+        react_no_flag           = RTP(str_no_flag == DeleteFlags(str_no_flag), IS_ERROR + '_NO_FLAG')
+
+        react_only_flag         = RTP(str_only_flag_result == DeleteFlags(str_only_flag), IS_VALID + '_ONE_FLAG')
+
+        react_flag_minus        = RTP(str_with_f_and_m_result == DeleteFlags(str_with_flag_and_minus), IS_VALID + '_WITH_ADD_FLAG')
+
+        react_multi_flag_minus  = RTP(str_multi_flag_result == DeleteFlags(str_multi_flag), IS_VALID + '_MULTI_FLAG')
 
         # Test cases for the methods with report to console
         # United result
         return (react_none_content  and 
                 react_no_flag       and 
                 react_only_flag     and 
-                react_flag_minus)    #and 
-                #react_multi_flag_minus)
+                react_flag_minus    and 
+                react_multi_flag_minus)

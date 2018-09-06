@@ -7,100 +7,154 @@
         => https://pymotw.com/2/collections/ordereddict.html
         => https://docs.python.org/3.6/library/numbers.html
 '''
-import random as rnd
 from anytree import AnyNode
 from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex
+import random as rnd
 
 #####################
 # Check and Support #
 #####################
 
-# This function check input is a complex number value.
 def isComplex(input):
+    """
+    This function check input is a complex number value.
+        :param input: unknown type object
+    """
     return isinstance(input, Complex)
 
-# This function check input is a rational number value.
 def isRational(input):
+    """
+    This function check input is a rational number value.
+        :param input: unknown type object
+    """
     return isinstance(input, Rational)
 
-# This function check input is a real number value.
 def isReal(input):
+    """
+    This function check input is a real number value.
+        :param input: unknown type object
+    """
     return isinstance(input, Real)
 
-# This function check input is a number value.
 def isNumber(input):
+    """
+    This function check input is a number value.
+        :param input: unknown type object
+    """
     return isinstance(input, Number)
 
-# This function check input is a boolean value.
 def isBool(input):
+    """
+    This function check input is a boolean value.
+        :param input: unknown type object
+    """
     return isinstance(input, bool)
 
-# This function check input is not None.
 def isNotNone(input):
+    """
+    This function check input is not None.
+        :param input: unknown type object
+    """
     return (input is not None)
 
-# This function check input is None.
 def isNone(input):
+    """
+    This function check input is None.
+        :param input: unknown type object
+    """
     return (input is None)
 
-# This function check input is a AnyNode object.
 def isAnyNode(input):
+    """
+    This function check input is a AnyNode object.
+        :param input: unknown type object
+    """
     return isinstance(input, AnyNode)
 
-# This function check input is a list object.
 def isList(input):
+    """
+    This function check input is a list object.
+        :param input: unknown type object
+    """
     return isinstance(input, list)
 
-# This function check input is a string value.
 def isStr(input):
+    """
+    This function check input is a string value.
+        :param input: unknown type object
+    """
     return isinstance(input, str)
 
-# This function check input is a integer value.
 def isInt(input):
+    """
+    This function check input is a integer value.
+        :param input: unknown type object
+    """
     return isinstance(input, int)
     
-# This function check input is a float value.
 def isFloat(input):
+    """
+    This function check input is a float value.
+        :param input: unknown type object
+    """
     return isinstance(input, float)
 
-# This function check input is a ordered dict object.
 def isODict(input):
+    """
+    This function check input is a ordered dict object.
+        :param input: unknown type object
+    """
     return isinstance(input, OrderedDict)
 
-# This function check input is a dict object.
 def isDict(input):
+    """
+    This function check input is a dict object.
+        :param input: unknown type object
+    """
     return isinstance(input, dict)
 
-# This function check input is a set object.
 def isSet(input):
+    """
+    This function check input is a set object.
+        :param input: unknown type object
+    """
     return isinstance(input, set)
     
-# This function check sequences/collections containing at least min 1 value.
 def hasContent(input):
+    """
+    This function check sequences/collections containing at least min 1 value.
+        :param input: unknown type object
+    """
     if isNotNone(input) and isIterable(input):
         return (len(input) > 0)
     else:
         print('WRONG INPUT FOR [hasContent]')
         return False
 
-# This function check a input is iterable 
-# => only possible for sequences and collections.
 def isIterable(input):
+    """
+    This function check a input is iterable,
+    for example sequences and collections.
+        :param input: unknown type object
+    """
     try:
         input_iterator = iter(input)
         return True
     except TypeError as te:
         return False
 
-# This funtion return the type input
-def GetType(input):
+def getType(input):
+    """
+    This funtion return the type input
+        :param input: unknown type object
+    """
     return type(input)
 
 # This function return a int between min and max
 # If min and max no integer it return an integer between 0 and 100
 def GetRandomInt(min, max):
-    if isInt(min) and isInt(max):
+    if isInt(min) and isInt(max) and (min < max):
         return rnd.randint(min, max)
     else:
         return rnd.randint(0,100)
@@ -184,8 +238,12 @@ def isXTypeEqualYType(in_x, in_y):
         return None
 
 # This function return the size of a files content.
-def file_len(fname):
+def getFileLength(fname):
+    if isStr(fname):
         with open(fname, 'r', encoding="utf8") as f:
             for i in enumerate(f):
                 pass
         return i + 1
+    else:
+        print('WRONG INPUT FOR [getFileLength]')
+        return 0

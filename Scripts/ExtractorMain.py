@@ -28,10 +28,10 @@ example_2 = """(c / chapter
   :mod 1)
 """
 
-print(example_1)
-result = GenerateCleanAMR(example_1, open_par, closing_par)
-print(result)
-print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
+#print(example_1)
+#result = GenerateCleanAMR(example_1, open_par, closing_par)
+#print(result)
+#print('Open-Close valid? [',CheckOpenEnclosing(result, '(', ')'),']')
 
 print(example_2)
 result = GenerateCleanAMR(example_2, open_par, closing_par)

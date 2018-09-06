@@ -14,32 +14,26 @@ from GraphHandler.GraphTreeConverter import GetDataSet
 '''
     This class library is used for content extraction from AMR dataset.
 '''
-#===========================================================#
-#                   Methods/Functions                       #
-#===========================================================#
 
-#==             Get output path on input path             ==#
-# This function return a result output path depending on the given input path and a extender.
-#
-#   Inputs:
-#       inpath              => raw data input path
-#       output_extender     => result data path extender
-#
-#   Return:
-#       The depending output path
+TYP_ERROR_MESSAGE = 'Entered wrong type! Input is no String!'
+
 def GetOutputPath(inpath, output_extender):
-    TYP_ERROR_MESSAGE = 'Entered wrong type! Input is no String!'
-    return setOrDefault(inpath+'.'+ output_extender , TYP_ERROR_MESSAGE, isStr(output_extender))
-
-#==         Calculate MW for a list of numbers            ==#
-# This function calculate the mean over all values in a list.
-#
-#   Inputs:
-#       sentences_length => lengths of all sentences
-#
-#   Return:
-#       The mean over all sentences
-def CalcMW(sentences_length):
+    """
+    This function return a result output path depending on the given input path and a extender.
+        :param inpath: raw data input path
+        :param output_extender: result data path extender
+    """
+    if isStr(inpath) and isStr(output_extender):
+        return setOrDefault(inpath+'.'+ output_extender , TYP_ERROR_MESSAGE, isStr(output_extender))
+    else:
+        print('WRONG INPUT FOR [GetOutputPath]')
+        return None
+    
+def CalculateMeanValue(sentences_length):
+    """
+    This function calculate the mean over all values in a list.
+        :param sentences_length: lengths of all sentences
+    """
     if(isList(sentences_length)):
         sent_summ = 0
 
@@ -49,88 +43,70 @@ def CalcMW(sentences_length):
         mw = int(round(sent_summ / len(sentences_length)))
         return mw
     else:
-        print('WRONG INPUT FOR [CalcMW]')
+        print('WRONG INPUT FOR [CalculateMeanValue]')
         return None
 
-#==                    Read AMR Dataset                   ==#
-# This function provide a file reader for the AMR dataset.
-#
-#   Inputs:
-#       path    => path string to dataset text file
-#
-#   Return:
-#       The dataset string.
-def FileToString(path):
+def DatasetAsList(path):
+    """
+    This function provide a file reader for the AMR dataset.
+        :param path: path string to dataset text file
+    """
     if(isStr(path)):
         with open(path, 'r', encoding="utf8") as fileIn:
             data=fileIn.read()
             content=data.split('#')
             return content
     else:
-        print('WRONG INPUT FOR [FileToString]')
+        print('WRONG INPUT FOR [DatasetAsList]')
         return None
 
-#==                                  Restricted Saving                           ==#
-# This funtion build a simple concatenation string containing a sentence and a semantic.
-#
-#   Inputs:
-#       sent        => the cleaned sentence
-#       sem         => the cleaned correspondign semantic for the sentence
-#
-#   Return:
-#       A concatenation string of semantic and sentece.
-def SavingCorpus(sent, sem):
-    if isStr(sent) and isNotNone(sem):
-            return sent + sem
+def SavingCorpus(sentence, semantic):
+    """
+    This function build a simple concatenation string containing a sentence and a semantic.
+        :param sentence: cleaned sentence with sentences flag
+        :param semantic: cleaned correspondign semantic for the sentence with semantic flag
+    """
+    if isStr(sentence) and isNotNone(semantic):
+            return sentence + semantic
     else:
         print('WRONG INPUT FOR [SavingCorpus]')
         return None
 
-#==                                  Restrict Content                            ==#
-# This funtion check a sentence and semantic pair satisfy the size restictions.
-#
-#   Inputs:
-#       max_len     => max allows length of a sentence
-#       sent        => the cleaned sentence
-#       sem         => the cleaned correspondign semantic for the sentence
-#       sen_size    => allowsed size for sentences
-#       sem_size    => allowsed size for semantics
-#
-#   Return:
-#       A list of sentence and semantic as pair.
-def RestrictionCorpus(max_len, sent, sem):
-    if isInt(max_len) and isStr(sent) and isNotNone(sem):
+def RestrictionCorpus(max_len, sentence, semantic):
+    """
+    This funtion check a sentence and semantic pair satisfy the size restictions.
+        :param max_len: max allows length of a sentence
+        :param sentence: the cleaned sentence
+        :param semantic: the cleaned correspondign semantic for the sentence
+    """
+    if isInt(max_len) and isStr(sentence) and isNotNone(semantic):
 
         sen_size = max_len
         sem_size = max_len*2
 
-        if (max_len < 1) or ((len(sent) < (sen_size+1)) and (len(sem) < (sem_size+1))):
-            return [sent, sem]
+        if (max_len < 1) or ((len(sentence) < (sen_size+1)) and (len(semantic) < (sem_size+1))):
+            return [sentence, semantic]
 
     else:
+        print('WRONG INPUT FOR [RestrictionCorpus]')
         return None
 
-#==                                Filter Content                                ==#
-# This method clean up the a given amr extracted sentence from text formating markup.
-#
-#   Inputs:
-#       in_sentence => raw sentence AMR split element 
-#
-#   Returns:
-#       The cleaned sentence.
-def ClearSentence(in_sentence):
+def CleanSentence(in_sentence):
+    """
+    This method clean up the a given amr extracted sentence from text formating markup.
+        :param in_sentence: raw sentence AMR split element 
+    """
     if(isStr(in_sentence)):
         in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
         in_sentence = re.sub('</[^>]+>','', in_sentence)
         in_sentence = re.sub('<[^/>]+/>','', '#'+in_sentence)
         return in_sentence+'\n'
     else:
-        print('WRONG INPUT FOR [ClearSentence]')
+        print('WRONG INPUT FOR [CleanSentence]')
         return None
 
 #==                Reforge AMR semantic to cleaned AMR string tree               ==#
-# This function allows to clean up a raw AMR semantic string tree representation 
-# into a cleaned version of it.
+# 
 #
 #   Inputs:
 #       semantic    => raw semantic input
@@ -139,6 +115,12 @@ def ClearSentence(in_sentence):
 #   Returns:
 #       A tree formated string like AMR.
 def ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag):
+    """
+    This function allows to clean up a raw AMR semantic string tree representation 
+    into a cleaned version of it.
+        :param semantic: 
+        :param sem_flag: 
+    """
     if(isStr(semantic)) and (isStr(sem_flag)):
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
         out = half_cleaned_sem+'\n'
@@ -176,7 +158,7 @@ def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to
 #       sent_flag    => defines a marker to attach to the cleaned sentence, make it easier to find later
 #       sem_flag     => defines a marker to attach to the cleaned semantic, make it easier to find later
 #       sent         => is the raw input of the AMR sentence
-#       sem          => is the raw input of the AMR semantic
+#       semantic          => is the raw input of the AMR semantic
 #
 #   Additional we have the following options:
 #       want_as_arm     => If True then it return a tree-like formated AMR string for the semantic entry 
@@ -187,16 +169,16 @@ def ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, print_console, to
 #
 #   Returns:
 #       A single data pair like [sentence, semantic]
-def GetSingleDatasetPair(sent_flag, sem_flag, sent, sem, want_as_arm, isShowConsole, isNotStoring):
-    if (isStr(sent_flag)) and (isStr(sem_flag)) and (isStr(sent)) and (isStr(sem)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
-        sent = sent_flag+' '+sent
-        sent = ClearSentence(sent)
+def GetSingleDatasetPair(sent_flag, sem_flag, sentence, semantic, want_as_arm, isShowConsole, isNotStoring):
+    if (isStr(sent_flag)) and (isStr(sem_flag)) and (isStr(sentence)) and (isStr(semantic)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
+        sentence = sent_flag+' '+sentence
+        sentence = CleanSentence(sentence)
         if(want_as_arm):
-            sem = ReforgeSemanticRepresentationToCleanARM(sem, sem_flag)
-            return [sent, sem]
+            semantic = ReforgeSemanticRepresentationToCleanARM(semantic, sem_flag)
+            return [sentence, semantic]
         else:
-            sem = ReforgeSemanticRepresentationToAnyTree(sem, sem_flag, isShowConsole, isNotStoring)
-            return [sent, sem]
+            semantic = ReforgeSemanticRepresentationToAnyTree(semantic, sem_flag, isShowConsole, isNotStoring)
+            return [sentence, semantic]
     else:
         print('WRONG INPUT FOR [GetSingleDatasetPair]')
         return [None, None]
@@ -369,7 +351,7 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
     inpath  = setOrDefault(inpath, TYP_ERROR, isStr(inpath))
 
     #==                     Read Dataset                      ==#
-    dataset = FileToString(inpath)
+    dataset = DatasetAsList(inpath)
 
     #==             Collect relevant raw_content              ==#
     len_dataset = len(dataset)
@@ -377,8 +359,8 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
     sents_lens, sema_lens, sentences, semantics = ExtractContent(dataset, max_length,SENTENCE_DELIM, FILE_DELIM)
 
     #==                      Get Median                       ==#
-    mw_value_sen = CalcMW(sents_lens)
-    mw_value_sem = CalcMW(sema_lens)
+    mw_value_sen = CalculateMeanValue(sents_lens)
+    mw_value_sem = CalculateMeanValue(sema_lens)
 
     #==                   Collected Content                   ==#
 

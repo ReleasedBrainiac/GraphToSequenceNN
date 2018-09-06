@@ -4,7 +4,7 @@ open_par = '('
 closing_par = ')'
 
 content_example = """(c / cause-01
-      :ARG1 (l / live-01
+      :ARG1 (l / live-01 :polarity -
             :ARG0 (i / i
                   :ARG0-of (t3 / talk-01 :polarity -
                         :ARG2 (a5 / anyone)

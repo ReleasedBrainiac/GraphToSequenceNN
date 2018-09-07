@@ -1,6 +1,6 @@
 # - *- coding: utf-8*-
 from anytree import Node, AnyNode, RenderTree
-from GraphHandler.GraphSalvage import NewAnyNode
+from TreeHandler.TreeParser import NewAnyNode
 from TextFormatting.ContentSupport import isNone
 from GraphHandler.GraphTreeConverter import GetTensorMatricesFromGraphTree
 from TestHandler.TestCores import ReportTestProgress

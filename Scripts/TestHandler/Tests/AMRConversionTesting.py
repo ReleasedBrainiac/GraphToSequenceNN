@@ -1,7 +1,7 @@
 # - *- coding: utf-8*-
 from TestHandler.TestCores import ReportTestProgress as RTP
-from GraphHandler.NodeStringExtractor import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
-from GraphHandler.NodeStringExtractor import DeleteFlags, GenerateCleanAMR
+from AMRHandler.AMRCleaner import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
+from AMRHandler.AMRCleaner import DeleteFlags, GenerateCleanAMR
 from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('

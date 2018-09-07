@@ -8,9 +8,9 @@
 import re
 from TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone
 from TextFormatting.ContentSupport import setOrDefault
-from GraphHandler.GraphSalvage import Gatherer
+from TreeHandler.TreeParser import Cleaner
 from GraphHandler.GraphTreeConverter import GetDataSet
-from GraphHandler.NodeStringExtractor import GenerateCleanAMR
+from AMRHandler.AMRCleaner import GenerateCleanAMR
 
 '''
     This class library is used for content extraction from AMR dataset.
@@ -133,13 +133,13 @@ def ReforgeSemanticToMinimalAnyTree(semantic, sem_flag, print_console, to_proces
     into a cleaned and minimalized anytree reprenstation of it.
         :param semantic: raw semantic input
         :param sem_flag: marker/delim to add to cleaned semantic
-        :param print_console: If True you get console output for GraphSalvage.Gatherer
+        :param print_console: If True you get console output for GraphSalvage.Cleaner
         :param to_process: If False you get a JsonString for saving in file.
     """
     if(isStr(semantic)) and (isStr(sem_flag)) and (isBool(print_console)) and (isBool(to_process)):
         half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
         out = half_cleaned_sem+'\n'
-        return Gatherer(out, sem_flag, print_console, to_process)
+        return Cleaner(out, sem_flag, print_console, to_process)
     else:
         print('WRONG INPUT FOR [ReforgeSemanticToMinimalAnyTree]')
         return None
@@ -153,7 +153,7 @@ def GetSingleDatasetPair(sent_flag, sem_flag, sentence, semantic, want_as_arm, i
         :param sentence: raw input of the AMR sentence
         :param semantic: raw input of the AMR semantic
         :param want_as_arm: True then it return a tree-like formated AMR string for the semantic entry
-        :param isShowConsole: True then it show in and out of the GraphSalvage.Gatherer on console
+        :param isShowConsole: True then it show in and out of the GraphSalvage.Cleaner on console
         :param isNotStoring: True you get GraphTree as AnyTree for further usage, else you get a JsonString for saving in file
     """
     if (isStr(sent_flag)) and (isStr(sem_flag)) and (isStr(sentence)) and (isStr(semantic)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
@@ -179,7 +179,7 @@ def GetMultiDatasetPairs(sent_flag, sem_flag, sent_array, sem_array, want_as_arm
         :param sent_array: Array of the raw input of the AMR sentences
         :param sem_array: Array of the raw input of the AMR semantics
         :param want_as_arm: True then it return a tree-like formated AMR string for the semantic entry
-        :param isShowConsole: True then it show in and out of the GraphSalvage.Gatherer on console
+        :param isShowConsole: True then it show in and out of the GraphSalvage.Cleaner on console
         :param isNotStoring: True you get GraphTree as AnyTree for further usage, else you get a JsonString for saving in file
     """
     if (isStr(sent_flag)) and (isStr(sem_flag)) and (isList(sent_array)) and (isList(sem_array)) and (isBool(want_as_arm)) and (isBool(isShowConsole)) and (isBool(isNotStoring)):
@@ -293,7 +293,7 @@ def BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_consol
         :param output_extender: extender to define result filename
         :param max_length: max allows length for sentences
         :param save_as_arm: output will be save as tree like formated AMR string
-        :param print_console: show all reforging at the Gatherer on console
+        :param print_console: show all reforging at the Cleaner on console
         :param is_not_saving: set result to JSON or AnyNode [save_as_arm = False]
     """
     # Carrier Arrays/Lists
@@ -338,7 +338,7 @@ def SavePipeline(inpath, output_extender, max_length, save_as_arm, print_console
         :param output_extender: extender to define result filename
         :param max_length: max allows length for sentences
         :param save_as_arm: output will be save as tree like formated AMR string
-        :param print_console: show all reforging at the Gatherer on console
+        :param print_console: show all reforging at the Cleaner on console
     """
     mw_value_sen, mw_value_sem, max_length, data_pairs = BasicPipeline(inpath, output_extender, max_length, save_as_arm, print_console, False)
     outpath = GetOutputPath(inpath, output_extender)
@@ -361,7 +361,7 @@ def DataPipeline(inpath, output_extender, max_length, save_as_arm, print_console
         :param output_extender: extender to define result filename
         :param max_length: max allows length for sentences
         :param save_as_arm: output will be save as tree like formated AMR string
-        :param print_console: show all reforging at the Gatherer on console
+        :param print_console: show all reforging at the Cleaner on console
     """
     if(save_as_arm == True):
         print('Processing dataset on AMR string representation not supported! Please set [save_as_arm=FALSE]!')

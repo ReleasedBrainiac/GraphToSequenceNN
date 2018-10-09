@@ -18,10 +18,6 @@ from anytree.importer import JsonImporter
     The result will provide as AnyNode or Json-AnyNode representation.
 '''
 
-#===========================================================#
-#==                    Conversion Methods                 ==#
-#===========================================================#
-
 #==                    Export informations                ==#
 # This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
 def ExportToJson(root):
@@ -42,9 +38,6 @@ def ImportAsJson(json):
         print('WRONG INPUT FOR [ImportAsJson]')
         return None
 
-#===========================================================#
-#==                      Helper Methods                   ==#
-#===========================================================#
 
 #==         Get nodes sentence from string sequence       ==#
 # This function allow to collect the raw node sequence containing the label 

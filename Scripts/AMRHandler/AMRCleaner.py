@@ -12,11 +12,11 @@ NEG_POL_LABEL = 'NT0'
 
 NEW_NODES_DICT = {}
 
-EXTENSIO_REGEX = '\-\d+'
-POLARITY_SIGN_REGEX = '\s+\-\s*'
-QUALIFIED_STR_REGEX = '\B(\"\w+( \w+)*\")'
-FLAG_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
-ARGS_REGEX = '\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
+EXTENSIO_REGEX = r'\-\d+'
+POLARITY_SIGN_REGEX = r'\s+\-\s*'
+QUALIFIED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
+FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
+ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
 
 def CreateNewLabel(number):
     """

@@ -6,11 +6,11 @@
 '''
 
 import re
-from TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone
-from TextFormatting.ContentSupport import setOrDefault
-from TreeHandler.TreeParser import Cleaner
-from GraphHandler.GraphTreeConverter import GetDataSet
-from AMRHandler.AMRCleaner import GenerateCleanAMR
+from Scripts.TextFormatting.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone
+from Scripts.TextFormatting.ContentSupport import setOrDefault
+from Scripts.TreeHandler.TreeParser import Cleaner
+from Scripts.GraphHandler.GraphTreeConverter import GetDataSet
+from Scripts.AMRHandler.AMRCleaner import GenerateCleanAMR
 
 '''
     This class library is used for content extraction from AMR dataset.

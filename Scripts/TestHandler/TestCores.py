@@ -1,5 +1,5 @@
 # - *- coding: utf-8*-
-from TextFormatting.ContentSupport import isNotNone, isList, isBool, isStr
+from Scripts.TextFormatting.ContentSupport import isNotNone, isList, isBool, isStr
 import inspect
 
 def ReportTestProgress(check_value, test_name):

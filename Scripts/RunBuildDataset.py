@@ -1,4 +1,4 @@
-from TextFormatting.DatasetProvider import DataPipeline as Pipe
+from Scripts.TextFormatting.DatasetProvider import DataPipeline as Pipe
 
 #===========================================================#
 #                            Test                           #

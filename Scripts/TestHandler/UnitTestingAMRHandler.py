@@ -5,8 +5,8 @@
 '''
 
 
-from TestHandler.TestCores import EvaluateTests, ReportTestProgress, RunTests
-from TestHandler.Tests.AMRConversionTesting import NodeStringExtractorTest
+from Scripts.TestHandler.TestCores import EvaluateTests, ReportTestProgress, RunTests
+from Scripts.TestHandler.Tests.AMRConversionTesting import NodeStringExtractorTest
 '''
     Running Tests!
 '''

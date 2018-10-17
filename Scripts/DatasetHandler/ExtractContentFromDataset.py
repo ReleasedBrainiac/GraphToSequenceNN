@@ -68,7 +68,7 @@ class Extractor:
                     sentence = self.ExtractSentence(x_delim, in_content, index)
                     sentence_found = True
 
-                if (y_delim in elem) and (not semantic_found):
+                if (y_delim in elem and sentence_found):
                     semantic = self.ExtractSemantic(in_content, index)
                     semantic_found = True
 
@@ -77,11 +77,12 @@ class Extractor:
                     sentence_found = False
                     semantic_found = False
 
-                if isNotNone(result_pair):
-                    sent_lens.append(len(result_pair[0]))
-                    sem_lens.append(len(result_pair[1]))
-                    sentences.append(result_pair[0])
-                    semantics.append(result_pair[1])
+                    if isNotNone(result_pair):
+                        sent_lens.append(len(result_pair[0]))
+                        sem_lens.append(len(result_pair[1]))
+                        sentences.append(result_pair[0])
+                        semantics.append(result_pair[1])
+                        result_pair = []
 
             if(len(sent_lens) == len(sem_lens) == len(sentences) == len(semantics)):
                 return [sent_lens, sem_lens, sentences, semantics]

@@ -18,3 +18,5 @@ class Constants:
     QUALIFIED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
     FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
     ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
+    #//TODO This regex didnt allow multiple whitespaces in the code!
+    FIND_EXTENSION_HAZRDS = r'\s*(((\()*(\w+ )(\/ \w+)*\)*)*|(\(\w+\)))'

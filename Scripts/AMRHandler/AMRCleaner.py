@@ -5,10 +5,12 @@ from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
 class Cleaner:
+    #//TODO IDEE: Erst den String in einen Baum packen und dann die einzelnen Knoten bearbeiten! Das macht den ganzen Vorgang einfacher!
 
     constants = Constants()
     NEW_NODES_DICT = {}
 
+    #// TODO BUG: Labels are inserted => (s / string-entity  (Y0Z)) but content is missing (s / string-entity :value "what")
     def CreateNewLabel(self, number):
         """
         This function create a label with a upper-case post- and pre-element.
@@ -178,6 +180,7 @@ class Cleaner:
             print('WRONG INPUT FOR [EncloseQualifiedStringInforamtions]')
             return None
 
+    #//TODO Polarity has a to be changed! There still polarity signs occouring => (h / he)  -)! 
     def ReplacePolarity(self, raw_line, open_par, close_par):
         """
         This function replace negative polarity (-) signs in a raw semantic line with a new AMR node.
@@ -201,7 +204,10 @@ class Cleaner:
 
                 replace_node_str = self.CreateNewDefinedNode(label, content, open_par, close_par)
                 replace = self.AddLeadingSpace(replace_node_str, next_depth)
-                return re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
+                result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
+                print('raw: ', raw_line)
+                print('result: ', result)
+                return result
             else:
                 return raw_line   
         else:
@@ -222,6 +228,10 @@ class Cleaner:
             print('WRONG INPUT FOR [DeleteFlags]')
             return None
 
+    #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
+    #//TODO how to handle => amr-unknown content? Its dataset content!
+    #//TODO how to handle => toss-out and have-rel-role? Both types occour much often! ??? mglw. => einzelworte in Glove später addieren?
+    #//TODO how to handle => :mode <random word>? I actually replace them as new node but the label ist still missing for it! mglw. => label = word[0] + 0 + word[0]?
     def DeleteWordExtension(self, raw_line):
         """
         This function delete word extensions from node content in a AMR semantic line fragment.
@@ -330,7 +340,15 @@ class Cleaner:
                 node_enclosed_str = self.EncloseSoloLabels(unformated_str)
                 name_enclosed_str = self.EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
                 amr_str = self.GetEnclosedContent(name_enclosed_str, open_par, close_par)
-                result = self.NiceFormatting(amr_str, open_par, close_par) 
+                result = self.NiceFormatting(amr_str, open_par, close_par)
+
+                #//TODO INFO: this control structure check extension regex failed sometimes!
+                while re.match(self.constants.FIND_EXTENSION_HAZRDS, result) is not None:
+                    print(result)
+                    result = self.NiceFormatting(amr_str, open_par, close_par)
+
+
+
                 return result
             else:
                 print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')

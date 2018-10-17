@@ -7,9 +7,9 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from Scripts.TextFormatting.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone
-from Scripts.TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone
-from Scripts.TextFormatting.ContentSupport import toInt
+from TextFormatting.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone
+from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone
+from TextFormatting.ContentSupport import toInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 

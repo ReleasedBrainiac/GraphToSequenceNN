@@ -1,7 +1,7 @@
 # - *- coding: utf-8*-
 import re
-from Scripts.TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber
-from Scripts.TextFormatting.ContentSupport import hasContent, GetRandomInt
+from TextFormatting.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber
+from TextFormatting.ContentSupport import hasContent, GetRandomInt
 
 # Gathered definitions of AMR semantic strings from AMR Datasets
 INDENTATION = 6

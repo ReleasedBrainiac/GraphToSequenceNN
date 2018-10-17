@@ -5,8 +5,8 @@
 '''
 
 
-from Scripts.TestHandler.TestCores import EvaluateTests, ReportTestProgress, RunTests
-from Scripts.TestHandler.Tests.GraphConverterTesting import GraphTests
+from TestHandler.TestCores import EvaluateTests, ReportTestProgress, RunTests
+from TestHandler.Tests.GraphConverterTesting import GraphTests
 '''
     Running Tests!
 '''

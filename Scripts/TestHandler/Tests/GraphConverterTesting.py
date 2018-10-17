@@ -1,9 +1,9 @@
 # - *- coding: utf-8*-
 from anytree import Node, AnyNode, RenderTree
-from Scripts.TreeHandler.TreeParser import NewAnyNode
-from Scripts.TextFormatting.ContentSupport import isNone
-from Scripts.GraphHandler.GraphTreeConverter import GetTensorMatricesFromGraphTree
-from Scripts.TestHandler.TestCores import ReportTestProgress
+from TreeHandler.TreeParser import NewAnyNode
+from TextFormatting.ContentSupport import isNone
+from GraphHandler.GraphTreeConverter import GetTensorMatricesFromGraphTree
+from TestHandler.TestCores import ReportTestProgress
 
 class GraphTests:
     def NoneTree():

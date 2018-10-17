@@ -1,8 +1,8 @@
 # - *- coding: utf-8*-
-from Scripts.TestHandler.TestCores import ReportTestProgress as RTP
-from Scripts.AMRHandler.AMRCleaner import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
-from Scripts.AMRHandler.AMRCleaner import DeleteFlags, GenerateCleanAMR
-from Scripts.TextFormatting.ContentSupport import isNone
+from TestHandler.TestCores import ReportTestProgress as RTP
+from AMRHandler.AMRCleaner import CountSubsStrInStr, CheckOpenEnclosing, GetEnclosedContent
+from AMRHandler.AMRCleaner import DeleteFlags, GenerateCleanAMR
+from TextFormatting.ContentSupport import isNone
 
 OPEN_PAR = '('
 CLOSING_PAR = ')'

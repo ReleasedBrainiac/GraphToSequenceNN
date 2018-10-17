@@ -4,8 +4,8 @@
         => https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.empty.html
 '''
 
-from Scripts.TextFormatting.ContentSupport import getType
-from Scripts.TextFormatting.ContentSupport import isAnyNode, isNone, isNotNone, isList
+from TextFormatting.ContentSupport import getType
+from TextFormatting.ContentSupport import isAnyNode, isNone, isNotNone, isList
 import numpy as np
 
 '''

@@ -1,4 +1,4 @@
-from TextFormatting.DatasetProvider import SavePipeline as Pipe
+from DatasetHandler.DatasetProvider import DatasetPipelines as Pipe
 
 #===========================================================#
 #                            Test                           #
@@ -9,4 +9,4 @@ inpath = '../Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-dev.txt'
 save_as_arm = True
 print_activated_anynode = False  # this wont work if you only store arm cause no anynode is calced!
 
-Pipe(inpath, output_extender, max_length, save_as_arm, print_activated_anynode)
+Pipe().SavePipeline(inpath, output_extender, max_length, save_as_arm, print_activated_anynode)

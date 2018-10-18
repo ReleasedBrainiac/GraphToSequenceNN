@@ -128,13 +128,17 @@ class Cleaner:
         """
         if isStr(raw_line):
             if isInStr(self.constants.COLON, raw_line):
-                loot = re.findall(self.constants.ARGS_REGEX, raw_line)
+                #print('[O: ',raw_line,']')
+                #loot = re.findall(self.constants.ARGS_REGEX, raw_line)
+                loot = re.findall(self.constants.UNENCLOSED_ARGS_REGEX, raw_line)
 
                 for loot_elem in loot:
+                    print('[L: ',loot_elem,']')
                     joined_elem_regex = ''.join(loot_elem)
-                    joined_elem_replace = ''.join([loot_elem[0], '('+loot_elem[1].lstrip(' ')+')'])
+                    joined_elem_replace = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
                     raw_line = re.sub(joined_elem_regex, joined_elem_replace, raw_line)      
-        
+                    
+                #print('[E: ',raw_line,']')
             return raw_line
         else:
             print('WRONG INPUT FOR [EncloseSoloLabels]')
@@ -205,8 +209,6 @@ class Cleaner:
                 replace_node_str = self.CreateNewDefinedNode(label, content, open_par, close_par)
                 replace = self.AddLeadingSpace(replace_node_str, next_depth)
                 result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
-                print('raw: ', raw_line)
-                print('result: ', result)
                 return result
             else:
                 return raw_line   
@@ -229,6 +231,7 @@ class Cleaner:
             return None
 
     #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
+    #//TODO how to handle => :part-of(x) if x is a parent?
     #//TODO how to handle => amr-unknown content? Its dataset content!
     #//TODO how to handle => toss-out and have-rel-role? Both types occour much often! ??? mglw. => einzelworte in Glove später addieren?
     #//TODO how to handle => :mode <random word>? I actually replace them as new node but the label ist still missing for it! mglw. => label = word[0] + 0 + word[0]?
@@ -338,16 +341,21 @@ class Cleaner:
             unformated_str = self.GetUnformatedAMRString(raw_amr)
             if self.CheckOpenEnclosing(unformated_str, open_par, close_par):
                 node_enclosed_str = self.EncloseSoloLabels(unformated_str)
+                #print(node_enclosed_str)
                 name_enclosed_str = self.EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
+                #print(name_enclosed_str)
                 amr_str = self.GetEnclosedContent(name_enclosed_str, open_par, close_par)
+
+                #print(amr_str)
+
                 result = self.NiceFormatting(amr_str, open_par, close_par)
 
+                '''
                 #//TODO INFO: this control structure check extension regex failed sometimes!
-                while re.match(self.constants.FIND_EXTENSION_HAZRDS, result) is not None:
-                    print(result)
-                    result = self.NiceFormatting(amr_str, open_par, close_par)
-
-
+                if re.match(self.constants.FIND_EXTENSION_HAZRDS, result) is not None:
+                    print('[',result,'] \n')
+                    #result = self.NiceFormatting(amr_str, open_par, close_par)
+                '''
 
                 return result
             else:

@@ -1,6 +1,7 @@
 #::snt Chapter 1 .
 #::smt 
-(c / chapter )
+(c / chapter  
+      (1))
 
 #::snt Once when I was six years old I saw a magnificent picture in a book , called True Stories from Nature , about the primeval forest .
 #::smt 
@@ -8,8 +9,8 @@
       (i / i)  
       (p / picture  
             (m / magnificent)  
-            (b2 / book
-                  (NT0 / not)
+            (b2 / book  
+                  (-)  
                   (n / name  
                         (Y0Z / True)  
                         (Y1Z / Stories)  
@@ -18,9 +19,10 @@
                   (f / forest  
                         (p2 / primeval))))  
       (o / once)  
-      (a / age 
+      (a / age  
             (i)  
-            (t / temporal-quantity   
+            (t / temporal-quantity  
+                  (6)  
                   (y / year))))
 
 #::snt It was a picture of a boa constrictor in the act of swallowing an animal .
@@ -49,29 +51,30 @@
             (b / boa  
                   (c / constrictor))  
             (p / prey  
-                  (w / whole) 
+                  (w / whole)  
                   (b))  
-            (c2 / chew
-                  (NT0)
-                  (b) 
+            (c2 / chew  
+                  (-)  
+                  (b)  
                   (p))))
 
 #::snt After that they are not able to move , and they sleep through the six months that they need for digestion . "
 #::smt 
 (a / and  
-      (p / possible
-            (NT0)
+      (p / possible  
+            (-)  
             (m / move  
                   (t / they)  
                   (a2 / after  
                         (t3 / that))))  
-      (s / sleep 
+      (s / sleep  
             (t)  
-            (t2 / temporal-quantity   
+            (t2 / temporal-quantity  
+                  (6)  
                   (m2 / month)  
-                  (n / need 
+                  (n / need  
                         (t)  
-                        (d / digest 
+                        (d / digest  
                               (t))))))
 
 #::snt I pondered deeply , then , over the adventures of the jungle .
@@ -88,14 +91,15 @@
 (a2 / and  
       (s / succeed  
             (i / i)  
-            (m / make 
+            (m / make  
                   (i)  
                   (p2 / picture  
-                        (d / draw 
+                        (d / draw  
                               (i)  
-                              (o / ordinal-entity ))))  
+                              (o / ordinal-entity  
+                                    (1)))))  
             (a / after  
-                  (w / work 
+                  (w / work  
                         (i)  
                         (p / pencil  
                               (c / color))  
@@ -103,8 +107,8 @@
 
 #::snt My Drawing Number One .
 #::smt 
-(p / picture
-      (NT0)
+(p / picture  
+      (-)  
       (n2 / name  
             (Y0Z / Drawing)  
             (Y1Z / Number)  
@@ -119,16 +123,16 @@
             (t / this))  
       (s / show  
             (i2 / i)  
-            (m / masterpiece 
-                  (i)2)  
+            (m / masterpiece  
+                  (i2))  
             (g / grown-up))  
-      (a2 / ask 
-            (i)2  
-            (f / frighten 
+      (a2 / ask  
+            (i2)  
+            (f / frighten  
                   (interrogative)  
                   (p / picture  
-                        (d / draw)) 
-                  (g)) 
+                        (d / draw))  
+                  (g))  
             (g)))
 
 #::snt But they answered : " Frighten ?
@@ -136,7 +140,7 @@
 (c / contrast  
       (a / answer  
             (t / they)  
-            (f / frighten 
+            (f / frighten  
                   (interrogative))))
 
 #::snt Why should any one be frightened by a hat ? "
@@ -150,8 +154,8 @@
 
 #::snt My drawing was not a picture of a hat .
 #::smt 
-(p / picture
-      (NT0)
+(p / picture  
+      (-)  
       (p2 / picture  
             (d / draw  
                   (i / i)))  
@@ -175,18 +179,18 @@
                   (p2 / picture  
                         (a / another))  
                   (c3 / cause  
-                        (p3 / possible
-                              (NT0)
+                        (p3 / possible  
+                              (-)  
                               (u / understand  
                                     (g / grown-up)  
                                     (i2 / it)))))  
-            (d / draw 
+            (d / draw  
                   (i)  
                   (i3 / inside  
                         (b2 / boa  
                               (c4 / constrictor)))  
                   (p / possible  
-                        (s / see 
+                        (s / see  
                               (g)  
                               (i4 / it)  
                               (c2 / clear-06))))))
@@ -202,25 +206,25 @@
 #::smt 
 (a6 / and  
       (l / look  
-            (p / picture
-                  (NT0)
+            (p / picture  
+                  (-)  
                   (n / name  
                         (Y0Z)  
                         (Y1Z)  
-                        (Y0Z / Two)) 
+                        (Y0Z / Two))  
                   (i))  
             (t2 / this))  
       (r / respond  
             (g / grown-up)  
             (i / i)  
-            (a / advise 
-                  (g) 
+            (a / advise  
+                  (g)  
                   (i)  
                   (a3 / and  
-                        (l2 / lay 
+                        (l2 / lay  
                               (i)  
                               (p2 / picture  
-                                    (d2 / draw 
+                                    (d2 / draw  
                                           (i))  
                                     (b2 / boa  
                                           (c2 / constrictor)  
@@ -228,16 +232,16 @@
                                                 (i2 / inside)  
                                                 (o2 / outside))))  
                               (a2 / aside))  
-                        (d3 / devote 
-                              (i) 
+                        (d3 / devote  
+                              (i)  
                               (i)  
                               (a4 / and  
                                     (g2 / geography)  
                                     (h / history)  
                                     (a5 / arithmetic)  
                                     (g3 / grammar))  
-                              (i4 / instead-of 
-                                    (d)2))))  
+                              (i4 / instead-of  
+                                    (d2)))))  
             (t4 / time  
                   (t5 / this))))
 
@@ -251,9 +255,10 @@
                   (m / magnificent)  
                   (p / person  
                         (p2 / paint)))  
-            (a / age 
+            (a / age  
                   (i)  
-                  (t / temporal-quantity   
+                  (t / temporal-quantity  
+                        (6)  
                         (y / year)))))
 
 #::snt I had been disheartened by the failure of my Drawing Number One and my Drawing Number Two .
@@ -261,26 +266,26 @@
 (d / dishearten  
       (f / fail  
             (a / and  
-                  (p / picture
-                        (NT0)
+                  (p / picture  
+                        (-)  
                         (n / name  
                               (Y0Z)  
                               (Y1Z)  
                               (Y2Z)))  
-                  (p2 / picture
-                        (NT0)
+                  (p2 / picture  
+                        (-)  
                         (n2 / name  
                               (Y0Z)  
                               (Y1Z)  
-                              (Y0Z))) 
+                              (Y0Z)))  
                   (i)))  
       (i / i))
 
 #::snt Grown - ups never understand anything by themselves , and it is tiresome for children to be always and forever explaining things to them .
 #::smt 
 (a / and  
-      (u / understand
-            (NT0)
+      (u / understand  
+            (-)  
             (g / grown-up)  
             (a3 / anything)  
             (e2 / ever)  
@@ -288,7 +293,7 @@
       (t / tiresome  
             (e / explain  
                   (c / child)  
-                  (t2 / thing) 
+                  (t2 / thing)  
                   (g)  
                   (a4 / always)  
                   (f / forever))))
@@ -301,16 +306,16 @@
                   (i / i)  
                   (p / profession  
                         (a2 / another)))  
-            (l / learn 
+            (l / learn  
                   (i)  
-                  (p2 / pilot 
+                  (p2 / pilot  
                         (i)  
                         (a3 / airplane)))))
 
 #::snt I have flown a little over all parts of the world ; and it is true that geography has been very useful to me .
 #::smt 
 (a / and  
-      (f / fly 
+      (f / fly  
             (i)  
             (o / over  
                   (p2 / part  
@@ -333,7 +338,7 @@
                   (Y1Z / Arizona)  
                   (n2 / name  
                         (Y1Z)))  
-            (g / glance 
+            (g / glance  
                   (i))))
 
 #::snt If one gets lost in the night , such knowledge is valuable .
@@ -379,14 +384,14 @@
       (t / they)  
       (c / close  
             (a / at-hand))  
-      (i2 / intimate 
+      (i2 / intimate  
             (i)))
 
 #::snt And that has n't much improved my opinion of them .
 #::smt 
 (a / and  
-      (i / improve
-            (NT0)
+      (i / improve  
+            (-)  
             (t / that)  
             (t3 / thing  
                   (o2 / opine  
@@ -400,24 +405,24 @@
       (i / i)  
       (e / experiment  
             (s / show  
-                  (p2 / picture
-                        (NT0)
+                  (p2 / picture  
+                        (-)  
                         (n / name  
                               (Y0Z)  
                               (Y1Z)  
-                              (Y2Z))) 
+                              (Y2Z)))  
                   (p)  
-                  (k / keep 
+                  (k / keep  
                         (i)  
                         (a / always))))  
-      (m / meet 
+      (m / meet  
             (i)  
             (p / person  
                   (i2 / include  
                         (t3 / they))  
                   (s3 / see  
                         (c / clear)  
-                        (s4 / seem 
+                        (s4 / seem  
                               (i))))  
             (a2 / any)))
 
@@ -425,9 +430,9 @@
 #::smt 
 (t / try  
       (i / i)  
-      (f / find-out 
+      (f / find-out  
             (i)  
-            (u2 / understand 
+            (u2 / understand  
                   (interrogative)  
                   (p / person  
                         (t2 / this))  
@@ -456,12 +461,13 @@
             (s / star))  
       (p / person  
             (t2 / that))  
-      (e / ever)  -)
+      (e / ever)  
+      (-))
 
 #::snt I would bring myself down to his level .
 #::smt 
 (b / bring  
-      (i / i) 
+      (i / i)  
       (i)  
       (l / level  
             (h / he))  
@@ -482,7 +488,7 @@
 #::smt 
 (a / and  
       (p / please  
-            (m / meet 
+            (m / meet  
                   (g)  
                   (m2 / man  
                         (s / sense  
@@ -492,22 +498,23 @@
 
 #::snt Chapter 2 .
 #::smt 
-(c / chapter )
+(c / chapter  
+      (2))
 
 #::snt So I lived my life alone , without anyone that I could really talk to , until I had an accident with my plane in the Desert of Sahara , six years ago .
 #::smt 
 (c / cause  
       (l / live  
             (i / i  
-                  (t3 / talk
-                        (NT0)
+                  (t3 / talk  
+                        (-)  
                         (a5 / anyone)  
                         (r / real)))  
-            (l2 / life 
+            (l2 / life  
                   (i))  
             (a / alone)  
             (u / until  
-                  (h / have 
+                  (h / have  
                         (i)  
                         (a3 / accident  
                               (p / plane))  
@@ -519,7 +526,8 @@
                                     (Y0Z)))  
                         (b / before  
                               (n2 / now)  
-                              (t2 / temporal-quantity   
+                              (t2 / temporal-quantity  
+                                    (6)  
                                     (y / year)))))))
 
 #::snt Something was broken in my engine .
@@ -533,13 +541,14 @@
 #::smt 
 (a / and  
       (c / cause  
-            (h / have 
+            (h / have  
                   (i)  
                   (o / or  
                         (m / mechanic)  
                         (p / passenger))  
-                  (i / i)  -)  
-            (a2 / attempt 
+                  (i / i)  
+                  (-))  
+            (a2 / attempt  
                   (i)  
                   (r / repair  
                         (d / difficult))  
@@ -548,7 +557,7 @@
 
 #::snt It was a question of life or death for me : I had scarcely enough drinking water to last a week .
 #::smt 
-(q / question 
+(q / question  
       (i)  
       (o / or  
             (l / live)  
@@ -557,13 +566,14 @@
             (h / have  
                   (i / i)  
                   (w / water  
-                        (d2 / drink 
+                        (d2 / drink  
                               (i))  
                         (e / enough  
                               (s / scarce))  
                         (l2 / last  
-                              (t / temporal-quantity   
-                                    (w2 / week)) 
+                              (t / temporal-quantity  
+                                    (1)  
+                                    (w2 / week))  
                               (i))))))
 
 #::snt The first night , then , I went to sleep on the sand , a thousand miles from any human habitation .
@@ -573,13 +583,15 @@
       (s2 / sand)  
       (d2 / date-entity  
             (n / night)  
-            (o / ordinal-entity ))  
+            (o / ordinal-entity  
+                  (1)))  
       (r / relative-position  
             (p / place  
                   (i2 / inhabit  
                         (h / human))  
                   (a2 / any))  
-            (d / distance-quantity 000  
+            (d / distance-quantity  
+                  (1000)  
                   (m / mile))  
             (a3 / away)))
 
@@ -607,14 +619,14 @@
                               (w / wake  
                                     (v / voice  
                                           (o / odd)  
-                                          (l / little)) 
+                                          (l / little))  
                                     (i)))))))
 
 #::snt It said : " If you please -- draw me a sheep ! "
 #::smt 
 (s / say  
       (i / it)  
-      (d / draw 
+      (d / draw  
             (imperative)  +  
             (y2 / you)  
             (s2 / sheep)  
@@ -630,7 +642,7 @@
 (d / draw  
       (y / you)  
       (s / sheep)  
-      (i / i) 
+      (i / i)  
       (imperative))
 
 #::snt I jumped to my feet , completely thunderstruck .
@@ -639,14 +651,14 @@
       (i / i  
             (t / thunderstruck  
                   (c / complete)))  
-      (f / foot 
+      (f / foot  
             (i)))
 
 #::snt I blinked my eyes hard .
 #::smt 
 (b / blink  
       (i / i)  
-      (e / eye 
+      (e / eye  
             (i))  
       (h / hard-04))
 
@@ -654,7 +666,7 @@
 #::smt 
 (l / look  
       (i / i)  
-      (a / around 
+      (a / around  
             (i)  
             (a2 / all))  
       (c / careful))
@@ -670,7 +682,7 @@
                         (m / most))  
                   (s3 / stand  
                         (t / there))  
-                  (e2 / examine 
+                  (e2 / examine  
                         (i)  
                         (s4 / serious  
                               (g / great))))))
@@ -702,7 +714,7 @@
                   (m / much  
                         (v / very)))  
             (c2 / certain)  
-            (m2 / model 
+            (m2 / model  
                   (p))))
 
 #::snt That , however , is not my fault .
@@ -710,7 +722,8 @@
 (c / contrast  
       (f / fault  
             (i / i)  
-            (t / that)  -))
+            (t / that)  
+            (-)))
 
 #::snt The grown - ups discouraged me in my painter 's career when I was six years old , and I never learned to draw anything , except boas from the outside and boas from the inside .
 #::smt 
@@ -719,13 +732,13 @@
       (i / i)  
       (c / career  
             (p / person  
-                  (p2 / paint)) 
+                  (p2 / paint))  
             (i))  
       (c2 / cause  
-            (l / learn
-                  (NT0)
+            (l / learn  
+                  (-)  
                   (i)  
-                  (d2 / draw 
+                  (d2 / draw  
                         (i)  
                         (a2 / anything))  
                   (e / ever)  
@@ -737,9 +750,10 @@
                               (b2 / boa  
                                     (f2 / from  
                                           (i2 / inside)))))))  
-      (a / age 
+      (a / age  
             (i)  
-            (t2 / temporal-quantity   
+            (t2 / temporal-quantity  
+                  (6)  
                   (y / year))))
 
 #::snt Now I stared at this sudden apparition with my eyes fairly starting out of my head in astonishment .
@@ -752,15 +766,15 @@
             (t2 / this))  
       (n / now)  
       (s3 / start  
-            (e / eye 
+            (e / eye  
                   (i))  
             (c / cause  
-                  (a2 / astonish 
+                  (a2 / astonish  
                         (i)))  
             (f / fair)  
-            (o / out 
+            (o / out  
                   (e)  
-                  (h / head 
+                  (h / head  
                         (i)))))
 
 #::snt Remember , I had crashed in the desert a thousand miles from any inhabited region .
@@ -775,8 +789,9 @@
                         (i2 / inhabit)  
                         (a2 / any))  
                   (d2 / distance-quantity  
-                        (m / mile) 000)  
-                  (a / away))) 
+                        (m / mile)  
+                        (1000))  
+                  (a / away)))  
       (imperative))
 
 #::snt And yet my little man seemed neither to be straying uncertainly among the sands , nor to be fainting from fatigue or hunger or thirst or fear .
@@ -790,15 +805,18 @@
                               (i / i))  
                         (a3 / among  
                               (s3 / sand))  
-                        (c / certain  -)  -)  
-                  (f / faint 
+                        (c / certain  
+                              (-))  
+                        (-))  
+                  (f / faint  
                         (m)  
                         (c2 / cause  
                               (o / or  
                                     (f2 / fatigue)  
                                     (h / hunger)  
                                     (t / thirst)  
-                                    (f3 / fear)))  -))))
+                                    (f3 / fear)))  
+                        (-)))))
 
 #::snt Nothing about him gave any suggestion of a child lost in the middle of the desert , a thousand miles from any human habitation .
 #::smt 
@@ -815,7 +833,8 @@
                                     (h2 / human))  
                               (a3 / any))  
                         (d2 / distance-quantity  
-                              (m2 / mile) 000)  
+                              (m2 / mile)  
+                              (1000))  
                         (a2 / away)))))
 
 #::snt When at last I was able to speak , I said to him : " But -- what are you doing here ? "
@@ -823,7 +842,7 @@
 (s / say  
       (i / i)  
       (c / contrast  
-            (b2 / be-located-at 
+            (b2 / be-located-at  
                   (interrogative)  
                   (y2 / you)  
                   (h2 / here)  
@@ -831,7 +850,7 @@
                         (a / amr-unknown))))  
       (h / he)  
       (p / possible  
-            (s2 / speak 
+            (s2 / speak  
                   (i)  
                   (a2 / at-last))))
 
@@ -840,16 +859,16 @@
 (a / and  
       (r / repeat  
             (h / he)  
-            (d / draw 
+            (d / draw  
                   (imperative)  +  
                   (y2 / you)  
                   (s3 / sheep)  
                   (i / i))  
-            (a2 / answer 
+            (a2 / answer  
                   (h))  
             (s / slow  
                   (v / very))  
-            (s2 / speak 
+            (s2 / speak  
                   (h)  
                   (m / matter  
                         (c / consequence  
@@ -859,9 +878,9 @@
 #::smt 
 (d / dare  
       (o / one)  
-      (d2 / disobey 
-            (o))
-                  (NT0)
+      (d2 / disobey  
+            (o))  
+      (-)  
       (o2 / overpower  
             (m / mystery)  
             (t2 / too)))
@@ -875,23 +894,25 @@
                         (a3 / any)  
                         (i2 / inhabit  
                               (h / human)))  
-                  (d / distance-quantity 000  
+                  (d / distance-quantity  
+                        (1000)  
                         (m / mile))  
                   (a2 / away))  
             (e / endanger  
-                  (d2 / die 
+                  (d2 / die  
                         (i))))  
       (a / and  
             (p / paper  
-                  (s / sheet ))  
+                  (s / sheet  
+                        (1)))  
             (p2 / pen  
-                  (f / fountain) 
+                  (f / fountain)  
                   (i)))  
-      (p3 / pocket 
+      (p3 / pocket  
             (i))  
       (p4 / possible  
             (s2 / seem  
-                  (a4 / absurd) 
+                  (a4 / absurd)  
                   (i))))
 
 #::snt But then I remembered how my studies had been concentrated on geography , history , arithmetic , and grammar , and I told the little chap ( a little crossly , too ) that I did not know how to draw .
@@ -906,15 +927,15 @@
                               (h / history)  
                               (a3 / arithmetic)  
                               (g2 / grammar))  
-                        (s / study 
+                        (s / study  
                               (i)))  
                   (t / then))  
-            (t2 / tell 
+            (t2 / tell  
                   (i)  
-                  (k / know
-                        (NT0)
+                  (k / know  
+                        (-)  
                         (i)  
-                        (d / draw 
+                        (d / draw  
                               (i)))  
                   (c2 / chap  
                         (l / little))  
@@ -928,14 +949,15 @@
       (h / he)  
       (i / i)  
       (m2 / matter  
-            (t / that)  -))
+            (t / that)  
+            (-)))
 
 #::snt Draw me a sheep ... "
 #::smt 
 (d / draw  
       (y / you)  
       (s / sheep)  
-      (i / i) 
+      (i / i)  
       (imperative))
 
 #::snt But I had never drawn a sheep .
@@ -944,17 +966,20 @@
       (d / draw  
             (i / i)  
             (s / sheep)  
-            (e / ever)  -))
+            (e / ever)  
+            (-)))
 
 #::snt So I drew for him one of the two pictures I had drawn so often .
 #::smt 
 (c / cause  
       (d / draw  
             (i / i)  
-            (p / picture   
+            (p / picture  
+                  (1)  
                   (i2 / include  
-                        (p2 / picture   
-                              (d2 / draw 
+                        (p2 / picture  
+                              (2)  
+                              (d2 / draw  
                                     (i)  
                                     (o / often  
                                           (s / so))))))  
@@ -971,9 +996,9 @@
 #::smt 
 (a / and  
       (a2 / astound  
-            (h / hear 
+            (h / hear  
                   (i)  
-                  (g / greet 
+                  (g / greet  
                         (f)  
                         (i2 / it)  
                         (a3 / and  
@@ -991,7 +1016,8 @@
       (e / elephant  
             (i2 / inside  
                   (b2 / boa  
-                        (c2 / constrictor))))  -)
+                        (c2 / constrictor))))  
+      (-))
 
 #::snt A boa constrictor is a very dangerous creature , and an elephant is very cumbersome .
 #::smt 
@@ -1023,7 +1049,7 @@
 (d / draw  
       (y / you)  
       (s / sheep)  
-      (i / i) 
+      (i / i)  
       (imperative))
 
 #::snt So then I made a drawing .
@@ -1040,7 +1066,7 @@
             (h / he)  
             (i / it)  
             (c / careful))  
-      (s / say 
+      (s / say  
             (h)  
             (n / no)  
             (t / then)))
@@ -1058,7 +1084,7 @@
 (m / make  
       (y / you)  
       (a / another)  
-      (i / i) 
+      (i / i)  
       (imperative))
 
 #::snt So I made another drawing .
@@ -1067,7 +1093,7 @@
       (m / make  
             (i / i)  
             (p / picture  
-                  (d / draw 
+                  (d / draw  
                         (i))  
                   (a / another))))
 
@@ -1088,7 +1114,8 @@
       (s2 / see  
             (y / you)  
             (s4 / sheep  
-                  (t2 / this)  -)))
+                  (t2 / this)  
+                  (-))))
 
 #::snt This is a ram .
 #::smt 
@@ -1107,10 +1134,11 @@
       (d / do  
             (i / i)  
             (p / picture  
-                  (d2 / draw 
+                  (d2 / draw  
                         (i)))  
             (o / over)  
-            (a / again )  
+            (a / again  
+                  (1))  
             (t2 / then)))
 
 #::snt But it was rejected too , just like the others .
@@ -1143,13 +1171,13 @@
       (p / patient  
             (i / i))  
       (c / cause  
-            (h / hurry 
+            (h / hurry  
                   (i)  
-                  (s / start 
+                  (s / start  
                         (i)  
-                        (d / disassemble 
+                        (d / disassemble  
                               (i)  
-                              (e2 / engine 
+                              (e2 / engine  
                                     (i))))))  
       (b / by  
             (t / time  
@@ -1161,7 +1189,7 @@
       (t / toss-out  
             (i / i)  
             (p / picture  
-                  (d / draw 
+                  (d / draw  
                         (i))  
                   (t3 / this))  
             (o / off)))
@@ -1192,14 +1220,14 @@
 #::smt 
 (a / and  
       (s / surprise  
-            (s2 / see 
+            (s2 / see  
                   (i)  
                   (b / break  
                         (l / light)  
                         (o / over  
                               (f / face  
                                     (p / person  
-                                          (j / judge) 
+                                          (j / judge)  
                                           (i)  
                                           (y / young))))))  
             (i / i)  
@@ -1207,7 +1235,7 @@
       (s3 / say  
             (w / way  
                   (e / exact)  
-                  (w2 / want 
+                  (w2 / want  
                         (p)  
                         (i2 / it)))))
 
@@ -1221,7 +1249,7 @@
                         (t2 / this))  
                   (g / grass  
                         (d / deal  
-                              (g2 / great))))) 
+                              (g2 / great)))))  
       (interrogative))
 
 #::snt " Why ? "
@@ -1267,15 +1295,15 @@
             (h2 / head  
                   (o / over  
                         (p / picture  
-                              (d / draw))) 
-                  (h)3))  
+                              (d / draw)))  
+                  (h3)))  
       (s / say  
             (h3 / he)  
-            (l / look 
+            (l / look  
                   (imperative)  
                   (y / you)  
-                  (s2 / small
-                        (NT0)
+                  (s2 / small  
+                        (-)  
                         (s3 / so)  
                         (t2 / that)))))
 
@@ -1295,7 +1323,8 @@
 
 #::snt Chapter 3 .
 #::smt 
-(c2 / chapter )
+(c2 / chapter  
+      (3))
 
 #::snt It took me a long time to learn where he came from .
 #::smt 
@@ -1311,8 +1340,8 @@
 #::snt The little prince , who asked me so many questions , never seemed to hear the ones I asked him .
 #::smt 
 (s / seem  
-      (h / hear
-            (NT0)
+      (h / hear  
+            (-)  
             (p / prince  
                   (l / little)  
                   (q / question  
@@ -1320,8 +1349,8 @@
                         (m / many  
                               (s2 / so))))  
             (o / one  
-                  (a2 / ask 
-                        (i) 
+                  (a2 / ask  
+                        (i)  
                         (p)))  
             (e2 / ever)))
 
@@ -1343,24 +1372,26 @@
             (t / that)  
             (a2 / amr-unknown))  
       (i / i)  
-      (s / see 
+      (s / see  
             (h)  
-            (a3 / airplane 
+            (a3 / airplane  
                   (i)  
-                  (d / draw
-                        (NT0)
+                  (d / draw  
+                        (-)  
                         (i)  
                         (c / cause  
-                              (c2 / complicate 
+                              (c2 / complicate  
                                     (i)  
                                     (t3 / too  
                                           (m / much))))))  
-            (o2 / ordinal-entity )))
+            (o2 / ordinal-entity  
+                  (1))))
 
 #::snt " That is not an object .
 #::smt 
 (o / object  
-      (t / that)  -)
+      (t / that)  
+      (-))
 
 #::snt It flies .
 #::smt 
@@ -1386,7 +1417,7 @@
             (l / learn  
                   (h2 / he)  
                   (p2 / possible  
-                        (f / fly 
+                        (f / fly  
                               (i))))))
 
 #::snt He cried out , then : " What !
@@ -1402,7 +1433,7 @@
 (d / drop  
       (y / you)  
       (s / sky)  
-      (d2 / down) 
+      (d2 / down)  
       (interrogative))
 
 #::snt " Yes , "
@@ -1417,7 +1448,7 @@
 
 #::snt " Oh !
 #::smt 
-(o / oh 
+(o / oh  
       (expressive))
 
 #::snt That is funny ! "
@@ -1444,7 +1475,7 @@
 (l / like  
       (i / i)  
       (t / take  
-            (m / misfortune 
+            (m / misfortune  
                   (i))  
             (s / serious-01)))
 
@@ -1476,12 +1507,13 @@
                         (p / present  
                               (h / he))  
                         (p3 / penetrate  
-                              (p2 / possible  -))))  
+                              (p2 / possible  
+                                    (-)))))  
             (m2 / moment  
                   (t / that)))  
-      (d / demand 
+      (d / demand  
             (i)  
-            (c2 / come 
+            (c2 / come  
                   (interrogative)  
                   (y / you)  
                   (p4 / planet  
@@ -1492,33 +1524,34 @@
 #::smt 
 (c / contrast  
       (r / reply  
-            (h / he)  -))
+            (h / he)  
+            (-)))
 
 #::snt He tossed his head gently , without taking his eyes from my plane : " It is true that on that you can n't have come from very far away ... "
 #::smt 
 (a / and  
       (t / toss  
             (h / he)  
-            (h2 / head 
+            (h2 / head  
                   (h))  
             (g / gentle)  
-            (t2 / take-away
-                  (NT0)
+            (t2 / take-away  
+                  (-)  
                   (h)  
-                  (e / eye 
+                  (e / eye  
                         (h))  
                   (p2 / plane  
                         (i / i))))  
-      (s / say 
+      (s / say  
             (h)  
-            (p / possible
-                  (NT0)
+            (p / possible  
+                  (-)  
                   (c / come  
                         (y / you)  
                         (a2 / away  
                               (f / far  
-                                    (v / very))) 
-                        (p)2))))
+                                    (v / very)))  
+                        (p2)))))
 
 #::snt And he sank into a reverie , which lasted a long time .
 #::smt 
@@ -1531,16 +1564,16 @@
 #::snt Then , taking my sheep out of his pocket , he buried himself in the contemplation of his treasure .
 #::smt 
 (b / bury  
-      (h / he) 
+      (h / he)  
       (h)  
-      (c / contemplate 
+      (c / contemplate  
             (h)  
-            (t / treasure 
+            (t / treasure  
                   (h)))  
-      (t2 / take-out 
+      (t2 / take-out  
             (h)  
             (s / sheep  
-                  (p / pocket 
+                  (p / pocket  
                         (h))  
                   (i / i)))  
       (t3 / then))
@@ -1564,7 +1597,7 @@
 (c / cause  
       (e / effort  
             (i / i)  
-            (f / find-out 
+            (f / find-out  
                   (i)  
                   (i2 / information  
                         (m2 / more)  
@@ -1587,7 +1620,7 @@
 (l / live  
       (y / you)  
       (p / place  
-            (s / speak 
+            (s / speak  
                   (y))  
             (a / amr-unknown)))
 
@@ -1595,9 +1628,9 @@
 #::smt 
 (w / want  
       (y / you)  
-      (t / take 
+      (t / take  
             (y)  
-            (s / sheep 
+            (s / sheep  
                   (y))  
             (a / amr-unknown)))
 
@@ -1610,14 +1643,14 @@
                   (s2 / so))  
             (b / box  
                   (g2 / give  
-                        (y / you) 
+                        (y / you)  
                         (h)))  
             (p / possible  
                   (u / use  
-                        (h2 / he) 
+                        (h2 / he)  
                         (b)  
-                        (h3 / house 
-                              (h)2)  
+                        (h3 / house  
+                              (h2))  
                         (d / date-entity  
                               (n / night)))))  
       (a2 / after  
@@ -1636,17 +1669,17 @@
             (i / i)  
             (a2 / and  
                   (s / string  
-                        (t / tie 
+                        (t / tie  
                               (y)  
                               (h / he)  
                               (d / date-entity  
                                     (d2 / day))))  
                   (p2 / post  
-                        (t3 / tie 
-                              (y) 
+                        (t3 / tie  
+                              (y)  
                               (h))))  
             (y / you)  
-            (g2 / good 
+            (g2 / good  
                   (y))))
 
 #::snt But the little prince seemed shocked by this offer : " Tie him !
@@ -1659,8 +1692,8 @@
                   (p / prince  
                         (l / little)  
                         (s3 / say  
-                              (t2 / tie 
-                                    (imperative) 
+                              (t2 / tie  
+                                    (imperative)  
                                     (p)  
                                     (h / he)))))))
 
@@ -1672,8 +1705,8 @@
 #::snt " But if you do n't tie him , "
 #::smt 
 (c / contrast  
-      (t / tie
-            (NT0)
+      (t / tie  
+            (-)  
             (y / you)  
             (h / he)  
             (t2 / thing)))
@@ -1686,7 +1719,7 @@
             (w / wander  
                   (h / he)  
                   (s2 / somewhere))  
-            (g / get 
+            (g / get  
                   (h)  
                   (l / lost))))
 
@@ -1723,8 +1756,8 @@
 (s / say  
       (p / prince  
             (l / little))  
-      (m / matter
-            (NT0)
+      (m / matter  
+            (-)  
             (t2 / that))  
       (e / earnest)  
       (t / then))
@@ -1743,12 +1776,13 @@
       (a2 / add  
             (h / he)  
             (g / go  
-                  (s2 / somebody  -)  
+                  (s2 / somebody  
+                        (-))  
                   (f / far  
                         (v / very))  
                   (a3 / ahead  
-                        (s3 / straight) 
-                        (s)2))  
+                        (s3 / straight)  
+                        (s2)))  
             (s / sad  
                   (h2 / hint)  
                   (p / possible-01))))

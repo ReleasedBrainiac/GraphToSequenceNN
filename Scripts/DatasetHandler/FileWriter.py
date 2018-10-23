@@ -16,7 +16,7 @@ class Writer:
     
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def __init__(self, input_path, in_output_extender='.output',data_pairs=None, in_context=None):
+    def __init__(self, input_path, in_output_extender='output',data_pairs=None, in_context=None):
         if isNotNone(input_path) and isStr(input_path):
             self.path = input_path
 
@@ -43,12 +43,25 @@ class Writer:
             print('WRONG INPUT FOR [SavingCorpus]')
             return None
 
+    def GetOutputPath(self):
+        """
+        This function return a result output path depending on the given input path and a extender.
+        """
+        try:
+            return setOrDefault(self.path+'.'+ self.output_extender , self.constants.TYP_ERROR, isStr(self.output_extender))
+        except ValueError:
+            print('WRONG INPUT FOR [GetOutputPath]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def StoreContext(self):
         """
         This function saves a (stringified) context passed by class init into a given file.
         """
         try:
-            with open(self.path, 'w', encoding=self.writer_encoding) as fileOut:
+            with open(self.GetOutputPath(), 'w', encoding=self.writer_encoding) as fileOut:
                 if isNotNone(self.context) and isStr(self.context):
                     fileOut.write(self.context)
                     fileOut.flush()
@@ -66,7 +79,7 @@ class Writer:
         This function save the collected content to a given file.
         """
         try:
-            with open(self.path, 'w', encoding=self.writer_encoding) as fileOut:
+            with open(self.GetOutputPath(), 'w', encoding=self.writer_encoding) as fileOut:
                 for i in range(len(self.dataset_pairs)):
                     result = self.SavingCorpus(self.dataset_pairs[i])
                     if isNotNone(result):
@@ -76,19 +89,6 @@ class Writer:
                 print('Destination => ', self.path)
         except ValueError:
             print('WRONG INPUT FOR [StoreAMR]')
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    def GetOutputPath(self):
-        """
-        This function return a result output path depending on the given input path and a extender.
-        """
-        try:
-            return setOrDefault(self.path+'.'+ self.output_extender , self.constants.TYP_ERROR, isStr(self.output_extender))
-        except ValueError:
-            print('WRONG INPUT FOR [GetOutputPath]')
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

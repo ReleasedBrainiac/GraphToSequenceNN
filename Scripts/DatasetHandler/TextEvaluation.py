@@ -7,7 +7,7 @@ class EvaluationHelpers:
         This function calculate the mean over all values in a list.
             :param sentences_length: lengths of all sentences
         """
-        if(isList(sentences_length)):
+        try:
             sent_summ = 0
 
             for index, _ in enumerate(sentences_length):
@@ -15,6 +15,11 @@ class EvaluationHelpers:
 
             mw = int(round(sent_summ / len(sentences_length)))
             return mw
-        else:
-            print('WRONG INPUT FOR [CalculateMeanValue]')
-            return None
+        except ValueError:
+            print("ERR: Missing or wrong value passed to [CalculateMeanValue].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+        

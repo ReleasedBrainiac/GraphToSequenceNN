@@ -18,14 +18,16 @@ from AMRHandler.AMRCleaner import Cleaner
 
 class DatasetPipelines:
 
+    # Variables inits
+    parenthesis = ['(', ')']
+    look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
+    extension_dict =  str(Reader(input_path=look_up_extension_replace_path).LineReadContent())
+
     # Class inits
     extractor = Extractor()
-    file_reader = Reader()
-    file_writer = Writer()
     constants = Constants()
     eval_Helper = EvaluationHelpers()
     gt_converter = GTConverter()
-    amr_cleaner = Cleaner()
     t_parser = TParser()
 
     def RemoveEnclosingAngleBracket(self, in_sentence):
@@ -51,8 +53,16 @@ class DatasetPipelines:
         """
         if isStr(semantic) and isStr(sem_flag):
             store = semantic
-            semantic = self.amr_cleaner.GenerateCleanAMR(semantic, '(', ')')
+            cleaner = Cleaner(open_bracket=self.parenthesis[0], 
+                              close_bracket=self.parenthesis[1], 
+                              input_context=semantic,
+                              input_extension_dict=self.extension_dict
+                              )
 
+            self.extension_dict = cleaner.extension_dict
+            semantic = cleaner.cleaned
+
+            #//TODO remove @ polishing process
             if isNone(semantic):
                 print(store)
 
@@ -151,7 +161,7 @@ class DatasetPipelines:
         max_length = setOrDefault(max_length, -1, isInt(max_length))
         inpath  = setOrDefault(inpath, self.constants.TYP_ERROR, isStr(inpath))
 
-        dataset = self.file_reader.GetAmrDatasetAsList(inpath)
+        dataset = Reader(inpath).GroupReadAMR()
         dataset=dataset[1:len(dataset)]
         
         sents_lens, sema_lens, sentences, semantics = self.extractor.Extract(dataset, 
@@ -176,6 +186,7 @@ class DatasetPipelines:
         print('Count semantics: ', len(semantics))
         print('Mean sentences: ', mw_value_sen)
         print('Mean semantics: ', mw_value_sem)
+        print('Look_up: \n', self.extension_dict)
 
         return [mw_value_sen, mw_value_sem, max_length, data_pairs]
 
@@ -188,23 +199,19 @@ class DatasetPipelines:
             :param save_as_arm: output will be save as tree like formated AMR string
             :param print_console: show all reforging at the Cleaner on console
         """
-        mw_value_sen, mw_value_sem, max_length, data_pairs = self.BasicPipeline(inpath, 
-                                                                                output_extender, 
-                                                                                max_length, 
-                                                                                save_as_arm, 
-                                                                                print_console, 
-                                                                                False)
+        _, _, _, data_pairs = self.BasicPipeline(inpath, 
+                                                 output_extender, 
+                                                 max_length, 
+                                                 save_as_arm, 
+                                                 print_console, 
+                                                 False)
 
-        outpath = self.file_writer.GetOutputPath(inpath, output_extender)
+        writer = Writer(inpath, output_extender, data_pairs)
+        outpath = writer.GetOutputPath()
+        writer.StoreAMR()
 
         if (print_console):
             print('outpath: ', outpath)
-
-        self.file_writer.SaveToFile(outpath,
-                                    mw_value_sen,
-                                    mw_value_sem,
-                                    max_length,
-                                    data_pairs)
         
         return None
 

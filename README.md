@@ -17,3 +17,5 @@ This Repo is in proceeding. It will provide an example of Graph2Sequence encodin
 ## Current developement status
 
 - Currently the programm is not working. I'ts still at the beginning!
+- I used the following ressource for lookup the table replacement.
+        => https://www.thesaurus.com/browse/clean%20out?s=t 

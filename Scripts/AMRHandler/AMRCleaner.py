@@ -22,7 +22,7 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}):
+    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict=None):
         try:
             if ((input_context is not None) and isStr(input_context)): 
                 self.gotContext = True
@@ -31,6 +31,8 @@ class Cleaner:
             if((input_extension_dict is not None) and isDict(input_extension_dict)):
                 self.gotExtentsionsDict = True
                 self.extension_dict = input_extension_dict
+            #else:
+            #    self.extension_dict = 
 
             if(isStr(open_bracket) and isStr(close_bracket)):
                 self.parenthesis[0] = open_bracket
@@ -279,6 +281,15 @@ class Cleaner:
             print('WRONG INPUT FOR [DeleteFlags]')
             return None
 
+    def RemoveUnusedSignes(self, raw_line):
+        """
+
+        """
+        if isStr(raw_line):
+                return re.sub(self.constants.REMOVE_USELSS_ELEMENTS_REGEX, '', raw_line)            
+        else:
+            return raw_line
+
     #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
     #//TODO how to handle => :part-of(x) if x is a parent?
     #//TODO how to handle => amr-unknown content? Its dataset content!
@@ -313,6 +324,7 @@ class Cleaner:
             if isInStr('-', result):
                 result = self.ReplacePolarity(result, open_par, close_par)
                 result = self.DeleteWordExtension(result)
+                result = self.RemoveUnusedSignes(result)
                     
             return result
         else:
@@ -345,6 +357,22 @@ class Cleaner:
         else:
             print('WRONG INPUT FOR [AddLeadingSpace]')
             return None
+
+    def LookUpReplacement(self, raw_line):
+        try:
+            if ('-' in raw_line) and (re.findall(self.constants.EXTENSION_REGEX, raw_line) is not None):
+                for found in re.findall(self.constants.EXTENSION_REGEX, raw_line):
+                    print('[',found,']')
+                #extension_dict
+            
+            return raw_line
+        except ValueError:
+            print("ERR: No string passed to [LookUpReplacement].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -397,19 +425,21 @@ class Cleaner:
                 node_enclosed_str = self.EncloseSoloLabels(unformated_str)
                 name_enclosed_str = self.EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
                 amr_str = self.GetEnclosedContent(name_enclosed_str, open_par, close_par)
-                result = self.NiceFormatting(amr_str, open_par, close_par)
-                #äprint(result)
+                look_str = self.LookUpReplacement(amr_str)
+                result = self.NiceFormatting(look_str, open_par, close_par)
+                print(result)
                 
+                """
                 #//TODO INFO: this control structure check extension regex failed sometimes!
                 if '-' in result:
                     if (re.findall(self.constants.POLARITY_SIGN_REGEX, result) is not None):
                         for found in re.findall(self.constants.POLARITY_SIGN_REGEX, result):
-                            self.extension_dict[found[0]] = found[0]
+                            self.extension_dict['EXT>'+found[0]] = found[0]
 
                     if (re.findall(self.constants.EXTENSION_REGEX, result) is not None):
                         for found in re.findall(self.constants.EXTENSION_REGEX, result):
-                            self.extension_dict[found[0]] = found[0]
-
+                            self.extension_dict['EXT>'+found[0]] = found[0]
+                """
                 return result
             else:
                 print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')

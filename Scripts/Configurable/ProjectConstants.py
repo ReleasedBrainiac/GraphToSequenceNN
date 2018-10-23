@@ -18,6 +18,8 @@ class Constants:
     EXTENSION_ELEMENT_REGEX = r'\-\d+'
     FIND_EXTENSION_HAZRDS = r'\s*(((\()*(\w+ )(\/ \w+)*\)*)*|(\(\w+\)))'
     
+    REMOVE_USELSS_ELEMENTS_REGEX = r'[^a-zA-Z\d\s:\/\:\-\(\)]'
+
     OLD_POLARITY_SIGN_REGEX = r'\s+\-\s*'
     POLARITY_SIGN_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
 

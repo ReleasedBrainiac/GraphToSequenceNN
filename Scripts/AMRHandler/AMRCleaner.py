@@ -1,14 +1,51 @@
 # - *- coding: utf-8*-
 import re
-from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber
+from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict
 from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
 class Cleaner:
     #//TODO IDEE: Erst den String in einen Baum packen und dann die einzelnen Knoten bearbeiten! Das macht den ganzen Vorgang einfacher!
 
+    # Variables inits
+    parenthesis = ['(',')']
+    extension_dict = {}
+    new_nodes_dict = {}
+    context = None
+    cleaned = None
+    isCleaned = False
+    gotContext = False
+    gotExtentsionsDict = False
+
+    # Class inits
     constants = Constants()
-    NEW_NODES_DICT = {}
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}):
+        try:
+            if ((input_context is not None) and isStr(input_context)): 
+                self.gotContext = True
+                self.context = input_context
+
+            if((input_extension_dict is not None) and isDict(input_extension_dict)):
+                self.gotExtentsionsDict = True
+                self.extension_dict = input_extension_dict
+
+            if(isStr(open_bracket) and isStr(close_bracket)):
+                self.parenthesis[0] = open_bracket
+                self.parenthesis[1] = close_bracket
+
+            if(self.gotContext):
+                self.cleaned = self.GenerateCleanAMR(input_context, open_bracket, close_bracket)
+        except ValueError:
+            print("No valid inputs passed. Try again...")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     #// TODO BUG: Labels are inserted => (s / string-entity  (Y0Z)) but content is missing (s / string-entity :value "what")
     def CreateNewLabel(self, number):
@@ -103,6 +140,8 @@ class Cleaner:
             print('WRONG INPUT FOR [CheckOpenEnclosing]')
             return None
 
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     def GetEnclosedContent(self, content, open_par, close_par):
         """
         This function return the most outer nested content in a string by given desired parenthesis strings.
@@ -110,39 +149,41 @@ class Cleaner:
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
-        if  isStr(content) and isStr(open_par) and isStr(close_par):
+        try:
             if isInStr(open_par, content) and isInStr(close_par, content):
                 pos_open = content.index(open_par)
                 pos_close = content.rfind(close_par)
                 return content[pos_open+1:pos_close]
             else:
                 return content
-        else:
-            print('WRONG INPUT FOR [GetEnclosedContent]')
-            return None
+        except ValueError:
+            print("ERR: Missing or wrong value(s) passed to [GetEnclosedContent].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def EncloseSoloLabels(self, raw_line):
         """
         This function create new AMR nodes on argument flags following unenclosed labels.
             :param raw_line: a string containing argument flags following unenclosed labels
         """
-        if isStr(raw_line):
+        try:
             if isInStr(self.constants.COLON, raw_line):
-                #print('[O: ',raw_line,']')
-                #loot = re.findall(self.constants.ARGS_REGEX, raw_line)
                 loot = re.findall(self.constants.UNENCLOSED_ARGS_REGEX, raw_line)
 
                 for loot_elem in loot:
-                    print('[L: ',loot_elem,']')
                     joined_elem_regex = ''.join(loot_elem)
                     joined_elem_replace = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
                     raw_line = re.sub(joined_elem_regex, joined_elem_replace, raw_line)      
                     
-                #print('[E: ',raw_line,']')
             return raw_line
-        else:
-            print('WRONG INPUT FOR [EncloseSoloLabels]')
-            return None
+        except ValueError:
+            print("ERR: Missing or wrong value passed to [EncloseSoloLabels].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def EncloseQualifiedStringInforamtions(self, raw_line, open_par, close_par):
         """
@@ -151,7 +192,7 @@ class Cleaner:
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(raw_line):
+        try:
             if isInStr(self.constants.QUOTATION_MARK, raw_line):
                 loot = re.findall(self.constants.QUALIFIED_STR_REGEX, raw_line)
                 run_iter = -1
@@ -162,15 +203,15 @@ class Cleaner:
                     content = None
 
                     if isNotNone(found_elem) and hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
-                        if found_elem in self.NEW_NODES_DICT:
-                            label = self.NEW_NODES_DICT[found_elem]
+                        if found_elem in self.new_nodes_dict:
+                            label = self.new_nodes_dict[found_elem]
                             content = None
 
                         else:     
                             run_iter = run_iter + 1
                             label = self.CreateNewLabel(run_iter)
                             content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
-                            self.NEW_NODES_DICT[found_elem] = label
+                            self.new_nodes_dict[found_elem] = label
                         
                         replace = self.CreateNewDefinedNode(label, content, open_par, close_par)
                         raw_line = raw_line.replace(found_elem, replace, 1)
@@ -180,9 +221,14 @@ class Cleaner:
                         continue   
 
             return raw_line
-        else:
-            print('WRONG INPUT FOR [EncloseQualifiedStringInforamtions]')
-            return None
+        except ValueError:
+            print("ERR: No string passed to [EncloseQualifiedStringInforamtions].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     #//TODO Polarity has a to be changed! There still polarity signs occouring => (h / he)  -)! 
     def ReplacePolarity(self, raw_line, open_par, close_par):
@@ -192,29 +238,32 @@ class Cleaner:
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(raw_line):
+        try:
             if isInStr(' - ', raw_line):
                 next_depth = self.GetCurrentDepth(raw_line) + 1 
                 label = None
                 content = None
 
-                if self.constants.NEG_POLARITY in self.NEW_NODES_DICT:
-                    label = self.NEW_NODES_DICT[self.constants.NEG_POLARITY]
+                if self.constants.NEG_POLARITY in self.new_nodes_dict:
+                    label = self.new_nodes_dict[self.constants.NEG_POLARITY]
                     content = None
                 else:
                     label = self.constants.NEG_POL_LABEL
                     content = self.constants.NEG_POLARITY
-                    self.NEW_NODES_DICT[self.constants.NEG_POLARITY] = self.constants.NEG_POL_LABEL
+                    self.new_nodes_dict[self.constants.NEG_POLARITY] = self.constants.NEG_POL_LABEL
 
                 replace_node_str = self.CreateNewDefinedNode(label, content, open_par, close_par)
                 replace = self.AddLeadingSpace(replace_node_str, next_depth)
                 result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
                 return result
             else:
-                return raw_line   
-        else:
-            print('WRONG INPUT FOR [ReplacePolarity]')
-            return None
+                return raw_line
+        except ValueError:
+            print("ERR: No string passed to [ReplacePolarity].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def DeleteFlags(self, raw_line):
         """
@@ -242,7 +291,7 @@ class Cleaner:
         """
         if isStr(raw_line):
             if isInStr('-', raw_line):
-                return re.sub(self.constants.EXTENSION_REGEX,'', raw_line)
+                return re.sub(self.constants.EXTENSION_ELEMENT_REGEX,'', raw_line)
             else:
                 return raw_line
         else:
@@ -297,6 +346,8 @@ class Cleaner:
             print('WRONG INPUT FOR [AddLeadingSpace]')
             return None
 
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     def NiceFormatting(self, amr_str, open_par, close_par):
         """
         This function format and clean up a raw AMR semantic (graph-) string.
@@ -313,6 +364,7 @@ class Cleaner:
             for line in openings:
                 depth = depth + 1
                 new_line = self.AddLeadingSpace((open_par + line), depth)
+                #print('[',new_line,']')
 
                 if isInStr(close_par, new_line):
                     occourences = self.CountSubsStrInStr(new_line, close_par)
@@ -330,6 +382,8 @@ class Cleaner:
             print('WRONG INPUT FOR [NiceFormatting]')
             return None
 
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     def GenerateCleanAMR(self, raw_amr, open_par, close_par):
         """
         This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
@@ -341,21 +395,20 @@ class Cleaner:
             unformated_str = self.GetUnformatedAMRString(raw_amr)
             if self.CheckOpenEnclosing(unformated_str, open_par, close_par):
                 node_enclosed_str = self.EncloseSoloLabels(unformated_str)
-                #print(node_enclosed_str)
                 name_enclosed_str = self.EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
-                #print(name_enclosed_str)
                 amr_str = self.GetEnclosedContent(name_enclosed_str, open_par, close_par)
-
-                #print(amr_str)
-
                 result = self.NiceFormatting(amr_str, open_par, close_par)
-
-                '''
+                #äprint(result)
+                
                 #//TODO INFO: this control structure check extension regex failed sometimes!
-                if re.match(self.constants.FIND_EXTENSION_HAZRDS, result) is not None:
-                    print('[',result,'] \n')
-                    #result = self.NiceFormatting(amr_str, open_par, close_par)
-                '''
+                if '-' in result:
+                    if (re.findall(self.constants.POLARITY_SIGN_REGEX, result) is not None):
+                        for found in re.findall(self.constants.POLARITY_SIGN_REGEX, result):
+                            self.extension_dict[found[0]] = found[0]
+
+                    if (re.findall(self.constants.EXTENSION_REGEX, result) is not None):
+                        for found in re.findall(self.constants.EXTENSION_REGEX, result):
+                            self.extension_dict[found[0]] = found[0]
 
                 return result
             else:
@@ -364,3 +417,14 @@ class Cleaner:
         else:
             print('WRONG INPUT FOR [GenerateCleanAMR]')
             return None
+
+'''
+        try:
+            
+        except ValueError:
+            print("ERR: No string passed to [].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+'''

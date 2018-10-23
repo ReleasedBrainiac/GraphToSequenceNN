@@ -13,11 +13,16 @@ class Constants:
     NEG_POLARITY = 'not'
     NEG_POL_LABEL = 'NT0'
 
-    EXTENSION_REGEX = r'\-\d+'
-    POLARITY_SIGN_REGEX = r'\s+\-\s*'
+    # Regex
+    EXTENSION_REGEX = r'(\w*(\-\w+)+)'
+    EXTENSION_ELEMENT_REGEX = r'\-\d+'
+    FIND_EXTENSION_HAZRDS = r'\s*(((\()*(\w+ )(\/ \w+)*\)*)*|(\(\w+\)))'
+    
+    OLD_POLARITY_SIGN_REGEX = r'\s+\-\s*'
+    POLARITY_SIGN_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
+
     QUALIFIED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
     FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
+
     ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
     UNENCLOSED_ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z0-9\-]+)'
-    #//TODO This regex didnt allow multiple whitespaces in the code!
-    FIND_EXTENSION_HAZRDS = r'\s*(((\()*(\w+ )(\/ \w+)*\)*)*|(\(\w+\)))'

@@ -11,6 +11,7 @@ class Constants:
     COLON = ':'
     QUOTATION_MARK = '"'
     CONNECTOR = '-'
+    POLARITY = ' - '
     WHITESPACE = ' '
     NEG_POLARITY = 'not'
     NEG_POL_LABEL = 'NT0'

@@ -26,6 +26,7 @@ class Cleaner:
         try:
 
             self.constants = Constants()
+            self.new_nodes_dict = {}
 
             if isStr(input_context): 
                 self.gotContext = True
@@ -79,6 +80,14 @@ class Cleaner:
             return self.parenthesis[0] in in_context and self.parenthesis[1] in in_context
         elif self.gotContext:
             return self.parenthesis[0] in self.context and self.parenthesis[1] in self.context
+        else:
+            return False
+
+    def HasPolarity(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.POLARITY in in_context
+        elif self.gotContext:
+            return self.constants.POLARITY in self.context
         else:
             return False
 
@@ -259,9 +268,7 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-
-    #//TODO BUG: Hier kontrollieren das der Knotenwerk min einmal im graphen auftaucht oder kein globales sondern ein lokales dict!
-    def EncloseQualifiedStringInforamtions(self, in_content):
+    def EncloseFreeInformations(self, in_content):
         """
         This function creates new AMR nodes with desired parenthesis for Qualified Names enclosed in quotation marks.
             :param in_content: a string with (at least one) qualified name(s)
@@ -275,11 +282,12 @@ class Cleaner:
                     label = None
                     content = None
 
+                    #//TODO BUG: Hier kontrollieren das der Knotenwerk min einmal im graphen auftaucht 
+                    #            oder kein globales sondern ein lokales dict!
                     if hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
                         if (found_elem in self.new_nodes_dict):
                             label = self.new_nodes_dict[found_elem]
                             content = None
-
                         else:     
                             run_iter = run_iter + 1
                             label = self.CreateNewLabel(run_iter)
@@ -289,12 +297,12 @@ class Cleaner:
                         in_content = in_content.replace(found_elem, self.CreateNewNode(label, content), 1)
 
                     else:
-                        print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseQualifiedStringInforamtions]')
+                        print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseFreeInformations]')
                         continue   
 
             return in_content
         except ValueError:
-            print("ERR: No content passed to [EncloseQualifiedStringInforamtions].")
+            print("ERR: No content passed to [EncloseFreeInformations].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -302,21 +310,19 @@ class Cleaner:
             
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    #//TODO Polarity has a to be changed! There still polarity signs occouring => (h / he)  -)! 
-    def ReplacePolarity(self, in_content, open_par, close_par):
+    #//TODO BUG: Polarity has to be changed! There still polarity signs occouring => (h / he)  -)! 
+    def ReplacePolarity(self, in_content):
         """
         This function replace negative polarity (-) signs in a raw semantic line with a new AMR node.
             :param in_content: string containing (at least on) AMR polarity sign
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
         """
         try:
-            if isInStr(' - ', in_content):
+            if self.HasPolarity(in_content):
                 next_depth = self.GetCurrentDepth(in_content) + 1 
                 label = None
                 content = None
 
-                if self.constants.NEG_POLARITY in self.new_nodes_dict:
+                if (self.constants.NEG_POLARITY in self.new_nodes_dict):
                     label = self.new_nodes_dict[self.constants.NEG_POLARITY]
                     content = None
                 else:
@@ -392,7 +398,7 @@ class Cleaner:
             if isInStr(self.constants.COLON, result):
                 result = self.DeleteFlags(result)
             if isInStr('-', result):
-                result = self.ReplacePolarity(result, open_par, close_par)
+                result = self.ReplacePolarity(result)
                 result = self.DeleteWordExtension(result)
                 result = self.RemoveUnusedSignes(result)
                     
@@ -489,7 +495,7 @@ class Cleaner:
         self.context = self.GetUnformatedAMRString(self.context)
         if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context, self.parenthesis[0], self.parenthesis[1]):
             self.context = self.EncloseSoloLabels(self.context)
-            self.context = self.EncloseQualifiedStringInforamtions(self.context)
+            self.context = self.EncloseFreeInformations(self.context)
             self.context = self.GetEnclosedContent(self.context)
             self.context = self.LookUpReplacement(self.context)
             self.cleaned = self.NiceFormatting(self.context, self.parenthesis[0], self.parenthesis[1])

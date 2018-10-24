@@ -18,30 +18,31 @@ class Cleaner:
     gotExtentsionsDict = False
 
     # Class inits
-    constants = Constants()
+    constants = None
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict=None):
+    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}):
         try:
-            if ((input_context is not None) and isStr(input_context)): 
+
+            self.constants = Constants()
+
+            if isStr(input_context): 
                 self.gotContext = True
                 self.context = input_context
 
-            if((input_extension_dict is not None) and isDict(input_extension_dict)):
+            if isDict(input_extension_dict):
                 self.gotExtentsionsDict = True
                 self.extension_dict = input_extension_dict
-            #else:
-            #    self.extension_dict = 
 
-            if(isStr(open_bracket) and isStr(close_bracket)):
+            if isStr(open_bracket) and isStr(close_bracket):
                 self.parenthesis[0] = open_bracket
                 self.parenthesis[1] = close_bracket
 
             if(self.gotContext):
-                self.cleaned = self.GenerateCleanAMR(input_context, open_bracket, close_bracket)
+                self.GenerateCleanAMR()
         except ValueError:
-            print("No valid inputs passed. Try again...")
+            print("No valid context passed.")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -49,115 +50,164 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    #// TODO BUG: Labels are inserted => (s / string-entity  (Y0Z)) but content is missing (s / string-entity :value "what")
-    def CreateNewLabel(self, number):
+    def HasColon(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.COLON in in_context
+        elif self.gotContext:
+            return self.constants.COLON in self.context
+        else:
+            return False
+
+    def HasQuotation(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.QUOTATION_MARK in in_context
+        elif self.gotContext:
+            return self.constants.QUOTATION_MARK in self.context
+        else:
+            return False
+
+    def HasConnector(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.CONNECTOR in in_context
+        elif self.gotContext:
+            return self.constants.CONNECTOR in self.context
+        else:
+            return False
+    
+    def HasParenthesis(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.parenthesis[0] in in_context and self.parenthesis[1] in in_context
+        elif self.gotContext:
+            return self.parenthesis[0] in self.context and self.parenthesis[1] in self.context
+        else:
+            return False
+
+    def HasWhitspaces(self, in_context=''):
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.WHITESPACE in in_context
+        elif self.gotContext:
+            return self.constants.WHITESPACE in self.context
+        else:
+            return False
+
+    def MatchSignsOccurences(self, in_context='', in_sign_x='(', in_sign_y=')'):
+        if isStr(in_context) and len(in_context) > 0:
+            count_sign_x = self.GetSignOccurenceCount(in_context, in_sign_x)
+            count_sign_y = self.GetSignOccurenceCount(in_context, in_sign_y)
+            return count_sign_x == count_sign_y
+        elif self.gotContext:
+            count_sign_x = self.GetSignOccurenceCount(self.context, in_sign_x)
+            count_sign_y = self.GetSignOccurenceCount(self.context, in_sign_y)
+            return count_sign_x == count_sign_y
+        else:
+            return False
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def CreateNewLabel(self, in_number):
         """
         This function create a label with a upper-case post- and pre-element.
         The passed number (maybe an iteration value) is placed between them.
-            :param number: a number which is placed in the label
+            :param in_number: a number which is placed in the label
         """
-        inner_index = GetRandomInt(0, 50)
-        if isNumber(number) and (number > -1):
-            inner_index = number
-            
-        return 'Y' + str(inner_index) + 'Z'
-
-    def CreateNewDefinedNode(self, label , content, open_par, close_par):
+        try:
+            inner_index = GetRandomInt(0, 50)
+            if isNumber(in_number) and (in_number > -1):
+                inner_index = in_number
+                
+            return 'Y' + str(inner_index) + 'Z'
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+ 
+    def CreateNewNode(self, in_label , in_content=None):
         """
         This function defines a new AMR converted node element.
         Depending on the content it returns a node with label and content or just containing a label.
-            :param label: the desired node label
-            :param content: the corresponding content
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
+            :param in_label: the desired node label
+            :param in_content: the corresponding content
         """
-        if isStr(label) and isStr(open_par) and isStr(close_par):
-            if isStr(content):
-                return open_par + label + ' / ' + content + close_par
+        try:
+            if isStr(in_content):
+                return self.parenthesis[0] + in_label + ' / ' + in_content + self.parenthesis[1]
             else:
-                return open_par + label + close_par
-        else:
-            print('WRONG INPUT FOR [CreateNewDefinedNode]')
-            return None
-
-    def CountLeadingWhiteSpaces(self, raw_line):
+                return self.parenthesis[0] + in_label + self.parenthesis[1]
+        except ValueError:
+            print("ERR: No label passed to [CreateNewNode].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)        
+        
+    def CountLeadingWhiteSpaces(self, in_content):
         """
         This function count leading whitespaces in raw line of a raw or indentation cleaned AMR string.
         Remind the input should not be preformated (e.g. cleaning from whitespaces).
-            :param raw_line: a raw or indentation cleaned AMR string.
+            :param in_content: a raw or indentation cleaned AMR string.
         """
-        if isStr(raw_line):
-            if isInStr(' ', raw_line):
-                return (len(raw_line) - len(raw_line.lstrip(' ')))
+        try:
+            if self.HasWhitspaces(in_content):
+                return (len(in_content) - len(in_content.lstrip(' ')))
             else:
                 return 0
-        else:
-            print('WRONG INPUT FOR [CountLeadingWhiteSpaces]')
-            return None
+        except ValueError:
+            print("ERR: No content passed to [CountLeadingWhiteSpaces].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-    def GetCurrentDepth(self, raw_line):
+    def GetSignOccurenceCount(self, in_content, in_search_element):
+        """
+        This function count occourences of srtings inside another string.
+            :param in_content: the string were want to discover occourences
+            :param in_search_element: the string we are searching for
+        """
+        try:
+            if len(in_content) > len(in_search_element):
+                return in_content.count(in_search_element)
+            else: 
+                print('WRONG INPUT FOR [GetSignOccurenceCount]')
+                return 0
+        except ValueError:
+            print("ERR: No content passed to [GetSignOccurenceCount].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def GetCurrentDepth(self, in_content):
         """
         This function calculate the depth of a AMR strig node element depending on:
         1. the amount of leading whitespaces
         2. the global defined constants.INDENTATION constant
-            :param raw_line: a raw or indentation cleaned AMR string.
-        """
-        if isStr(raw_line):
-            if isInStr('', raw_line):
-                return toInt(self.CountLeadingWhiteSpaces(raw_line) / self.constants.INDENTATION)
-            else:
-                return 0
-        else:
-            print('WRONG INPUT FOR [GetCurrentDepth]')
-            return None
-
-    def CountSubsStrInStr(self, content_str, search_element):
-        """
-        This function count occourences of srtings inside another string.
-            :param content_str: the string were want to discover occourences
-            :param search_element: the string we are searching for
-        """
-        if isStr(content_str) and isStr(search_element) and (len(content_str) > len(search_element)):
-            return content_str.count(search_element)
-        else: 
-            print('WRONG INPUT FOR [CountSubsStrInStr]')
-            return 0
-
-    def CheckOpenEnclosing(self, content, open_par, close_par):
-        """
-        This function check the equal amount of opened and closed parenthesis depending on the given parenthesis definition.
-            :param content: raw string containing desired parenthesis
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
-        """
-        if isStr(content) and isStr(open_par) and isStr(close_par) and isInStr(open_par, content) and isInStr(close_par, content) :
-            count_open = self.CountSubsStrInStr(content,open_par)
-            count_close = self.CountSubsStrInStr(content,close_par)
-
-            if (count_open == count_close):
-                return True
-            else:
-                return False
-        else:
-            print('WRONG INPUT FOR [CheckOpenEnclosing]')
-            return None
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def GetEnclosedContent(self, content, open_par, close_par):
-        """
-        This function return the most outer nested content in a string by given desired parenthesis strings.
-            :param content: string containing content nested in desired parenthesis.
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
+            :param in_content: a raw or indentation cleaned AMR string.
         """
         try:
-            if isInStr(open_par, content) and isInStr(close_par, content):
-                pos_open = content.index(open_par)
-                pos_close = content.rfind(close_par)
-                return content[pos_open+1:pos_close]
+            if self.HasWhitspaces(in_content):
+                return toInt(self.CountLeadingWhiteSpaces(in_content) / self.constants.INDENTATION)
             else:
-                return content
+                return 0
+        except ValueError:
+            print("ERR: No content passed to [GetCurrentDepth].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def GetEnclosedContent(self, in_content):
+        """
+        This function return the most outer nested content in a string by given desired parenthesis strings.
+            :param in_content: string containing content nested in desired parenthesis.
+        """
+        try:
+            if self.HasParenthesis(in_content):
+                pos_open = in_content.index(self.parenthesis[0])
+                pos_close = in_content.rfind(self.parenthesis[1])
+                return in_content[pos_open+1:pos_close]
+            else:
+                return in_content
         except ValueError:
             print("ERR: Missing or wrong value(s) passed to [GetEnclosedContent].")
         except Exception as ex:
@@ -165,21 +215,43 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncloseSoloLabels(self, raw_line):
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def CollectAllMatchesOfPattern(self, in_context, in_regex_pattern):
+        try:
+            return re.findall(in_regex_pattern, in_context)
+        except ValueError:
+            print("ERR: No content passed to [CollectAllMatchesOfPattern].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def ReplaceAllPatternMatches(self, in_pattern_search, in_replace, in_context):
+        try:
+            return re.sub(in_pattern_search, in_replace, in_context) 
+        except ValueError:
+            print("ERR: No content passed to [ReplaceAllPatternMatches].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def EncloseSoloLabels(self, in_content):
         """
         This function create new AMR nodes on argument flags following unenclosed labels.
-            :param raw_line: a string containing argument flags following unenclosed labels
+            :param in_content: a string containing argument flags following unenclosed labels
         """
         try:
-            if isInStr(self.constants.COLON, raw_line):
-                loot = re.findall(self.constants.UNENCLOSED_ARGS_REGEX, raw_line)
-
-                for loot_elem in loot:
-                    joined_elem_regex = ''.join(loot_elem)
-                    joined_elem_replace = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
-                    raw_line = re.sub(joined_elem_regex, joined_elem_replace, raw_line)      
+            if self.HasColon(in_content):
+                for loot_elem in self.CollectAllMatchesOfPattern(self.constants.UNENCLOSED_ARGS_REGEX, in_content):
+                    search_pattern = ''.join(loot_elem)
+                    replace_pattern = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
+                    in_content = self.ReplaceAllPatternMatches(search_pattern, replace_pattern, in_content)
                     
-            return raw_line
+            return in_content
         except ValueError:
             print("ERR: Missing or wrong value passed to [EncloseSoloLabels].")
         except Exception as ex:
@@ -187,25 +259,24 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncloseQualifiedStringInforamtions(self, raw_line, open_par, close_par):
+
+    #//TODO BUG: Hier kontrollieren das der Knotenwerk min einmal im graphen auftaucht oder kein globales sondern ein lokales dict!
+    def EncloseQualifiedStringInforamtions(self, in_content):
         """
         This function creates new AMR nodes with desired parenthesis for Qualified Names enclosed in quotation marks.
-            :param raw_line: a string with (at least one) qualified name(s)
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
+            :param in_content: a string with (at least one) qualified name(s)
         """
         try:
-            if isInStr(self.constants.QUOTATION_MARK, raw_line):
-                loot = re.findall(self.constants.QUALIFIED_STR_REGEX, raw_line)
+            if self.HasQuotation(in_content):
                 run_iter = -1
 
-                for loot_elem in loot:
+                for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.QUALIFIED_STR_REGEX):
                     found_elem = loot_elem[0]
                     label = None
                     content = None
 
-                    if isNotNone(found_elem) and hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
-                        if found_elem in self.new_nodes_dict:
+                    if hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
+                        if (found_elem in self.new_nodes_dict):
                             label = self.new_nodes_dict[found_elem]
                             content = None
 
@@ -215,16 +286,15 @@ class Cleaner:
                             content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
                             self.new_nodes_dict[found_elem] = label
                         
-                        replace = self.CreateNewDefinedNode(label, content, open_par, close_par)
-                        raw_line = raw_line.replace(found_elem, replace, 1)
+                        in_content = in_content.replace(found_elem, self.CreateNewNode(label, content), 1)
 
                     else:
                         print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseQualifiedStringInforamtions]')
                         continue   
 
-            return raw_line
+            return in_content
         except ValueError:
-            print("ERR: No string passed to [EncloseQualifiedStringInforamtions].")
+            print("ERR: No content passed to [EncloseQualifiedStringInforamtions].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -233,16 +303,16 @@ class Cleaner:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     #//TODO Polarity has a to be changed! There still polarity signs occouring => (h / he)  -)! 
-    def ReplacePolarity(self, raw_line, open_par, close_par):
+    def ReplacePolarity(self, in_content, open_par, close_par):
         """
         This function replace negative polarity (-) signs in a raw semantic line with a new AMR node.
-            :param raw_line: string containing (at least on) AMR polarity sign
+            :param in_content: string containing (at least on) AMR polarity sign
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
         try:
-            if isInStr(' - ', raw_line):
-                next_depth = self.GetCurrentDepth(raw_line) + 1 
+            if isInStr(' - ', in_content):
+                next_depth = self.GetCurrentDepth(in_content) + 1 
                 label = None
                 content = None
 
@@ -254,70 +324,70 @@ class Cleaner:
                     content = self.constants.NEG_POLARITY
                     self.new_nodes_dict[self.constants.NEG_POLARITY] = self.constants.NEG_POL_LABEL
 
-                replace_node_str = self.CreateNewDefinedNode(label, content, open_par, close_par)
+                replace_node_str = self.CreateNewNode(label, content)
                 replace = self.AddLeadingSpace(replace_node_str, next_depth)
-                result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), raw_line)
+                result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), in_content)
                 return result
             else:
-                return raw_line
+                return in_content
         except ValueError:
-            print("ERR: No string passed to [ReplacePolarity].")
+            print("ERR: No content passed to [ReplacePolarity].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DeleteFlags(self, raw_line):
+    def DeleteFlags(self, in_content):
         """
         This function delete AMR flags and only keep the informations they were flagged.
-            :param raw_line: string with (at least on) AMR flag(s)
+            :param in_content: string with (at least on) AMR flag(s)
         """
-        if isStr(raw_line):
-            if isInStr(self.constants.COLON, raw_line):
-                return re.sub(self.constants.FLAG_REGEX, '', raw_line)            
+        if isStr(in_content):
+            if isInStr(self.constants.COLON, in_content):
+                return re.sub(self.constants.FLAG_REGEX, '', in_content)            
             else:
-                return raw_line
+                return in_content
         else:
             print('WRONG INPUT FOR [DeleteFlags]')
             return None
 
-    def RemoveUnusedSignes(self, raw_line):
+    def RemoveUnusedSignes(self, in_content):
         """
 
         """
-        if isStr(raw_line):
-                return re.sub(self.constants.REMOVE_USELSS_ELEMENTS_REGEX, '', raw_line)            
+        if isStr(in_content):
+                return re.sub(self.constants.REMOVE_USELSS_ELEMENTS_REGEX, '', in_content)            
         else:
-            return raw_line
+            return in_content
 
     #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
     #//TODO how to handle => :part-of(x) if x is a parent?
     #//TODO how to handle => amr-unknown content? Its dataset content!
     #//TODO how to handle => toss-out and have-rel-role? Both types occour much often! ??? mglw. => einzelworte in Glove später addieren?
     #//TODO how to handle => :mode <random word>? I actually replace them as new node but the label ist still missing for it! mglw. => label = word[0] + 0 + word[0]?
-    def DeleteWordExtension(self, raw_line):
+    def DeleteWordExtension(self, in_content):
         """
         This function delete word extensions from node content in a AMR semantic line fragment.
-            :param raw_line: a AMR semantic line fragment
+            :param in_content: a AMR semantic line fragment
         """
-        if isStr(raw_line):
-            if isInStr('-', raw_line):
-                return re.sub(self.constants.EXTENSION_ELEMENT_REGEX,'', raw_line)
+        if isStr(in_content):
+            if isInStr('-', in_content):
+                return re.sub(self.constants.EXTENSION_ELEMENT_REGEX,'', in_content)
             else:
-                return raw_line
+                return in_content
         else:
             print('WRONG INPUT FOR [DeleteWordExtension]')
             return None
         
-    def ExploreAdditionalcontent(self, raw_line, open_par, close_par):
+    def ExploreAdditionalcontent(self, in_content, open_par, close_par):
         """
         This function search in a AMR line fragment about additional context for the AMR node.
-            :param raw_line: a AMR line fragment with a node and maybe additional context 
+            :param in_content: a AMR line fragment with a node and maybe additional context 
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(raw_line):
-            result = raw_line
+        if isStr(in_content):
+            result = in_content
 
             if isInStr(self.constants.COLON, result):
                 result = self.DeleteFlags(result)
@@ -358,16 +428,16 @@ class Cleaner:
             print('WRONG INPUT FOR [AddLeadingSpace]')
             return None
 
-    def LookUpReplacement(self, raw_line):
+    def LookUpReplacement(self, in_content):
         try:
-            if ('-' in raw_line) and (re.findall(self.constants.EXTENSION_REGEX, raw_line) is not None):
-                for found in re.findall(self.constants.EXTENSION_REGEX, raw_line):
+            if ('-' in in_content) and (re.findall(self.constants.EXTENSION_REGEX, in_content) is not None):
+                for found in re.findall(self.constants.EXTENSION_REGEX, in_content):
                     print('[',found,']')
                 #extension_dict
             
-            return raw_line
+            return in_content
         except ValueError:
-            print("ERR: No string passed to [LookUpReplacement].")
+            print("ERR: No content passed to [LookUpReplacement].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -395,7 +465,7 @@ class Cleaner:
                 #print('[',new_line,']')
 
                 if isInStr(close_par, new_line):
-                    occourences = self.CountSubsStrInStr(new_line, close_par)
+                    occourences = self.GetSignOccurenceCount(new_line, close_par)
                     depth = depth - occourences
                 
                 if isInStr(self.constants.COLON, new_line):
@@ -412,47 +482,45 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def GenerateCleanAMR(self, raw_amr, open_par, close_par):
+    def GenerateCleanAMR(self):
         """
         This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
-            :param raw_amr: a raw AMR semantic (graph-) string
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(raw_amr) and isStr(open_par) and isStr(close_par):
-            unformated_str = self.GetUnformatedAMRString(raw_amr)
-            if self.CheckOpenEnclosing(unformated_str, open_par, close_par):
-                node_enclosed_str = self.EncloseSoloLabels(unformated_str)
-                name_enclosed_str = self.EncloseQualifiedStringInforamtions(node_enclosed_str, open_par, close_par)
-                amr_str = self.GetEnclosedContent(name_enclosed_str, open_par, close_par)
-                look_str = self.LookUpReplacement(amr_str)
-                result = self.NiceFormatting(look_str, open_par, close_par)
-                print(result)
-                
-                """
-                #//TODO INFO: this control structure check extension regex failed sometimes!
-                if '-' in result:
-                    if (re.findall(self.constants.POLARITY_SIGN_REGEX, result) is not None):
-                        for found in re.findall(self.constants.POLARITY_SIGN_REGEX, result):
-                            self.extension_dict['EXT>'+found[0]] = found[0]
+        self.context = self.GetUnformatedAMRString(self.context)
+        if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context, self.parenthesis[0], self.parenthesis[1]):
+            self.context = self.EncloseSoloLabels(self.context)
+            self.context = self.EncloseQualifiedStringInforamtions(self.context)
+            self.context = self.GetEnclosedContent(self.context)
+            self.context = self.LookUpReplacement(self.context)
+            self.cleaned = self.NiceFormatting(self.context, self.parenthesis[0], self.parenthesis[1])
 
-                    if (re.findall(self.constants.EXTENSION_REGEX, result) is not None):
-                        for found in re.findall(self.constants.EXTENSION_REGEX, result):
-                            self.extension_dict['EXT>'+found[0]] = found[0]
-                """
-                return result
-            else:
-                print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')
-                return None
+            print(self.cleaned)
+            #self.Check(self.cleaned)
+
+            #//TODO hier muss eine Kontrollstruktur rein die einen aussage darüber trifft ob das resultat valide ist.
+            #       das resultat muss dann zur eliminierung von fehlerhaften paaren genutzt werden
+
+            return self.cleaned
         else:
-            print('WRONG INPUT FOR [GenerateCleanAMR]')
+            print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')
             return None
+
+    def Check(self, in_context):
+        #//TODO INFO: this control structure check extension regex failed sometimes!
+        if '-' in in_context:
+            if (re.findall(self.constants.POLARITY_SIGN_REGEX, in_context) is not None):
+                for found in re.findall(self.constants.POLARITY_SIGN_REGEX, in_context):
+                    self.extension_dict['EXT>'+found[0]] = found[0]
+
+            if (re.findall(self.constants.EXTENSION_REGEX, in_context) is not None):
+                for found in re.findall(self.constants.EXTENSION_REGEX, in_context):
+                    self.extension_dict['EXT>'+found[0]] = found[0]
 
 '''
         try:
             
         except ValueError:
-            print("ERR: No string passed to [].")
+            print("ERR: No content passed to [].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

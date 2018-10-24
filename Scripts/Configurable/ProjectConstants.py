@@ -10,6 +10,8 @@ class Constants:
     INDENTATION = 6
     COLON = ':'
     QUOTATION_MARK = '"'
+    CONNECTOR = '-'
+    WHITESPACE = ' '
     NEG_POLARITY = 'not'
     NEG_POL_LABEL = 'NT0'
 

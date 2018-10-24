@@ -10,6 +10,5 @@
     "python.unitTest.nosetestsEnabled": false,
     "python.unitTest.unittestEnabled": false,
     "python.unitTest.promptToConfigure": false,
-    "path-intellisense.absolutePathToWorkspace": true,
-    "python.autoComplete.extraPaths": ["/Scripts"]
+    "python.autoComplete.extraPaths": ["${workspaceFolder}/Scripts"]
 }

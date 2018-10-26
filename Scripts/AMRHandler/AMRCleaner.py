@@ -255,7 +255,7 @@ class Cleaner:
         """
         try:
             if self.HasColon(in_content):
-                for loot_elem in self.CollectAllMatchesOfPattern(self.constants.UNENCLOSED_ARGS_REGEX, in_content):
+                for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.UNENCLOSED_ARGS_REGEX):
                     search_pattern = ''.join(loot_elem)
                     replace_pattern = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
                     in_content = self.ReplaceAllPatternMatches(search_pattern, replace_pattern, in_content)
@@ -277,13 +277,13 @@ class Cleaner:
             if self.HasQuotation(in_content):
                 run_iter = -1
 
-                for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.QUALIFIED_STR_REGEX):
+                for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.MARKER_NESTED_STR_REGEX):
                     found_elem = loot_elem[0]
                     label = None
                     content = None
 
-                    #//TODO BUG: Hier kontrollieren das der Knotenwerk min einmal im graphen auftaucht 
-                    #            oder kein globales sondern ein lokales dict!
+                    #//TODO BUG: Hier kontrollieren das der Knotenwert min einmal im graphen auftaucht 
+                    #            und die definition ein Child ist.
                     if hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
                         if (found_elem in self.new_nodes_dict):
                             label = self.new_nodes_dict[found_elem]
@@ -332,7 +332,7 @@ class Cleaner:
 
                 replace_node_str = self.CreateNewNode(label, content)
                 replace = self.AddLeadingSpace(replace_node_str, next_depth)
-                result = re.sub(self.constants.POLARITY_SIGN_REGEX, ('\n'+ replace), in_content)
+                result = re.sub(self.constants.SIGN_POLARITY_REGEX, ('\n'+ replace), in_content)
                 return result
             else:
                 return in_content
@@ -359,12 +359,17 @@ class Cleaner:
 
     def RemoveUnusedSignes(self, in_content):
         """
-
+        This function delete all remaining signs we don't want to keep in the string.
+            :param in_content: string
         """
-        if isStr(in_content):
-                return re.sub(self.constants.REMOVE_USELSS_ELEMENTS_REGEX, '', in_content)            
-        else:
-            return in_content
+        try:
+            return re.sub(self.constants.SIGNS_REMOVE_UNUSED_REGEX, '', in_content)
+        except ValueError:
+            print("ERR: No content passed to [RemoveUnusedSignes].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
     #//TODO how to handle => :part-of(x) if x is a parent?
@@ -378,7 +383,7 @@ class Cleaner:
         """
         if isStr(in_content):
             if isInStr('-', in_content):
-                return re.sub(self.constants.EXTENSION_ELEMENT_REGEX,'', in_content)
+                return re.sub(self.constants.EXTENSION_NUMBER_REGEX,'', in_content)
             else:
                 return in_content
         else:
@@ -436,11 +441,17 @@ class Cleaner:
 
     def LookUpReplacement(self, in_content):
         try:
-            if ('-' in in_content) and (re.findall(self.constants.EXTENSION_REGEX, in_content) is not None):
-                for found in re.findall(self.constants.EXTENSION_REGEX, in_content):
-                    print('[',found,']')
-                #extension_dict
             
+
+            if ('-' in in_content):
+                look_up_control = self.CollectAllMatchesOfPattern(in_content, self.constants.EXTENSION_MULTI_WORD_REGEX)
+
+                if (look_up_control is not None):
+                    print('in: [',in_content,']')
+                    for found in look_up_control:
+                        if found in self.extension_dict:
+                            in_content.replace(found, self.extension_dict[found])
+                print('out: [',in_content,']')
             return in_content
         except ValueError:
             print("ERR: No content passed to [LookUpReplacement].")
@@ -468,7 +479,6 @@ class Cleaner:
             for line in openings:
                 depth = depth + 1
                 new_line = self.AddLeadingSpace((open_par + line), depth)
-                #print('[',new_line,']')
 
                 if isInStr(close_par, new_line):
                     occourences = self.GetSignOccurenceCount(new_line, close_par)
@@ -494,13 +504,18 @@ class Cleaner:
         """
         self.context = self.GetUnformatedAMRString(self.context)
         if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context, self.parenthesis[0], self.parenthesis[1]):
+            #print('#^1[',self.context,']')
             self.context = self.EncloseSoloLabels(self.context)
+            #print('#^2[',self.context,']')
             self.context = self.EncloseFreeInformations(self.context)
+            #print('#^3[',self.context,']')
             self.context = self.GetEnclosedContent(self.context)
+            #print('#^4[',self.context,']')
             self.context = self.LookUpReplacement(self.context)
+            #print('#^5[',self.context,']')
             self.cleaned = self.NiceFormatting(self.context, self.parenthesis[0], self.parenthesis[1])
 
-            print(self.cleaned)
+            #print(self.cleaned)
             #self.Check(self.cleaned)
 
             #//TODO hier muss eine Kontrollstruktur rein die einen aussage darüber trifft ob das resultat valide ist.
@@ -514,12 +529,15 @@ class Cleaner:
     def Check(self, in_context):
         #//TODO INFO: this control structure check extension regex failed sometimes!
         if '-' in in_context:
-            if (re.findall(self.constants.POLARITY_SIGN_REGEX, in_context) is not None):
-                for found in re.findall(self.constants.POLARITY_SIGN_REGEX, in_context):
+            polarity_control = self.CollectAllMatchesOfPattern(in_context, self.constants.SIGN_POLARITY_REGEX)
+            extension_control = self.CollectAllMatchesOfPattern(in_context, self.constants.EXTENSION_REGEX)
+
+            if (polarity_control is not None):
+                for found in polarity_control:
                     self.extension_dict['EXT>'+found[0]] = found[0]
 
-            if (re.findall(self.constants.EXTENSION_REGEX, in_context) is not None):
-                for found in re.findall(self.constants.EXTENSION_REGEX, in_context):
+            if (extension_control is not None):
+                for found in extension_control:
                     self.extension_dict['EXT>'+found[0]] = found[0]
 
 '''

@@ -18,15 +18,15 @@ class Constants:
 
     # Regex
     EXTENSION_REGEX = r'(\w*(\-\w+)+)'
-    EXTENSION_ELEMENT_REGEX = r'\-\d+'
-    FIND_EXTENSION_HAZRDS = r'\s*(((\()*(\w+ )(\/ \w+)*\)*)*|(\(\w+\)))'
+    EXTENSION_NUMBER_REGEX = r'\-\d+'
+    EXTENSION_WORD_ENDING_REGEX = r'(\w+\-)+[0-9]+'
+    EXTENSION_MULTI_WORD_REGEX = r'[^:](\w*(\-[a-zA-Z]+)+)'
     
-    REMOVE_USELSS_ELEMENTS_REGEX = r'[^a-zA-Z\d\s:\/\:\-\(\)]'
+    SIGN_POLARITY_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
+    SIGNS_REMOVE_UNUSED_REGEX = r'[^a-zA-Z\d\s:\/\:\-\(\)]'
+    
 
-    OLD_POLARITY_SIGN_REGEX = r'\s+\-\s*'
-    POLARITY_SIGN_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
-
-    QUALIFIED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
+    MARKER_NESTED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
     FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
 
     ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'

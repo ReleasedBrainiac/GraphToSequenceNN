@@ -8,6 +8,7 @@ This Repo is in proceeding. It will provide an example of Graph2Sequence encodin
 - Keras Version:        2.2.2 => https://keras.io/
 - Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/
+- NetworkX              2.2   => https://networkx.github.io/documentation/stable/install.html
 - Ordereddict Version:  1.1   => https://pypi.org/project/ordereddict/
 - Pydot Version:        1.2.4 => https://pypi.org/project/pydot/
 - Graphviz Version:     0.8.4 => https://pypi.org/project/graphviz/

@@ -10,6 +10,7 @@ class Cleaner:
     # Variables inits
     parenthesis = ['(',')']
     extension_dict = {}
+    extension_keys_dict = {}
     new_nodes_dict = {}
     context = None
     cleaned = None
@@ -35,6 +36,7 @@ class Cleaner:
             if isDict(input_extension_dict):
                 self.gotExtentsionsDict = True
                 self.extension_dict = input_extension_dict
+                self.extension_keys_dict = self.extension_dict.keys()
 
             if isStr(open_bracket) and isStr(close_bracket):
                 self.parenthesis[0] = open_bracket
@@ -85,7 +87,7 @@ class Cleaner:
 
     def HasPolarity(self, in_context=''):
         if isStr(in_context) and len(in_context) > 0:
-            return self.constants.POLARITY in in_context
+            return (self.constants.POLARITY in in_context or '(-)' in in_context)
         elif self.gotContext:
             return self.constants.POLARITY in self.context
         else:
@@ -124,9 +126,9 @@ class Cleaner:
             if isNumber(in_number) and (in_number > -1):
                 inner_index = in_number
                 
-            return 'Y' + str(inner_index) + 'Z'
+            return 'NEW' + str(inner_index)
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CreateNewLabel]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
  
@@ -143,9 +145,9 @@ class Cleaner:
             else:
                 return self.parenthesis[0] + in_label + self.parenthesis[1]
         except ValueError:
-            print("ERR: No label passed to [CreateNewNode].")
+            print("ERR: No label passed to [AMRCleaner.CreateNewNode].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CreateNewNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)        
         
@@ -156,14 +158,15 @@ class Cleaner:
             :param in_content: a raw or indentation cleaned AMR string.
         """
         try:
+            count = 0
             if self.HasWhitspaces(in_content):
-                return (len(in_content) - len(in_content.lstrip(' ')))
-            else:
-                return 0
+                count = (len(in_content) - len(in_content.lstrip(' ')))
+
+            return count
         except ValueError:
-            print("ERR: No content passed to [CountLeadingWhiteSpaces].")
+            print("ERR: No content passed to [AMRCleaner.CountLeadingWhiteSpaces].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CountLeadingWhiteSpaces]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -174,15 +177,15 @@ class Cleaner:
             :param in_search_element: the string we are searching for
         """
         try:
+            occurence = 0
             if len(in_content) > len(in_search_element):
-                return in_content.count(in_search_element)
-            else: 
-                print('WRONG INPUT FOR [GetSignOccurenceCount]')
-                return 0
+                occurence = in_content.count(in_search_element)
+
+            return occurence
         except ValueError:
-            print("ERR: No content passed to [GetSignOccurenceCount].")
+            print("ERR: No content passed to [AMRCleaner.GetSignOccurenceCount].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.GetSignOccurenceCount]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -248,7 +251,7 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def EncloseSoloLabels(self, in_content):
+    def EncloseUnenclosedValues(self, in_content):
         """
         This function create new AMR nodes on argument flags following unenclosed labels.
             :param in_content: a string containing argument flags following unenclosed labels
@@ -259,16 +262,16 @@ class Cleaner:
                     search_pattern = ''.join(loot_elem)
                     replace_pattern = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
                     in_content = self.ReplaceAllPatternMatches(search_pattern, replace_pattern, in_content)
-                    
+             
             return in_content
         except ValueError:
-            print("ERR: Missing or wrong value passed to [EncloseSoloLabels].")
+            print("ERR: Missing or wrong value passed to [EncloseUnenclosedValues].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncloseFreeInformations(self, in_content):
+    def EncloseStringifiedValues(self, in_content):
         """
         This function creates new AMR nodes with desired parenthesis for Qualified Names enclosed in quotation marks.
             :param in_content: a string with (at least one) qualified name(s)
@@ -285,6 +288,7 @@ class Cleaner:
                     #//TODO BUG: Hier kontrollieren das der Knotenwert min einmal im graphen auftaucht 
                     #            und die definition ein Child ist.
                     if hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
+                        '''
                         if (found_elem in self.new_nodes_dict):
                             label = self.new_nodes_dict[found_elem]
                             content = None
@@ -293,16 +297,21 @@ class Cleaner:
                             label = self.CreateNewLabel(run_iter)
                             content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
                             self.new_nodes_dict[found_elem] = label
+                        '''
+
+                        run_iter = run_iter + 1
+                        label = self.CreateNewLabel(run_iter)
+                        content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
                         
                         in_content = in_content.replace(found_elem, self.CreateNewNode(label, content), 1)
 
                     else:
-                        print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseFreeInformations]')
+                        print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseStringifiedValues]')
                         continue   
 
             return in_content
         except ValueError:
-            print("ERR: No content passed to [EncloseFreeInformations].")
+            print("ERR: No content passed to [EncloseStringifiedValues].")
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -310,7 +319,6 @@ class Cleaner:
             
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    #//TODO BUG: Polarity has to be changed! There still polarity signs occouring => (h / he)  -)! 
     def ReplacePolarity(self, in_content):
         """
         This function replace negative polarity (-) signs in a raw semantic line with a new AMR node.
@@ -318,24 +326,12 @@ class Cleaner:
         """
         try:
             if self.HasPolarity(in_content):
-                next_depth = self.GetCurrentDepth(in_content) + 1 
-                label = None
-                content = None
-
-                if (self.constants.NEG_POLARITY in self.new_nodes_dict):
-                    label = self.new_nodes_dict[self.constants.NEG_POLARITY]
-                    content = None
-                else:
-                    label = self.constants.NEG_POL_LABEL
-                    content = self.constants.NEG_POLARITY
-                    self.new_nodes_dict[self.constants.NEG_POLARITY] = self.constants.NEG_POL_LABEL
-
-                replace_node_str = self.CreateNewNode(label, content)
-                replace = self.AddLeadingSpace(replace_node_str, next_depth)
-                result = re.sub(self.constants.SIGN_POLARITY_REGEX, ('\n'+ replace), in_content)
-                return result
-            else:
-                return in_content
+                label = self.constants.NEG_POL_LABEL
+                content = self.constants.NEG_POLARITY
+                replace = self.CreateNewNode(label, content)
+                
+                in_content = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_content)
+            return in_content
         except ValueError:
             print("ERR: No content passed to [ReplacePolarity].")
         except Exception as ex:
@@ -348,14 +344,17 @@ class Cleaner:
         This function delete AMR flags and only keep the informations they were flagged.
             :param in_content: string with (at least on) AMR flag(s)
         """
-        if isStr(in_content):
+        try:
             if isInStr(self.constants.COLON, in_content):
-                return re.sub(self.constants.FLAG_REGEX, '', in_content)            
-            else:
-                return in_content
-        else:
-            print('WRONG INPUT FOR [DeleteFlags]')
-            return None
+                in_content = re.sub(self.constants.FLAG_REGEX, '', in_content)
+
+            return in_content
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ARMCleaner.RemoveUnusedSignes]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+        
 
     def RemoveUnusedSignes(self, in_content):
         """
@@ -383,9 +382,9 @@ class Cleaner:
         """
         if isStr(in_content):
             if isInStr('-', in_content):
-                return re.sub(self.constants.EXTENSION_NUMBER_REGEX,'', in_content)
-            else:
-                return in_content
+                in_content = re.sub(self.constants.EXTENSION_NUMBER_REGEX,'', )
+
+            return in_content
         else:
             print('WRONG INPUT FOR [DeleteWordExtension]')
             return None
@@ -397,20 +396,19 @@ class Cleaner:
             :param open_par: string of desired parenthesis type style "open"
             :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(in_content):
-            result = in_content
+        try:
+            if isInStr(self.constants.COLON, in_content): in_content = self.DeleteFlags(in_content)
 
-            if isInStr(self.constants.COLON, result):
-                result = self.DeleteFlags(result)
-            if isInStr('-', result):
-                result = self.ReplacePolarity(result)
-                result = self.DeleteWordExtension(result)
-                result = self.RemoveUnusedSignes(result)
+            if isInStr('-', in_content):
+                in_content = self.ReplacePolarity(in_content)
+                in_content = self.DeleteWordExtension(in_content)
+                in_content = self.RemoveUnusedSignes(in_content)
                     
-            return result
-        else:
-            print('WRONG INPUT FOR [ExploreAdditionalcontent]')
-            return None
+            return in_content
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [AMRCleaner.ExploreAdditionalcontent]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def GetUnformatedAMRString(self, raw_amr):
         """
@@ -441,17 +439,13 @@ class Cleaner:
 
     def LookUpReplacement(self, in_content):
         try:
-            
-
             if ('-' in in_content):
                 look_up_control = self.CollectAllMatchesOfPattern(in_content, self.constants.EXTENSION_MULTI_WORD_REGEX)
-
-                if (look_up_control is not None):
-                    print('in: [',in_content,']')
+                if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
                     for found in look_up_control:
-                        if found in self.extension_dict:
-                            in_content.replace(found, self.extension_dict[found])
-                print('out: [',in_content,']')
+                        if len(found[0]) > 0 and found[0] in self.extension_keys_dict:
+                            in_content.replace(found[0], self.extension_dict[found[0]])
+                    
             return in_content
         except ValueError:
             print("ERR: No content passed to [LookUpReplacement].")
@@ -463,29 +457,27 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def NiceFormatting(self, amr_str, open_par, close_par):
+    def NiceFormatting(self, amr_str):
         """
         This function format and clean up a raw AMR semantic (graph-) string.
         This allow to clean up format definitions and remove [for this project] uninteresting content!
             :param amr_str: a raw AMR semantic (graph-) string
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
         """
-        if isStr(amr_str) and isStr(open_par) and isStr(close_par):
+        if isStr(amr_str) and isStr(self.parenthesis[0]) and isStr(self.parenthesis[1]):
             depth = -1
-            openings = amr_str.split(open_par)
+            openings = amr_str.split(self.parenthesis[0])
             struct_contain = []
 
             for line in openings:
                 depth = depth + 1
-                new_line = self.AddLeadingSpace((open_par + line), depth)
+                new_line = self.AddLeadingSpace((self.parenthesis[0] + line), depth)
 
-                if isInStr(close_par, new_line):
-                    occourences = self.GetSignOccurenceCount(new_line, close_par)
+                if isInStr(self.parenthesis[1], new_line):
+                    occourences = self.GetSignOccurenceCount(new_line, self.parenthesis[1])
                     depth = depth - occourences
                 
                 if isInStr(self.constants.COLON, new_line):
-                    new_line = self.ExploreAdditionalcontent(new_line, open_par, close_par)
+                    new_line = self.ExploreAdditionalcontent(new_line, self.parenthesis[0], self.parenthesis[1])
                 
                 struct_contain.append(new_line)
 
@@ -504,23 +496,24 @@ class Cleaner:
         """
         self.context = self.GetUnformatedAMRString(self.context)
         if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context, self.parenthesis[0], self.parenthesis[1]):
-            #print('#^1[',self.context,']')
-            self.context = self.EncloseSoloLabels(self.context)
-            #print('#^2[',self.context,']')
-            self.context = self.EncloseFreeInformations(self.context)
-            #print('#^3[',self.context,']')
+            #print('#Origin\n',self.context, '\n')
+            self.context = self.EncloseUnenclosedValues(self.context)
+            #print('#1\n',self.context, '\n')
+            self.context = self.EncloseStringifiedValues(self.context)
+            #print('#2\n',self.context, '\n')
             self.context = self.GetEnclosedContent(self.context)
-            #print('#^4[',self.context,']')
+            #print('#3\n',self.context, '\n')
             self.context = self.LookUpReplacement(self.context)
-            #print('#^5[',self.context,']')
-            self.cleaned = self.NiceFormatting(self.context, self.parenthesis[0], self.parenthesis[1])
+            #print('#4\n',self.context, '\n')
+            self.cleaned = self.NiceFormatting(self.context)
+            #print('#Final\n',self.cleaned)
 
-            #print(self.cleaned)
             #self.Check(self.cleaned)
 
             #//TODO hier muss eine Kontrollstruktur rein die einen aussage darüber trifft ob das resultat valide ist.
             #       das resultat muss dann zur eliminierung von fehlerhaften paaren genutzt werden
 
+            print('\n################################\n')
             return self.cleaned
         else:
             print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')

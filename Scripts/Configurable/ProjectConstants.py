@@ -14,7 +14,7 @@ class Constants:
     POLARITY = ' - '
     WHITESPACE = ' '
     NEG_POLARITY = 'not'
-    NEG_POL_LABEL = 'NT0'
+    NEG_POL_LABEL = 'N0T'
 
     # Regex
     EXTENSION_REGEX = r'(\w*(\-\w+)+)'

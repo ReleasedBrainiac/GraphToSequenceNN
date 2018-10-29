@@ -25,7 +25,7 @@ class Reader:
                     content = line.replace('\n','').replace(',','').split('#')
                     look_up_elements[content[0]]=content[1]
 
-                return look_up_elements
+            return look_up_elements
         except ValueError:
             print('WRONG INPUT FOR [DatasetAsList]')
         except Exception as ex:

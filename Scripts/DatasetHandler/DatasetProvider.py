@@ -13,15 +13,17 @@ from DatasetHandler.ExtractContentFromDataset import Extractor
 from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
+from TreeHandler.AMRGraphParser import GParser
 from GraphHandler.GraphTreeConverter import GTConverter
 from AMRHandler.AMRCleaner import Cleaner
+
 
 class DatasetPipelines:
 
     # Variables inits
     parenthesis = ['(', ')']
     look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
-    extension_dict =  str(Reader(input_path=look_up_extension_replace_path).LineReadContent())
+    extension_dict =  Reader(input_path=look_up_extension_replace_path).LineReadContent()
 
     # Class inits
     extractor = Extractor()
@@ -29,6 +31,7 @@ class DatasetPipelines:
     eval_Helper = EvaluationHelpers()
     gt_converter = GTConverter()
     t_parser = TParser()
+    g_parser = None
 
     def RemoveEnclosingAngleBracket(self, in_sentence):
         """
@@ -86,6 +89,8 @@ class DatasetPipelines:
             half_cleaned_sem = '#'+sem_flag+' '+semantic+'\n'
             out = half_cleaned_sem+'\n'
             return self.t_parser.Execute(out, sem_flag, print_console, to_process)
+            #self.g_parser = GParser(out, self.extension_dict)
+            #return self.g_parser.GetNetworkxGraph()
         else:
             print('WRONG INPUT FOR [ReforgeSemanticToMinimalAnyTree]')
             return None
@@ -205,7 +210,7 @@ class DatasetPipelines:
                                                  save_as_arm, 
                                                  print_console, 
                                                  False)
-
+        '''
         writer = Writer(inpath, output_extender, data_pairs)
         outpath = writer.GetOutputPath()
         writer.StoreAMR()
@@ -214,6 +219,7 @@ class DatasetPipelines:
             print('outpath: ', outpath)
         
         return None
+        '''
 
     def DataPipeline(self, inpath, output_extender, max_length, save_as_arm, print_console):
         """

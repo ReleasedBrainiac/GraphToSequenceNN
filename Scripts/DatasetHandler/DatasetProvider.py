@@ -210,7 +210,7 @@ class DatasetPipelines:
                                                  save_as_arm, 
                                                  print_console, 
                                                  False)
-        '''
+        
         writer = Writer(inpath, output_extender, data_pairs)
         outpath = writer.GetOutputPath()
         writer.StoreAMR()
@@ -219,7 +219,7 @@ class DatasetPipelines:
             print('outpath: ', outpath)
         
         return None
-        '''
+        
 
     def DataPipeline(self, inpath, output_extender, max_length, save_as_arm, print_console):
         """

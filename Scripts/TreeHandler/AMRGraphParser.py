@@ -65,12 +65,12 @@ class GParser:
             for line in self._graph_fragments:
                 if(self.constants.SEMANTIC_DELIM not in line) and (line != ''):
                     s = len(line) - len(line.lstrip(' '))
-                    t_rest = s%v
-                    t = s/v
+                    t_rest = s%step_size
+                    t = s/step_size
 
                     if(t_rest > 0):
-                        line, s = self.AddLeadingWhitespaces(line, (v-t_rest))
-                    print(line,' \t => [S: ',s,'| C: ',node_index,'| T: ',(s/v),']')
+                        line, s = self.AddLeadingWhitespaces(line, (step_size-t_rest))
+                    print(line,' \t => [S: ',s,'| C: ',node_index,'| T: ',(s/step_size),']')
 
 
                     '''

@@ -33,3 +33,22 @@ This Repo is in proceeding. It will provide an example of Graph2Sequence encodin
 
 ## Questions
 - [?]  Is GloVe able to encode "New Zealand", "North_Pole" or other definitions
+
+## [AMR Parser] What do I expel from AMR string
+ 
+1. Replaced all base word extensions 
+        1. "do-01" => "d0"
+2. Replaced all not alphanumeric qualified strings "" 
+        1. "Ocean" => kept
+        2. "19:35" => expelled
+3. Replaced polaritity "-" with a new node 
+        1. => {"N0T": "not"}
+4. Replaced word lists like with word with a close meaning
+        1. "littly-by-little" => "gradually"
+        2. "amr-unknown" => "?"
+5. Replaced all options ":opx 'Zealand'" with a new node 
+        1. => {"NSLx": "Zealand"}
+6. Expelled all signs which not match alpahnumeric, whitespacing, "/" and round parenthesis
+
+[THE RESULT] is a cleaned AMR string which i gonna use for to create a node embedding with GloVe.
+                                          

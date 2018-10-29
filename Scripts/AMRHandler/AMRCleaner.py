@@ -115,18 +115,24 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def CreateNewLabel(self, in_number):
+    def CreateNewLabel(self, in_name=None, in_number=None):
         """
         This function create a label with a upper-case post- and pre-element.
         The passed number (maybe an iteration value) is placed between them.
+            :param in_name: a desired label name
             :param in_number: a number which is placed in the label
         """
         try:
-            inner_index = GetRandomInt(0, 50)
-            if isNumber(in_number) and (in_number > -1):
-                inner_index = in_number
+            name = 'NEW'
+            index = GetRandomInt(0, 50)
+
+            if isNumber(in_name) and (in_number > -1):
+                index = in_number
+
+            if isStr(in_name):
+                name = in_name
                 
-            return 'NEW' + str(inner_index)
+            return str(name) + str(index)
         except Exception as ex:
             template = "An exception of type {0} occurred in [AMRCleaner.CreateNewLabel]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -197,14 +203,15 @@ class Cleaner:
             :param in_content: a raw or indentation cleaned AMR string.
         """
         try:
+            depth = 0
             if self.HasWhitspaces(in_content):
-                return toInt(self.CountLeadingWhiteSpaces(in_content) / self.constants.INDENTATION)
-            else:
-                return 0
+                depth = toInt(self.CountLeadingWhiteSpaces(in_content) / self.constants.INDENTATION)
+
+            return depth
         except ValueError:
-            print("ERR: No content passed to [GetCurrentDepth].")
+            print("ERR: No content passed to [AMRCleaner.GetCurrentDepth].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.GetCurrentDepth]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -217,13 +224,25 @@ class Cleaner:
             if self.HasParenthesis(in_content):
                 pos_open = in_content.index(self.parenthesis[0])
                 pos_close = in_content.rfind(self.parenthesis[1])
-                return in_content[pos_open+1:pos_close]
-            else:
-                return in_content
+                in_content = in_content[pos_open+1:pos_close]
+            
+            return in_content
         except ValueError:
-            print("ERR: Missing or wrong value(s) passed to [GetEnclosedContent].")
+            print("ERR: Missing or wrong value(s) passed to [AMRCleaner.GetEnclosedContent].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.GetEnclosedContent]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def GetUnformatedAMRString(self, in_content):
+        """
+        This function replace all line and space formatting in raw AMR (graph-) string with a sigle whitespace.
+            :param in_content: a raw string from AMR Dataset
+        """
+        try:
+            return (' '.join(in_content.split()))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [AMRCleaner.GetUnformatedAMRString]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -233,9 +252,9 @@ class Cleaner:
         try:
             return re.findall(in_regex_pattern, in_context)
         except ValueError:
-            print("ERR: No content passed to [CollectAllMatchesOfPattern].")
+            print("ERR: No content passed to [AMRCleaner.CollectAllMatchesOfPattern].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CollectAllMatchesOfPattern]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -243,13 +262,29 @@ class Cleaner:
         try:
             return re.sub(in_pattern_search, in_replace, in_context) 
         except ValueError:
-            print("ERR: No content passed to [ReplaceAllPatternMatches].")
+            print("ERR: No content passed to [AMRCleaner.ReplaceAllPatternMatches].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.ReplaceAllPatternMatches]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def AddLeadingSpace(self, str, depth):
+        """
+        This function add a desired depth to a cleaned AMR line fragment by means of leading whitespaces.
+        This will keep the AMR datasets indentation definition of a AMR semantice (graph) string.
+            :param str: the cleaned AMR semantic line fragment
+            :param depth: the desired depth rather intended position in the string
+        """
+        try:
+            for _ in range((depth * self.constants.INDENTATION)):
+                str = ' '+str
+            return str
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [AMRCleaner.AddLeadingSpace]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def EncloseUnenclosedValues(self, in_content):
         """
@@ -259,15 +294,15 @@ class Cleaner:
         try:
             if self.HasColon(in_content):
                 for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.UNENCLOSED_ARGS_REGEX):
-                    search_pattern = ''.join(loot_elem)
-                    replace_pattern = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
-                    in_content = self.ReplaceAllPatternMatches(search_pattern, replace_pattern, in_content)
+                    search = ''.join(loot_elem)
+                    replace = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
+                    in_content = self.ReplaceAllPatternMatches(search, replace, in_content)
              
             return in_content
         except ValueError:
-            print("ERR: Missing or wrong value passed to [EncloseUnenclosedValues].")
+            print("ERR: Missing or wrong value passed to [AMRCleaner.EncloseUnenclosedValues].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.EncloseUnenclosedValues]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -279,45 +314,44 @@ class Cleaner:
         try:
             if self.HasQuotation(in_content):
                 run_iter = -1
+                found_hazards = self.CollectAllMatchesOfPattern(in_content, self.constants.MARKER_NESTINGS_REGEX)
+                
+                for elem in found_hazards:
+                    hazard = elem[0]
 
-                for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.MARKER_NESTED_STR_REGEX):
-                    found_elem = loot_elem[0]
-                    label = None
-                    content = None
-
-                    #//TODO BUG: Hier kontrollieren das der Knotenwert min einmal im graphen auftaucht 
-                    #            und die definition ein Child ist.
-                    if hasContent(found_elem) and found_elem.count(self.constants.QUOTATION_MARK) == 2:
-                        '''
-                        if (found_elem in self.new_nodes_dict):
-                            label = self.new_nodes_dict[found_elem]
-                            content = None
-                        else:     
-                            run_iter = run_iter + 1
-                            label = self.CreateNewLabel(run_iter)
-                            content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
-                            self.new_nodes_dict[found_elem] = label
-                        '''
-
+                    if hasContent(hazard) and hazard.count(self.constants.QUOTATION_MARK) == 2:
                         run_iter = run_iter + 1
-                        label = self.CreateNewLabel(run_iter)
-                        content = re.sub(self.constants.QUOTATION_MARK,'',found_elem)
-                        
-                        in_content = in_content.replace(found_elem, self.CreateNewNode(label, content), 1)
-
-                    else:
-                        print('WRONG DEFINITION ['+ found_elem + ']FOUND IN INPUT FOR [EncloseStringifiedValues]')
-                        continue   
+                        label = self.CreateNewLabel('NSL',run_iter)
+                        content = re.sub(self.constants.QUOTATION_MARK,'',hazard).replace('_',' ')
+                        if all(x.isalnum() or x.isspace() for x in content):
+                            in_content = in_content.replace(hazard, self.CreateNewNode(label, content), 1)
+                        else:
+                            in_content = in_content.replace(hazard, '', 1)
 
             return in_content
         except ValueError:
-            print("ERR: No content passed to [EncloseStringifiedValues].")
+            print("ERR: No content passed to [ARMCleaner.EncloseStringifiedValues].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.EncloseStringifiedValues]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def LookUpReplacement(self, in_content):
+        try:
+            if ('-' in in_content):
+                look_up_control = self.CollectAllMatchesOfPattern(in_content, self.constants.EXTENSION_MULTI_WORD_REGEX)
+                if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
+                    for found in look_up_control:
+                        if len(found[0]) > 0 and found[0] in self.extension_keys_dict:
+                            in_content = in_content.replace(found[0], self.extension_dict[found[0]])
+                    
+            return in_content
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ARMCleaner.LookUpReplacement]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def ReplacePolarity(self, in_content):
         """
@@ -325,17 +359,18 @@ class Cleaner:
             :param in_content: string containing (at least on) AMR polarity sign
         """
         try:
-            if self.HasPolarity(in_content):
-                label = self.constants.NEG_POL_LABEL
-                content = self.constants.NEG_POLARITY
-                replace = self.CreateNewNode(label, content)
+            label = self.constants.NEG_POL_LABEL
+            content = self.constants.NEG_POLARITY
+            replace = self.CreateNewNode(label, content)
+            in_content = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_content)
+            #in_content = in_content.replace('(-)',replace)
                 
-                in_content = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_content)
+
             return in_content
         except ValueError:
-            print("ERR: No content passed to [ReplacePolarity].")
+            print("ERR: No content passed to [ARMCleaner.ReplacePolarity].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.ReplacePolarity]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -350,11 +385,9 @@ class Cleaner:
 
             return in_content
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ARMCleaner.RemoveUnusedSignes]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.DeleteFlags]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
-        
 
     def RemoveUnusedSignes(self, in_content):
         """
@@ -364,45 +397,44 @@ class Cleaner:
         try:
             return re.sub(self.constants.SIGNS_REMOVE_UNUSED_REGEX, '', in_content)
         except ValueError:
-            print("ERR: No content passed to [RemoveUnusedSignes].")
+            print("ERR: No content passed to [ARMCleaner.RemoveUnusedSignes].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.RemoveUnusedSignes]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #//TODO BUG nicht alle extensions werden gelöscht => (l / long-03)
-    #//TODO how to handle => :part-of(x) if x is a parent?
-    #//TODO how to handle => amr-unknown content? Its dataset content!
-    #//TODO how to handle => toss-out and have-rel-role? Both types occour much often! ??? mglw. => einzelworte in Glove später addieren?
-    #//TODO how to handle => :mode <random word>? I actually replace them as new node but the label ist still missing for it! mglw. => label = word[0] + 0 + word[0]?
     def DeleteWordExtension(self, in_content):
         """
         This function delete word extensions from node content in a AMR semantic line fragment.
             :param in_content: a AMR semantic line fragment
         """
-        if isStr(in_content):
+        try:
             if isInStr('-', in_content):
-                in_content = re.sub(self.constants.EXTENSION_NUMBER_REGEX,'', )
+                in_content = re.sub(self.constants.EXTENSION_NUMBER_REGEX,'', in_content)
 
             return in_content
-        else:
-            print('WRONG INPUT FOR [DeleteWordExtension]')
-            return None
-        
-    def ExploreAdditionalcontent(self, in_content, open_par, close_par):
+        except ValueError:
+            print("ERR: No content passed to [ARMCleaner.DeleteWordExtension].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ARMCleaner.DeleteWordExtension]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+     
+    def ExploreAdditionalcontent(self, in_content):
         """
         This function search in a AMR line fragment about additional context for the AMR node.
             :param in_content: a AMR line fragment with a node and maybe additional context 
-            :param open_par: string of desired parenthesis type style "open"
-            :param close_par: string of desired parenthesis type style "close"
         """
         try:
             if isInStr(self.constants.COLON, in_content): in_content = self.DeleteFlags(in_content)
-
+            
             if isInStr('-', in_content):
                 in_content = self.ReplacePolarity(in_content)
                 in_content = self.DeleteWordExtension(in_content)
-                in_content = self.RemoveUnusedSignes(in_content)
+
+            in_content = self.RemoveUnusedSignes(in_content)
                     
             return in_content
         except Exception as ex:
@@ -410,62 +442,15 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GetUnformatedAMRString(self, raw_amr):
-        """
-        This function replace all line and space formatting in raw AMR (graph-) string with a sigle whitespace.
-            :param raw_amr: a raw AMR (graph-) string from AMR Dataset
-        """
-        if isStr(raw_amr):
-            return (' '.join(raw_amr.split()))
-        else:
-            print('WRONG INPUT FOR [GetUnformatedAMRString]')
-            return None
-
-    def AddLeadingSpace(self, str, depth):
-        """
-        This function add a desired depth to a cleaned AMR line fragment by means of leading whitespaces.
-        This will keep the AMR datasets indentation definition of a AMR semantice (graph) string.
-            :param str: the cleaned AMR semantic line fragment
-            :param depth: the desired depth rather intended position in the string
-        """
-        if(isStr(str)) and (isInt(depth)):
-            for _ in range((depth * self.constants.INDENTATION)):
-                str = ' '+str
-            return str
-
-        else:
-            print('WRONG INPUT FOR [AddLeadingSpace]')
-            return None
-
-    def LookUpReplacement(self, in_content):
-        try:
-            if ('-' in in_content):
-                look_up_control = self.CollectAllMatchesOfPattern(in_content, self.constants.EXTENSION_MULTI_WORD_REGEX)
-                if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
-                    for found in look_up_control:
-                        if len(found[0]) > 0 and found[0] in self.extension_keys_dict:
-                            in_content.replace(found[0], self.extension_dict[found[0]])
-                    
-            return in_content
-        except ValueError:
-            print("ERR: No content passed to [LookUpReplacement].")
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def NiceFormatting(self, amr_str):
+    def NiceFormatting(self, in_content):
         """
         This function format and clean up a raw AMR semantic (graph-) string.
         This allow to clean up format definitions and remove [for this project] uninteresting content!
-            :param amr_str: a raw AMR semantic (graph-) string
+            :param in_content: a raw AMR semantic string
         """
-        if isStr(amr_str) and isStr(self.parenthesis[0]) and isStr(self.parenthesis[1]):
+        try:
             depth = -1
-            openings = amr_str.split(self.parenthesis[0])
+            openings = in_content.split(self.parenthesis[0])
             struct_contain = []
 
             for line in openings:
@@ -476,17 +461,15 @@ class Cleaner:
                     occourences = self.GetSignOccurenceCount(new_line, self.parenthesis[1])
                     depth = depth - occourences
                 
-                if isInStr(self.constants.COLON, new_line):
-                    new_line = self.ExploreAdditionalcontent(new_line, self.parenthesis[0], self.parenthesis[1])
-                
+                new_line = self.ExploreAdditionalcontent(new_line)
                 struct_contain.append(new_line)
 
-            returning = '\n'.join(struct_contain) + ')'
-            return returning
+            return '\n'.join(struct_contain) + ')'
 
-        else:
-            print('WRONG INPUT FOR [NiceFormatting]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [AMRCleaner.NiceFormatting]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -494,52 +477,28 @@ class Cleaner:
         """
         This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
         """
-        self.context = self.GetUnformatedAMRString(self.context)
-        if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context, self.parenthesis[0], self.parenthesis[1]):
-            #print('#Origin\n',self.context, '\n')
-            self.context = self.EncloseUnenclosedValues(self.context)
-            #print('#1\n',self.context, '\n')
-            self.context = self.EncloseStringifiedValues(self.context)
-            #print('#2\n',self.context, '\n')
-            self.context = self.GetEnclosedContent(self.context)
-            #print('#3\n',self.context, '\n')
-            self.context = self.LookUpReplacement(self.context)
-            #print('#4\n',self.context, '\n')
-            self.cleaned = self.NiceFormatting(self.context)
-            #print('#Final\n',self.cleaned)
-
-            #self.Check(self.cleaned)
-
-            #//TODO hier muss eine Kontrollstruktur rein die einen aussage darüber trifft ob das resultat valide ist.
-            #       das resultat muss dann zur eliminierung von fehlerhaften paaren genutzt werden
-
-            print('\n################################\n')
-            return self.cleaned
-        else:
-            print('UNEQUAL AMOUNT OF BRACKET PAIRS IN INPUT FOR [GenerateCleanAMR]')
-            return None
-
-    def Check(self, in_context):
-        #//TODO INFO: this control structure check extension regex failed sometimes!
-        if '-' in in_context:
-            polarity_control = self.CollectAllMatchesOfPattern(in_context, self.constants.SIGN_POLARITY_REGEX)
-            extension_control = self.CollectAllMatchesOfPattern(in_context, self.constants.EXTENSION_REGEX)
-
-            if (polarity_control is not None):
-                for found in polarity_control:
-                    self.extension_dict['EXT>'+found[0]] = found[0]
-
-            if (extension_control is not None):
-                for found in extension_control:
-                    self.extension_dict['EXT>'+found[0]] = found[0]
-
-'''
         try:
-            
-        except ValueError:
-            print("ERR: No content passed to [].")
+            self.context = self.GetUnformatedAMRString(self.context)
+            if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context):
+                self.context = self.EncloseUnenclosedValues(self.context)
+                self.context = self.EncloseStringifiedValues(self.context)
+                self.context = self.GetEnclosedContent(self.context)
+                self.context = self.LookUpReplacement(self.context)
+                self.cleaned = self.NiceFormatting(self.context)
+                self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned)
+                
+                return self.cleaned
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.AllowedCharacterOccurenceCheck]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-'''
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    def AllowedCharacterOccurenceCheck(self, in_context):
+        try:
+            return all(x.isalnum() or x.isspace() or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ARMCleaner.AllowedCharacterOccurenceCheck]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)    

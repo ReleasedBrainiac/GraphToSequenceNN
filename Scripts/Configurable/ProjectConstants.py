@@ -24,9 +24,8 @@ class Constants:
     
     SIGN_POLARITY_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
     SIGNS_REMOVE_UNUSED_REGEX = r'[^a-zA-Z\d\s:\/\:\-\(\)]'
-    
 
-    MARKER_NESTED_STR_REGEX = r'\B(\"\w+( \w+)*\")'
+    MARKER_NESTINGS_REGEX = r'(\"(.*?)\")'
     FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'
 
     ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'

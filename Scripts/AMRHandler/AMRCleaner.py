@@ -526,7 +526,6 @@ class Cleaner:
         This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
         """
         try:
-            print('R:\n',self.context)
             self.context = self.GetUnformatedAMRString(self.context)
             if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context):
                 self.context = self.EncloseUnenclosedValues(self.context)
@@ -535,11 +534,10 @@ class Cleaner:
                 self.context = self.LookUpReplacement(self.context)
                 self.cleaned = self.NiceFormatting(self.context)
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned)
-                print('O:\n',self.cleaned)
-                print('S:\n',self.isCleaned )
-                print('#####################################################')
-                
-                return self.cleaned
+                if(self.isCleaned):
+                    return self.cleaned
+                else:
+                    return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.GenerateCleanAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

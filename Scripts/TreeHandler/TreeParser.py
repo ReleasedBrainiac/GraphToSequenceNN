@@ -452,9 +452,9 @@ class TParser:
     # This function handle the execution of the gatherer.
     # The result is a importable json if you like to store [to_process = False] 
     # or a AnyNode Tree if you want to process it further [to_process = True] .
-    def Execute(self, amr_graph, sem_flag, print_to_console, to_process):
+    def Execute(self, amr_graph, sem_flag, print_to_console, is_saving):
         root = self.Pipeline(amr_graph, sem_flag, print_to_console)
-        if(to_process):
-            return root
-        else:
+        if(is_saving):
             return self.ExportToJson(root)
+        else:
+            return root

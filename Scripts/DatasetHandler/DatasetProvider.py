@@ -32,6 +32,7 @@ class DatasetPipelines:
     gt_converter = GTConverter()
     t_parser = TParser()
     g_parser = None
+    keep_edges = False
 
     def RemoveEnclosingAngleBracket(self, in_sentence):
         """
@@ -59,7 +60,8 @@ class DatasetPipelines:
             cleaner = Cleaner(open_bracket=self.parenthesis[0], 
                               close_bracket=self.parenthesis[1], 
                               input_context=semantic,
-                              input_extension_dict=self.extension_dict
+                              input_extension_dict=self.extension_dict,
+                              keep_edges = self.keep_edges
                               )
 
             self.extension_dict = cleaner.extension_dict

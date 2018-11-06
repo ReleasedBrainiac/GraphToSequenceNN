@@ -35,7 +35,7 @@ class DatasetPipelines:
 
     # Path content
     in_path = None
-    out_path_extender = '.ouput'
+    out_path_extender = 'ouput'
     context_max_length = -1
 
     # Switches
@@ -225,8 +225,8 @@ class DatasetPipelines:
             writer = Writer(self.in_path, 
                             self.out_path_extender, 
                             self.Pipeline())
-            outpath = writer.GetOutputPath()
-            #writer.StoreAMR()
+            outpath = writer.out_path
+            writer.Store()
 
             if (self.is_showing_feedback): print('outpath: ', outpath)
             

@@ -9,7 +9,7 @@ class Writer:
     path = None
     context = None
     dataset_pairs = None
-    output_extender = None
+    out_path = None
 
     # Class init 
     constants = Constants()
@@ -17,17 +17,21 @@ class Writer:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def __init__(self, input_path, in_output_extender='output',data_pairs=None, in_context=None):
-        if isNotNone(input_path) and isStr(input_path):
-            self.path = input_path
+        try:
+            if isNotNone(input_path) and isStr(input_path):
+                self.path = input_path
 
-        if isNotNone(data_pairs) and isList(data_pairs):
-            self.dataset_pairs = data_pairs
+            if isNotNone(data_pairs) and isList(data_pairs):
+                self.dataset_pairs = data_pairs
 
-        if isNotNone(in_context) and isStr(in_context):
-            self.context = in_context
+            if isNotNone(in_context) and isStr(in_context):
+                self.context = in_context
 
-        if isNotNone(in_output_extender) and isStr(in_output_extender):
-            self.output_extender = in_output_extender
+            self.out_path = setOrDefault(self.path+'.'+ in_output_extender , self.constants.TYP_ERROR, isStr(in_output_extender))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [FileWriter.__init__]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
         
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -37,22 +41,13 @@ class Writer:
             :param sentence: cleaned sentence with sentences flag
             :param semantic: cleaned correspondign semantic for the sentence with semantic flag
         """
-        if isNotNone(data_pair) and isStr(data_pair[0]) and isNotNone(data_pair[1]):
-                return data_pair[0] + data_pair[1]
-        else:
-            print('WRONG INPUT FOR [SavingCorpus]')
-            return None
-
-    def GetOutputPath(self):
-        """
-        This function return a result output path depending on the given input path and a extender.
-        """
         try:
-            return setOrDefault(self.path+'.'+ self.output_extender , self.constants.TYP_ERROR, isStr(self.output_extender))
-        except ValueError:
-            print('WRONG INPUT FOR [GetOutputPath]')
+            if isNotNone(data_pair) and isStr(data_pair[0]) and isNotNone(data_pair[1]):
+                    return data_pair[0] + data_pair[1]
+            else:
+                return None
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [FileWriter.SavingCorpus]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -61,7 +56,7 @@ class Writer:
         This function saves a (stringified) context passed by class init into a given file.
         """
         try:
-            with open(self.GetOutputPath(), 'w', encoding=self.writer_encoding) as fileOut:
+            with open(self.out_path, 'w', encoding=self.writer_encoding) as fileOut:
                 if isNotNone(self.context) and isStr(self.context):
                     fileOut.write(self.context)
                     fileOut.flush()
@@ -70,16 +65,16 @@ class Writer:
         except ValueError:
             print('WRONG INPUT FOR [StoreContext]')
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [FileWriter.StoreContext]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def StoreAMR(self):
+    def Store(self):
         """
         This function save the collected content to a given file.
         """
         try:
-            with open(self.GetOutputPath(), 'w', encoding=self.writer_encoding) as fileOut:
+            with open(self.out_path, 'w', encoding=self.writer_encoding) as fileOut:
                 for i in range(len(self.dataset_pairs)):
                     result = self.SavingCorpus(self.dataset_pairs[i])
                     if isNotNone(result):
@@ -90,6 +85,6 @@ class Writer:
         except ValueError:
             print('WRONG INPUT FOR [StoreAMR]')
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [FileWriter.StoreAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

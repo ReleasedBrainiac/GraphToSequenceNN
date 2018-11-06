@@ -1,6 +1,6 @@
 # - *- coding: utf-8*-
 import re
-from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict
+from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict, isBool
 from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
@@ -8,7 +8,8 @@ class Cleaner:
     #//TODO IDEE: Erst den String in einen Baum packen und dann die einzelnen Knoten bearbeiten! Das macht den ganzen Vorgang einfacher!
 
     # Variables inits
-    parenthesis = ['(',')']
+    node_parenthesis = ['(',')']
+    edge_parenthesis = ['[',']']
     extension_dict = {}
     extension_keys_dict = {}
     new_nodes_dict = {}
@@ -17,13 +18,14 @@ class Cleaner:
     isCleaned = False
     gotContext = False
     gotExtentsionsDict = False
+    keep_edge_encoding = False
 
     # Class inits
     constants = None
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}):
+    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}, keep_edges=False):
         try:
 
             self.constants = Constants()
@@ -39,8 +41,11 @@ class Cleaner:
                 self.extension_keys_dict = self.extension_dict.keys()
 
             if isStr(open_bracket) and isStr(close_bracket):
-                self.parenthesis[0] = open_bracket
-                self.parenthesis[1] = close_bracket
+                self.node_parenthesis[0] = open_bracket
+                self.node_parenthesis[1] = close_bracket
+
+            if isBool(keep_edges):
+                self.keep_edge_encoding = keep_edges
 
             if(self.gotContext):
                 self.GenerateCleanAMR()
@@ -79,9 +84,9 @@ class Cleaner:
     
     def HasParenthesis(self, in_context=''):
         if isStr(in_context) and len(in_context) > 0:
-            return self.parenthesis[0] in in_context and self.parenthesis[1] in in_context
+            return self.node_parenthesis[0] in in_context and self.node_parenthesis[1] in in_context
         elif self.gotContext:
-            return self.parenthesis[0] in self.context and self.parenthesis[1] in self.context
+            return self.node_parenthesis[0] in self.context and self.node_parenthesis[1] in self.context
         else:
             return False
 
@@ -101,14 +106,14 @@ class Cleaner:
         else:
             return False
 
-    def MatchSignsOccurences(self, in_context='', in_sign_x='(', in_sign_y=')'):
+    def MatchSignsOccurences(self, in_context='', in_signs=['(',')']):
         if isStr(in_context) and len(in_context) > 0:
-            count_sign_x = self.GetSignOccurenceCount(in_context, in_sign_x)
-            count_sign_y = self.GetSignOccurenceCount(in_context, in_sign_y)
+            count_sign_x = self.GetSignOccurenceCount(in_context, in_signs[0])
+            count_sign_y = self.GetSignOccurenceCount(in_context, in_signs[1])
             return count_sign_x == count_sign_y
         elif self.gotContext:
-            count_sign_x = self.GetSignOccurenceCount(self.context, in_sign_x)
-            count_sign_y = self.GetSignOccurenceCount(self.context, in_sign_y)
+            count_sign_x = self.GetSignOccurenceCount(self.context, in_signs[0])
+            count_sign_y = self.GetSignOccurenceCount(self.context, in_signs[1])
             return count_sign_x == count_sign_y
         else:
             return False
@@ -138,22 +143,18 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
  
-    def CreateNewNode(self, in_label , in_content=None):
+    def CreateEdgeTagDefinition(self , in_content=None):
         """
         This function defines a new AMR converted node element.
-        Depending on the content it returns a node with label and content or just containing a label.
-            :param in_label: the desired node label
+        Depending on the content it returns a edge with content.
             :param in_content: the corresponding content
         """
         try:
-            if isStr(in_content):
-                return self.parenthesis[0] + in_label + ' / ' + in_content + self.parenthesis[1]
-            else:
-                return self.parenthesis[0] + in_label + self.parenthesis[1]
+            return self.node_parenthesis[0] + self.edge_parenthesis[0] + in_content + self.edge_parenthesis[1] + self.node_parenthesis[1]
         except ValueError:
-            print("ERR: No label passed to [AMRCleaner.CreateNewNode].")
+            print("ERR: No label passed to [AMRCleaner.CreateEdgeTagDefinition].")
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.CreateNewNode]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CreateEdgeTagDefinition]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)        
         
@@ -217,13 +218,13 @@ class Cleaner:
 
     def GetEnclosedContent(self, in_content):
         """
-        This function return the most outer nested content in a string by given desired parenthesis strings.
-            :param in_content: string containing content nested in desired parenthesis.
+        This function return the most outer nested content in a string by given desired node_parenthesis strings.
+            :param in_content: string containing content nested in desired node_parenthesis.
         """
         try:
             if self.HasParenthesis(in_content):
-                pos_open = in_content.index(self.parenthesis[0])
-                pos_close = in_content.rfind(self.parenthesis[1])
+                pos_open = in_content.index(self.node_parenthesis[0])
+                pos_close = in_content.rfind(self.node_parenthesis[1])
                 in_content = in_content[pos_open+1:pos_close]
             
             return in_content
@@ -286,6 +287,22 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def EncloseEdge(self, in_match):
+        """
+            Encapsulate label inputs with a square brackets
+            :param in_match: a label string component
+        """   
+        try:
+            flag = in_match[0]
+            flagged_element = '['+in_match[1].lstrip(' ')+']'
+            return [flag, flagged_element]
+        except ValueError:
+            print("ERR: Missing or wrong value passed to [AMRCleaner.EncloseEdge].")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [AMRCleaner.EncloseEdge]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def EncloseUnenclosedValues(self, in_content):
         """
         This function create new AMR nodes on argument flags following unenclosed labels.
@@ -295,9 +312,19 @@ class Cleaner:
             if self.HasColon(in_content):
                 for loot_elem in self.CollectAllMatchesOfPattern(in_content, self.constants.UNENCLOSED_ARGS_REGEX):
                     search = ''.join(loot_elem)
-                    replace = ''.join([loot_elem[0], ' ('+loot_elem[1].lstrip(' ')+')'])
+                    found_flag = loot_elem[0]
+                    found_edge = loot_elem[1].lstrip(' ')
+                    replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_edge + self.node_parenthesis[1]])
+
+                    if 'ARG' not in loot_elem[0]:
+                        if self.keep_edge_encoding:
+                            found_flag, found_edge = self.EncloseEdge(loot_elem)
+                            replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_edge + self.node_parenthesis[1]])
+                        else:
+                            replace = ''
+                        
+                    
                     in_content = self.ReplaceAllPatternMatches(search, replace, in_content)
-             
             return in_content
         except ValueError:
             print("ERR: Missing or wrong value passed to [AMRCleaner.EncloseUnenclosedValues].")
@@ -308,25 +335,22 @@ class Cleaner:
 
     def EncloseStringifiedValues(self, in_content):
         """
-        This function creates new AMR nodes with desired parenthesis for Qualified Names enclosed in quotation marks.
+        This function creates new AMR nodes with desired node_parenthesis for Qualified Names enclosed in quotation marks.
             :param in_content: a string with (at least one) qualified name(s)
         """
         try:
             if self.HasQuotation(in_content):
-                run_iter = -1
-                found_hazards = self.CollectAllMatchesOfPattern(in_content, self.constants.MARKER_NESTINGS_REGEX)
-                
-                for elem in found_hazards:
-                    hazard = elem[0]
+                for elem in self.CollectAllMatchesOfPattern(in_content, self.constants.MARKER_NESTINGS_REGEX):
+                    replacer = ''
 
-                    if hasContent(hazard) and hazard.count(self.constants.QUOTATION_MARK) == 2:
-                        run_iter = run_iter + 1
-                        label = self.CreateNewLabel('NSL',run_iter)
-                        content = re.sub(self.constants.QUOTATION_MARK,'',hazard).replace('_',' ')
-                        if all(x.isalnum() or x.isspace() for x in content):
-                            in_content = in_content.replace(hazard, self.CreateNewNode(label, content), 1)
-                        else:
-                            in_content = in_content.replace(hazard, '', 1)
+                    if hasContent(elem[0]) and elem[0].count(self.constants.QUOTATION_MARK) == 2:
+                        if self.keep_edge_encoding:
+                            content = re.sub(self.constants.QUOTATION_MARK,'',elem[0]).replace('_',' ')
+
+                            if all(x.isalnum() or x.isspace() for x in content):
+                                replacer = self.CreateEdgeTagDefinition(content)
+
+                    in_content = in_content.replace(elem[0], replacer, 1)
 
             return in_content
         except ValueError:
@@ -335,7 +359,7 @@ class Cleaner:
             template = "An exception of type {0} occurred in [ARMCleaner.EncloseStringifiedValues]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-            
+
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def LookUpReplacement(self, in_content):
@@ -359,13 +383,12 @@ class Cleaner:
             :param in_content: string containing (at least on) AMR polarity sign
         """
         try:
-            label = self.constants.NEG_POL_LABEL
             content = self.constants.NEG_POLARITY
-            replace = self.CreateNewNode(label, content)
-            in_content = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_content)
-            #in_content = in_content.replace('(-)',replace)
-                
+            replace = ''
 
+            if self.keep_edge_encoding: replace = self.CreateEdgeTagDefinition(content)
+
+            in_content = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_content)
             return in_content
         except ValueError:
             print("ERR: No content passed to [ARMCleaner.ReplacePolarity].")
@@ -382,7 +405,6 @@ class Cleaner:
         try:
             if isInStr(self.constants.COLON, in_content):
                 in_content = re.sub(self.constants.FLAG_REGEX, '', in_content)
-
             return in_content
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.DeleteFlags]. Arguments:\n{1!r}"
@@ -420,8 +442,36 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    '''  
+    def QuantMapping(self, in_content):
+        """
+        This function replace concrete values with grouping string, which explain there qauntity more generally.
+            :param in_content: a string containing a edge quantity value
+        """   
+        for quantity in self.CollectAllMatchesOfPattern(in_content, self.constants.NUMBER_QUANTITIY_REGEX):
+            value = int(quantity[2:len(quantity)-2])
+            print('V:\n', value)
+            fragments = NumWordParser(value).GetDigitsByBase(in_value=value, base=1000)
+            fragments_count = len(fragments)
+            result = ''
+
+            if(fragments_count == 1 and fragments[0] > 0):
+                result = '([low])'
+            elif (fragments_count == 2):
+                result = '([mid])'
+            elif (fragments_count == 3):
+                result = '([high])'
+            elif (fragments_count >= 4):
+                result = '([gigantic])'
+            else:
+                result = '([zero])'
+            in_content = in_content.replace(quantity, result)
+
+        return in_content
+    '''
+
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-     
+
     def ExploreAdditionalcontent(self, in_content):
         """
         This function search in a AMR line fragment about additional context for the AMR node.
@@ -450,15 +500,15 @@ class Cleaner:
         """
         try:
             depth = -1
-            openings = in_content.split(self.parenthesis[0])
+            openings = in_content.split(self.node_parenthesis[0])
             struct_contain = []
 
             for line in openings:
                 depth = depth + 1
-                new_line = self.AddLeadingSpace((self.parenthesis[0] + line), depth)
+                new_line = self.AddLeadingSpace((self.node_parenthesis[0] + line), depth)
 
-                if isInStr(self.parenthesis[1], new_line):
-                    occourences = self.GetSignOccurenceCount(new_line, self.parenthesis[1])
+                if isInStr(self.node_parenthesis[1], new_line):
+                    occourences = self.GetSignOccurenceCount(new_line, self.node_parenthesis[1])
                     depth = depth - occourences
                 
                 new_line = self.ExploreAdditionalcontent(new_line)
@@ -478,6 +528,7 @@ class Cleaner:
         This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
         """
         try:
+            print('R:\n',self.context)
             self.context = self.GetUnformatedAMRString(self.context)
             if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context):
                 self.context = self.EncloseUnenclosedValues(self.context)
@@ -486,10 +537,13 @@ class Cleaner:
                 self.context = self.LookUpReplacement(self.context)
                 self.cleaned = self.NiceFormatting(self.context)
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned)
+                print('O:\n',self.cleaned)
+                print('S:\n',self.isCleaned )
+                print('#####################################################')
                 
                 return self.cleaned
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ARMCleaner.AllowedCharacterOccurenceCheck]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ARMCleaner.GenerateCleanAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -497,8 +551,11 @@ class Cleaner:
 
     def AllowedCharacterOccurenceCheck(self, in_context):
         try:
-            return all(x.isalnum() or x.isspace() or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
+            only_allowed_chars = all(x.isalnum() or x.isspace() or (x is '[') or (x is ']') or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
+            has_correct_parenthesis = self.MatchSignsOccurences(in_context) and self.MatchSignsOccurences(in_context, self.edge_parenthesis)
+            allowed = only_allowed_chars and has_correct_parenthesis
+            return allowed
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.AllowedCharacterOccurenceCheck]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print(message)    
+            print(message)

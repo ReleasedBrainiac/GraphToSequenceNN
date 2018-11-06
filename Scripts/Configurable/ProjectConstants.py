@@ -22,8 +22,10 @@ class Constants:
     EXTENSION_WORD_ENDING_REGEX = r'(\w+\-)+[0-9]+'
     EXTENSION_MULTI_WORD_REGEX = r'[^:](\w*(\-[a-zA-Z]+)+)'
     
-    SIGN_POLARITY_REGEX = r'(\(\-\))|(\s+\-[\r\t\f ]*)'
-    SIGNS_REMOVE_UNUSED_REGEX = r'[^a-zA-Z\d\s:\/\:\-\(\)]'
+    SIGN_POLARITY_REGEX = r'(\(\[\-\]\))|(\s+\-[\r\t\f ]*)'
+    SIGNS_REMOVE_UNUSED_REGEX = r'[^a-zA-Z\d\s\/\-\(\)\[\]\?]'
+
+    NUMBER_QUANTITIY_REGEX = r'(\(\[[0-9]+\]\))'
 
     MARKER_NESTINGS_REGEX = r'(\"(.*?)\")'
     FLAG_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( \d)*'

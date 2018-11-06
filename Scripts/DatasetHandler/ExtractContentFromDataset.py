@@ -57,8 +57,8 @@ class Extractor:
             result_pair = None
             sentence_found = False
             semantic_found = False
-            sent_lens = []
-            sem_lens = []
+            sentence_lengths = []
+            semantic_lengths = []
             sentences = []
             semantics = []
 
@@ -78,14 +78,14 @@ class Extractor:
                     semantic_found = False
 
                     if isNotNone(result_pair):
-                        sent_lens.append(len(result_pair[0]))
-                        sem_lens.append(len(result_pair[1]))
+                        sentence_lengths.append(len(result_pair[0]))
+                        semantic_lengths.append(len(result_pair[1]))
                         sentences.append(result_pair[0])
                         semantics.append(result_pair[1])
                         result_pair = []
 
-            if(len(sent_lens) == len(sem_lens) == len(sentences) == len(semantics)):
-                return [sent_lens, sem_lens, sentences, semantics]
+            if(len(sentence_lengths) == len(semantic_lengths) == len(sentences) == len(semantics)):
+                return [sentence_lengths, semantic_lengths, sentences, semantics]
             else:
                 print('WRONG OUTPUT FOR [ExtractContent]... Size of outputs dont match!')
                 return None

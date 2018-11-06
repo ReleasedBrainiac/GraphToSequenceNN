@@ -15,12 +15,13 @@ class NumWordParser:
     millions = "Million"
     billions = "Billion"
     result = ""
+    in_content = -1
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
     def __init__(self, number):
         try:
-            self.result = self.BillionNumberToEnglishWord(int(number))
+            self.in_content = int(number)
         except ValueError:
             print("No valid number passed. Try again...")
 
@@ -40,9 +41,12 @@ class NumWordParser:
         except ValueError:
             print("Oops!  That was no valid number.  Try again...")
 
-    def GetDigitsByBase(self, number, base=1000):
+    def GetDigitsByBase(self, in_value=-1, base=1000):
         try:
-            number = int(number)
+            if (in_value >= 0):
+                number = int(in_value)
+            else:
+                number = self.in_content
             assert number >= 0
             if number == 0:
                 return [0]
@@ -54,9 +58,12 @@ class NumWordParser:
         except ValueError:
             print("No valid number passed. Try again...")
 
-    def GetReversedDigitsByBase(self, number, base=1000):
+    def GetDigitsByBaseReversed(self, in_value=-1, base=1000):
         try:
-            number = int(number)
+            if (in_value >= 0):
+                number = int(in_value)
+            else:
+                number = self.in_content
             assert number >= 0
             if number == 0:
                 return [0]
@@ -169,7 +176,7 @@ class NumWordParser:
         except ValueError:
             print("No valid number passed. Try again...")
 
-    def BillionNumberToEnglishWord(self, number):
+    def Convert(self, number):
 
         try:
             digits = self.GetDigitsByBase(int(number), 1000)

@@ -5,8 +5,6 @@ from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
 class Cleaner:
-    #//TODO IDEE: Erst den String in einen Baum packen und dann die einzelnen Knoten bearbeiten! Das macht den ganzen Vorgang einfacher!
-
     # Variables inits
     node_parenthesis = ['(',')']
     edge_parenthesis = ['[',']']

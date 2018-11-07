@@ -14,6 +14,7 @@ class Constants:
     POLARITY = ' - '
     WHITESPACE = ' '
     NEG_POLARITY = 'not'
+    POS_POLITE = 'positive'
     NEG_POL_LABEL = 'N0T'
 
     # Regex
@@ -22,7 +23,9 @@ class Constants:
     EXTENSION_WORD_ENDING_REGEX = r'(\w+\-)+[0-9]+'
     EXTENSION_MULTI_WORD_REGEX = r'[^:](\w*(\-[a-zA-Z]+)+)'
     
-    SIGN_POLARITY_REGEX = r'(\(\[\-\]\))|(\s+\-[\r\t\f ]*)'
+    SIGN_POLITE_REGEX = r'(\(\[\+\]\))|(\s+\+[\r\t\f ]*)|(\(\+\))'
+
+    SIGN_POLARITY_REGEX = r'(\(\[\-\]\))|(\s+\-[\r\t\f ]*)|(\(\-\))'
     SIGNS_REMOVE_UNUSED_REGEX = r'[^a-zA-Z\d\s\/\-\(\)\[\]\?]'
 
     NUMBER_QUANTITIY_REGEX = r'(\(\[[0-9]+\]\))'

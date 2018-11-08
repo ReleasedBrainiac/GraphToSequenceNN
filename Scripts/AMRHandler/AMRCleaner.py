@@ -545,12 +545,14 @@ class Cleaner:
         try:
             self.context = self.GetUnformatedAMRString(self.context)
             if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context):
+                print('I: ',self.context)
                 self.context = self.EncloseUnenclosedValues(self.context)
                 self.context = self.EncloseStringifiedValues(self.context)
                 self.context = self.GetEnclosedContent(self.context)
                 self.context = self.LookUpReplacement(self.context)
                 self.cleaned_context = self.NiceFormatting(self.context)
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned_context)
+                print('O: ',self.cleaned_context)
                 if(self.isCleaned):
                     return self.cleaned_context
                 else:

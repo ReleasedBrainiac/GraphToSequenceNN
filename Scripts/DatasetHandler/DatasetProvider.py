@@ -86,8 +86,7 @@ class DatasetPipelines:
             :param semantic_flag: marker/delim to add to cleaned semantic
         """
         try:
-            cleaner = Cleaner(open_bracket=self.parenthesis[0], 
-                              close_bracket=self.parenthesis[1], 
+            cleaner = Cleaner(self.parenthesis, 
                               input_context=semantic,
                               input_extension_dict=self.extension_dict,
                               keep_edges = self.is_keeping_edges

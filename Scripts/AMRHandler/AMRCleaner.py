@@ -1,6 +1,6 @@
 # - *- coding: utf-8*-
 import re
-from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict, isBool
+from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict, isBool, isList
 from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
@@ -22,7 +22,14 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def __init__(self, open_bracket='(', close_bracket=')', input_context=None, input_extension_dict={}, keep_edges=False):
+    def __init__(self, node_parenthesis=['(',')'], input_context=None, input_extension_dict={}, keep_edges=False):
+        """
+        Class constructor 
+            :param node_parenthesis: define node parenthesis
+            :param input_context: input amr string
+            :param input_extension_dict: look up dictionairy
+            :param keep_edges: switch allow to keep edges or not
+        """   
         try:
             self.constants = Constants()
 
@@ -35,9 +42,8 @@ class Cleaner:
                 self.extension_dict = input_extension_dict
                 self.extension_keys_dict = self.extension_dict.keys()
 
-            if isStr(open_bracket) and isStr(close_bracket):
-                self.node_parenthesis[0] = open_bracket
-                self.node_parenthesis[1] = close_bracket
+            if isList(node_parenthesis):
+                self.node_parenthesis = node_parenthesis
 
             if isBool(keep_edges): self.keep_edge_encoding = keep_edges
             if(self.hasContext): self.GenerateCleanAMR()
@@ -401,9 +407,9 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def ExploreAdditionalContent(self, in_context):
+    def HandleAdditionalContent(self, in_context):
         """
-        This function search in a AMR line fragment about additional context for the AMR node.
+        This function search in a AMR line fragment about additional context for the AMR node and replace or remove problematic content.
             :param in_context: a AMR line fragment with a node and maybe additional context 
         """
         try:
@@ -419,15 +425,14 @@ class Cleaner:
                     
             return in_context
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.ExploreAdditionalContent]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.HandleAdditionalContent]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def NiceFormatting(self, in_context):
+    def FinalFormatter(self, in_context):
         """
-        This function format and clean up a raw AMR semantic (graph-) string.
-        This allow to clean up format definitions and remove [for this project] uninteresting content!
-            :param in_context: a raw AMR semantic string
+        This function clean up a raw spacing format removed AMR semantic string.
+            :param in_context: a raw spacing format removed AMR semantic string
         """
         try:
             depth = -1
@@ -442,13 +447,13 @@ class Cleaner:
                     occourences = self.CountSignOccurence(new_line, self.node_parenthesis[1])
                     depth = depth - occourences
                 
-                new_line = self.ExploreAdditionalContent(new_line)
+                new_line = self.HandleAdditionalContent(new_line)
                 struct_contain.append(new_line)
 
             return '\n'.join(struct_contain) + ')'
 
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.NiceFormatting]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.FinalFormatter]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -456,7 +461,7 @@ class Cleaner:
 
     def GenerateCleanAMR(self):
         """
-        This function preprocess a raw AMR semantic (graph-) string for further usage in the main project.
+        This function preprocess a raw AMR semantic string.
         """
         try:
             self.context = self.RemoveSpacingFormat(self.context)
@@ -465,7 +470,7 @@ class Cleaner:
                 self.context = self.EncapsulateStringifiedValues(self.context)
                 self.context = self.GetNestedContent(self.context)
                 self.context = self.ReplaceKnownExtensions(self.context)
-                self.cleaned_context = self.NiceFormatting(self.context)
+                self.cleaned_context = self.FinalFormatter(self.context)
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned_context)
                 if(self.isCleaned):
                     return self.cleaned_context
@@ -479,6 +484,10 @@ class Cleaner:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def AllowedCharacterOccurenceCheck(self, in_context):
+        """
+        This function check a string being AMR conform and additionally allows new defined type of edge informations.
+            :param in_context: a string
+        """   
         try:
             only_allowed_chars = all(x.isalnum() or x.isspace() or (x is '[') or (x is ']') or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
             has_correct_parenthesis = self.MatchSignsOccurences(in_context) and self.MatchSignsOccurences(in_context, self.edge_parenthesis)

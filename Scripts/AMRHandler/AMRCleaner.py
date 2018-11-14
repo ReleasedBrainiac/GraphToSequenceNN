@@ -183,7 +183,7 @@ class Cleaner:
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-    def CollectAllMatchesOfPattern(self, in_regex_pattern, in_context):
+    def CollectAllMatches(self, in_regex_pattern, in_context):
         """
         This function collect all occurences of a regex pattern match.
             :param in_regex_pattern: matcher regex
@@ -192,13 +192,13 @@ class Cleaner:
         try:
             return re.findall(in_regex_pattern, in_context)
         except ValueError:
-            print("ERR: No content passed to [AMRCleaner.CollectAllMatchesOfPattern].")
+            print("ERR: No content passed to [AMRCleaner.CollectAllMatches].")
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.CollectAllMatchesOfPattern]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.CollectAllMatches]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplaceAllPatternMatches(self, in_pattern_search, in_replace, in_context):
+    def ReplaceAllMatches(self, in_pattern_search, in_replace, in_context):
         """
         This function replace a found regex pattern match with a desired replacement value.
             :param in_pattern_search: matcher regex
@@ -208,9 +208,9 @@ class Cleaner:
         try:
             return re.sub(in_pattern_search, in_replace, in_context) 
         except ValueError:
-            print("ERR: No content passed to [AMRCleaner.ReplaceAllPatternMatches].")
+            print("ERR: No content passed to [AMRCleaner.ReplaceAllMatches].")
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.ReplaceAllPatternMatches]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.ReplaceAllMatches]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -254,7 +254,7 @@ class Cleaner:
         """
         try:
             if self.HasColon(in_context):
-                for loot_elem in self.CollectAllMatchesOfPattern(self.constants.UNENCLOSED_ARGS_REGEX, in_context):
+                for loot_elem in self.CollectAllMatches(self.constants.UNENCLOSED_ARGS_REGEX, in_context):
                     search = ''.join(loot_elem)
                     found_flag = loot_elem[0]
                     found_edge = loot_elem[1].lstrip(' ')
@@ -267,7 +267,7 @@ class Cleaner:
                         else:
                             replace = ''
                         
-                    in_context = self.ReplaceAllPatternMatches(search, replace, in_context)
+                    in_context = self.ReplaceAllMatches(search, replace, in_context)
             return in_context
         except ValueError:
             print("ERR: Missing or wrong value passed to [AMRCleaner.EncapsulateUnenclosedValues].")
@@ -283,7 +283,7 @@ class Cleaner:
         """
         try:
             if self.HasQuotation(in_context):
-                for elem in self.CollectAllMatchesOfPattern(self.constants.MARKER_NESTINGS_REGEX, in_context):
+                for elem in self.CollectAllMatches(self.constants.MARKER_NESTINGS_REGEX, in_context):
                     replacer = ''
 
                     if hasContent(elem[0]) and elem[0].count(self.constants.QUOTATION_MARK) == 2:
@@ -311,7 +311,7 @@ class Cleaner:
         """   
         try:
             if ('-' in in_context):
-                look_up_control = self.CollectAllMatchesOfPattern(self.constants.EXTENSION_MULTI_WORD_REGEX, in_context)
+                look_up_control = self.CollectAllMatches(self.constants.EXTENSION_MULTI_WORD_REGEX, in_context)
                 if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
                     for found in look_up_control:
                         if len(found[0]) > 0 and found[0] in self.extension_keys_dict:

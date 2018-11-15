@@ -21,7 +21,6 @@ from AMRHandler.AMRCleaner import Cleaner
 class DatasetPipelines:
 
     # Variables inits
-    parenthesis = ['(', ')']
     look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
     extension_dict =  Reader(input_path=look_up_extension_replace_path).LineReadContent()
 
@@ -86,11 +85,7 @@ class DatasetPipelines:
             :param semantic_flag: marker/delim to add to cleaned semantic
         """
         try:
-            cleaner = Cleaner(self.parenthesis, 
-                              input_context=semantic,
-                              input_extension_dict=self.extension_dict,
-                              keep_edges = self.is_keeping_edges
-                              )
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
 
             self.extension_dict = cleaner.extension_dict
             half_cleaned_sem = '#'+semantic_flag+' \n'+cleaner.cleaned_context+'\n'
@@ -178,10 +173,10 @@ class DatasetPipelines:
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
 
-            extracted = self.extractor.Extract(dataset, 
-                                               self.context_max_length, 
-                                               self.constants.SENTENCE_DELIM, 
-                                               self.constants.FILE_DELIM)        
+            extracted = self.extractor.Extract(in_content=dataset, 
+                                               max_len=self.context_max_length, 
+                                               x_delim=self.constants.SENTENCE_DELIM, 
+                                               y_delim=self.constants.FILE_DELIM)        
 
             mean_value_sentences = self.eval_Helper.CalculateMeanValue(extracted[0])
             mean_value_semantics = self.eval_Helper.CalculateMeanValue(extracted[1])     
@@ -197,8 +192,6 @@ class DatasetPipelines:
             print('Count semantics: ', len(extracted[3]))
             print('Mean sentences: ', mean_value_sentences)
             print('Mean semantics: ', mean_value_semantics)
-            print('AMR? ', self.as_amr)
-            print('Look_up: \n', self.extension_dict)
 
             return data_pairs
         except Exception as ex:

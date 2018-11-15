@@ -79,7 +79,7 @@ class Extractor:
                     if isNotNone(result_pair):
                         sentence_lengths.append(len(result_pair[0]))
                         semantic_lengths.append(len(result_pair[1]))
-                        pairs.append(result_pair)
+                        if isNotNone(result_pair[1]) and isNotNone(result_pair[1]): pairs.append(result_pair)
                         result_pair = []
 
             if(len(sentence_lengths) == len(semantic_lengths) and isNotNone(pairs)):

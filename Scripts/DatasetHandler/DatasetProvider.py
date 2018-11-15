@@ -128,24 +128,22 @@ class DatasetPipelines:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectDatasetPair(self, sentence_flag, semantic_flag, sentence, semantic):
+    def CollectDatasetPair(self, sentence_flag, semantic_flag, data_pair):
         """
         This function collect a data pair from raw sentences and semantics.
         ATTENTION: [as_amr = true] does not support conversion with ConvertToTensorMatrices!
             :param sentence_flag: a marker to attach to the cleaned sentence, make it easier to find later
             :param semantic_flag: a marker to attach to the cleaned semantic, make it easier to find later
-            :param sentence: raw input of the AMR sentence
-            :param semantic: raw input of the AMR semantic
+            :param data_pair: amr data pair
         """
         try:
-            sentence = sentence_flag+' '+sentence
-            sentence = self.RemoveEnclosingAngleBracket(sentence)
+            sentence = self.RemoveEnclosingAngleBracket(sentence_flag+' '+data_pair[0])
             if(self.as_amr):
-                semantic = self.ForgeAmrSemanticString(semantic, semantic_flag)
+                semantic = self.ForgeAmrSemanticString(data_pair[1], semantic_flag)
             else: 
-                semantic = self.ForgeAmrTree(semantic, semantic_flag)
+                semantic = self.ForgeAmrTree(data_pair[1], semantic_flag)
                 
-            if isNotNone(semantic): 
+            if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]
             else:
                 return None
@@ -154,21 +152,18 @@ class DatasetPipelines:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectAllDatasetPairs(self, sentence_flag, semantic_flag, sent_array, sem_array):
+    def CollectAllDatasetPairs(self, sentence_flag, semantic_flag, data_pairs):
         """
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
             :param sentence_flag: a marker to attach to the cleaned sentence, make it easier to find later
             :param semantic_flag: a marker to attach to the cleaned semantic, make it easier to find later
-            :param sent_array: Array of the raw input of the AMR sentences
-            :param sem_array: Array of the raw input of the AMR semantics
+            :param data_pairs: array of amr data pairs
         """
         try:
             dataset_pairs_sent_sem = []
-            for i in range(min(len(sent_array), len(sem_array))):
-                dataset_pairs_sent_sem.append(self.CollectDatasetPair(sentence_flag, semantic_flag, sent_array[i], sem_array[i]))
-
+            for i in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(sentence_flag, semantic_flag, data_pairs[i]))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -188,23 +183,22 @@ class DatasetPipelines:
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
 
-            extracted = self.extractor.Extract(in_content=dataset, 
-                                               max_len=self.context_max_length, 
-                                               x_delim=self.constants.SENTENCE_DELIM, 
-                                               y_delim=self.constants.FILE_DELIM)        
+            sentence_lengths, semantic_lengths, pairs = self.extractor.Extract(in_content=dataset, 
+                                                                               max_len=self.context_max_length, 
+                                                                               x_delim=self.constants.SENTENCE_DELIM, 
+                                                                               y_delim=self.constants.FILE_DELIM)        
 
-            mean_value_sentences = self.eval_Helper.CalculateMeanValue(extracted[0])
-            mean_value_semantics = self.eval_Helper.CalculateMeanValue(extracted[1])     
+            mean_value_sentences = self.eval_Helper.CalculateMeanValue(sentence_lengths)
+            mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     
 
             data_pairs = self.CollectAllDatasetPairs(self.constants.SENTENCE_DELIM, 
                                                      self.constants.SEMANTIC_DELIM, 
-                                                     extracted[2], 
-                                                     extracted[3])
+                                                     pairs)
 
             print('Max restriction: ', self.context_max_length)
             print('Path input: ', self.in_path)
-            print('Count sentences: ', len(extracted[2]))
-            print('Count semantics: ', len(extracted[3]))
+            print('Count sentences: ', len(sentence_lengths))
+            print('Count semantics: ', len(semantic_lengths))
             print('Mean sentences: ', mean_value_sentences)
             print('Mean semantics: ', mean_value_semantics)
             print('Data dropouts:', self.dataset_drop_outs)

@@ -59,8 +59,7 @@ class Extractor:
             semantic_found = False
             sentence_lengths = []
             semantic_lengths = []
-            sentences = []
-            semantics = []
+            pairs = []
 
             for index, elem in enumerate(in_content):
                 
@@ -80,12 +79,11 @@ class Extractor:
                     if isNotNone(result_pair):
                         sentence_lengths.append(len(result_pair[0]))
                         semantic_lengths.append(len(result_pair[1]))
-                        sentences.append(result_pair[0])
-                        semantics.append(result_pair[1])
+                        pairs.append(result_pair)
                         result_pair = []
 
-            if(len(sentence_lengths) == len(semantic_lengths) == len(sentences) == len(semantics)):
-                return [sentence_lengths, semantic_lengths, sentences, semantics]
+            if(len(sentence_lengths) == len(semantic_lengths) and isNotNone(pairs)):
+                return [sentence_lengths, semantic_lengths, pairs]
             else:
                 print('WRONG OUTPUT FOR [ExtractContent]... Size of outputs dont match!')
                 return None

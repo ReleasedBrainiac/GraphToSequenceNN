@@ -1,4 +1,4 @@
-from DatasetHandler.ContentSupport import isStr, isNotNone, isList
+from DatasetHandler.ContentSupport import isStr, isNone, isNotNone, isList
 from DatasetHandler.ContentSupport import setOrDefault
 from Configurable.ProjectConstants import Constants
 
@@ -17,17 +17,32 @@ class Writer:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def __init__(self, input_path, in_output_extender='output',data_pairs=None, in_context=None):
+        """
+        This is the constructor of the Writer class. 
+        Necessary is the input path only. 
+        Extender for the output path provide a default value.
+        To provide 2 types of input you can set amr datapairs or various context of type string.
+        If both is present the data pairs wil be preferred.
+            :param input_path: path of the input file
+            :param in_output_extender='output': extender to create output file from input path
+            :param data_pairs=None: amr data pairs list like List<Array{sentence, semantic}>
+            :param in_context=None: optional if no data pairs present use context
+        """   
         try:
             if isNotNone(input_path) and isStr(input_path):
                 self.path = input_path
+                self.out_path = setOrDefault(self.path+'.'+ in_output_extender , self.constants.TYP_ERROR, isStr(in_output_extender))
 
             if isNotNone(data_pairs) and isList(data_pairs):
                 self.dataset_pairs = data_pairs
+                self.StoreAMR()
 
-            if isNotNone(in_context) and isStr(in_context):
+            if isNotNone(in_context) and isStr(in_context) and isNone(data_pairs):
                 self.context = in_context
+                self.StoreContext()
+            
 
-            self.out_path = setOrDefault(self.path+'.'+ in_output_extender , self.constants.TYP_ERROR, isStr(in_output_extender))
+
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileWriter.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -69,7 +84,7 @@ class Writer:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def Store(self):
+    def StoreAMR(self):
         """
         This function save the collected content to a given file.
         """

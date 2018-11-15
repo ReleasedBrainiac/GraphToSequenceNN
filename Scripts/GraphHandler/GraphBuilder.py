@@ -11,7 +11,7 @@ import numpy as np
 '''
     This class library allow to convert GraphTree's of type AnyNode from anytree library into a matrix representation.
 '''
-class GTConverter:
+class GraphBuilder:
 
     def GetNodesLables(self, tree_graph):
         if isNotNone(tree_graph) and isAnyNode(tree_graph):

@@ -41,7 +41,7 @@ class Writer:
                 self.context = in_context
                 self.StoreContext()
             
-
+            print('Destination: ', self.out_path)
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileWriter.__init__]. Arguments:\n{1!r}"
@@ -75,10 +75,8 @@ class Writer:
                 if isNotNone(self.context) and isStr(self.context):
                     fileOut.write(self.context)
                     fileOut.flush()
-
-                print('Destination => ', self.path)
         except ValueError:
-            print('WRONG INPUT FOR [StoreContext]')
+            print('WRONG INPUT FOR [FileWriter.StoreContext]')
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileWriter.StoreContext]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -95,10 +93,8 @@ class Writer:
                     if isNotNone(result):
                         fileOut.write(result)
                         fileOut.flush()
-
-                print('Destination => ', self.path)
         except ValueError:
-            print('WRONG INPUT FOR [StoreAMR]')
+            print('WRONG INPUT FOR [FileWriter.StoreAMR]')
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileWriter.StoreAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

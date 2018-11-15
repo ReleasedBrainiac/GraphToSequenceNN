@@ -14,7 +14,7 @@ from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
 from TreeHandler.AMRGraphParser import GParser
-from GraphHandler.GraphTreeConverter import GTConverter
+from GraphHandler.GraphBuilder import GraphBuilder
 from AMRHandler.AMRCleaner import Cleaner
 
 
@@ -28,7 +28,7 @@ class DatasetPipelines:
     extractor = Extractor()
     constants = Constants()
     eval_Helper = EvaluationHelpers()
-    gt_converter = GTConverter()
+    gt_converter = GraphBuilder()
     t_parser = TParser()
     g_parser = None
 
@@ -210,10 +210,6 @@ class DatasetPipelines:
             writer = Writer(self.in_path, 
                             self.out_path_extender, 
                             self.Pipeline())
-            outpath = writer.out_path
-            writer.Store()
-
-            if (self.is_showing_feedback): print('outpath: ', outpath)
             
             return None
         except Exception as ex:

@@ -15,10 +15,8 @@ class EvaluationHelpers:
 
             mw = int(round(sent_summ / len(sentences_length)))
             return mw
-        except ValueError:
-            print("ERR: Missing or wrong value passed to [CalculateMeanValue].")
         except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TextEvaluation.CalculateMeanValue]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 

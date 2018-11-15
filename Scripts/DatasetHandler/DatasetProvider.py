@@ -31,6 +31,7 @@ class DatasetPipelines:
     gt_converter = GraphBuilder()
     t_parser = TParser()
     g_parser = None
+    dataset_drop_outs = 0
 
     # Path content
     in_path = None
@@ -44,8 +45,25 @@ class DatasetPipelines:
     as_amr = False
 
     def __init__(self, in_path=None, output_path_extender=None, max_length=-1, saving=False,show_feedback=False, keep_edges=False):
+        """
+        This class constructor allow to set all path definbition for the dataset and the output. 
+        Further its possible to define a maximal lengt for the used dataset. 
+        Therefore the max_length define the exact value for the string length and doubled it for the  semantic string length.
+        If it is negative the module gonna use all dataset elements.
+        Additionally switches allow to tell the system:
+            -> to save the content only
+            -> to show feedback on the processing stage
+            -> to include amr graph edge encoding
+            :param in_path: dataset input path
+            :param output_path_extender: result output path
+            :param max_length: context length restriction
+            :param saving: only saving flag
+            :param show_feedback: show process content
+            :param keep_edges: include edges in the amr cleaner strategy
+        """   
         try:
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
+            self.dataset_drop_outs = 0
 
             if isStr(output_path_extender): self.out_path_extender = output_path_extender
 
@@ -70,33 +88,32 @@ class DatasetPipelines:
         try:
             in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
             in_sentence = re.sub('</[^>]+>','', in_sentence)
-            in_sentence = re.sub('<[^/>]+/>','', '#'+in_sentence)
-            return in_sentence+'\n'
+            return  re.sub('<[^/>]+/>','', '#'+in_sentence)+'\n'
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.RemoveEnclosingAngleBracket]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CleanReforgeAmrSemantic(self, semantic, semantic_flag):
+    def ForgeAmrSemanticString(self, semantic, semantic_flag):
         """
-        This function allows to convert a raw AMR semantic (graph-) string  
-        into a cleaned and minimalized version of it.
+        This function allows to convert a raw AMR semantic into a cleaned and minimalized version of it.
             :param semantic: raw semantic input
-            :param semantic_flag: marker/delim to add to cleaned semantic
+            :param semantic_flag: marker/delim added to the cleaned semantic
         """
         try:
             cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
-
-            self.extension_dict = cleaner.extension_dict
-            half_cleaned_sem = '#'+semantic_flag+' \n'+cleaner.cleaned_context+'\n'
-            out = half_cleaned_sem+'\n'
-            return out
+            if cleaner.isCleaned:
+                self.extension_dict = cleaner.extension_dict
+                return '#'+semantic_flag+' \n'+cleaner.cleaned_context+'\n'+'\n'
+            else:
+                self.dataset_drop_outs += 1
+                return None
         except Exception as ex:
-            template = "An exception of type {0} occurred in [DatasetProvider.CleanReforgeAmrSemantic]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrSemanticString]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CleanReforgeTreeSemantic(self, semantic, semantic_flag):
+    def ForgeAmrTree(self, semantic, semantic_flag):
         """
         This function allows to convert a raw AMR semantic (graph-) string
         into a cleaned and minimalized anytree reprenstation of it.
@@ -104,14 +121,10 @@ class DatasetPipelines:
             :param semantic_flag: marker/delim to add to cleaned semantic
         """
         try:
-            half_cleaned_sem = '#'+semantic_flag+' '+semantic+'\n'
-            out = half_cleaned_sem+'\n'
+            out = '#'+semantic_flag+' '+semantic+'\n'+'\n'
             return self.t_parser.Execute(out, semantic_flag, self.is_showing_feedback, self.is_saving)
-            #//TODO remove or use!
-            #self.g_parser = GParser(out, self.extension_dict)
-            #return self.g_parser.GetNetworkxGraph()
         except Exception as ex:
-            template = "An exception of type {0} occurred in [DatasetProvider.CleanReforgeTreeSemantic]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -125,15 +138,17 @@ class DatasetPipelines:
             :param semantic: raw input of the AMR semantic
         """
         try:
-            #//TODO here check a semantic is okay with Cleaner.isCleaned => if not discard 
             sentence = sentence_flag+' '+sentence
             sentence = self.RemoveEnclosingAngleBracket(sentence)
             if(self.as_amr):
-                semantic = self.CleanReforgeAmrSemantic(semantic, semantic_flag)
+                semantic = self.ForgeAmrSemanticString(semantic, semantic_flag)
+            else: 
+                semantic = self.ForgeAmrTree(semantic, semantic_flag)
+                
+            if isNotNone(semantic): 
                 return [sentence, semantic]
             else:
-                semantic = self.CleanReforgeTreeSemantic(semantic, semantic_flag)
-                return [sentence, semantic]
+                return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectDatasetPair]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -192,6 +207,7 @@ class DatasetPipelines:
             print('Count semantics: ', len(extracted[3]))
             print('Mean sentences: ', mean_value_sentences)
             print('Mean semantics: ', mean_value_semantics)
+            print('Data dropouts:', self.dataset_drop_outs)
 
             return data_pairs
         except Exception as ex:

@@ -84,7 +84,7 @@ class Writer:
 
     def StoreAMR(self):
         """
-        This function save the collected content to a given file.
+        This function save the collected amr content to a given file.
         """
         try:
             with open(self.out_path, 'w', encoding=self.writer_encoding) as fileOut:

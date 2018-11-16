@@ -47,8 +47,7 @@ class Extractor:
         try:
             raw_start_index = in_content[index].find(self.constants.SENTENCE_DELIM)+6
             sentence = in_content[index]
-            sent_len = len(sentence)
-            return sentence[raw_start_index:sent_len-1]
+            return sentence[raw_start_index:len(sentence)-1]
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetExtractor.ExtractSentence]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -84,10 +83,12 @@ class Extractor:
 
             for index, elem in enumerate(self.context):
                 if (self.constants.SENTENCE_DELIM in elem):
+                    #//TODO geht das nicht direkt auf dem element => wäre schneller
                     sentence = self.ExtractSentence(self.context, index)
                     sentence_found = True
 
                 if (self.constants.FILE_DELIM in elem and sentence_found):
+                    #//TODO geht das nicht direkt auf dem element => wäre schneller
                     semantic = self.ExtractSemantic(self.context, index)
                     semantic_found = True
 

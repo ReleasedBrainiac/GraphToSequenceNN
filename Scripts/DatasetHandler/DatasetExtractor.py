@@ -5,34 +5,33 @@ class Extractor:
 
     context = None
     constants = None
+    size_restriction = -1
 
-    def __init__(self, in_content=None):
+    def __init__(self, in_content=None, in_size_restriction=-1):
         try:
             self.context = in_content
+            self.size_restriction = in_size_restriction
             self.constants = Constants()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetExtractor.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def RestrictionCorpus(self, max_len, sentence, semantic):
+    def RestrictionCorpus(self, sentence, semantic):
         """
         This funtion check a sentence and semantic pair satisfy the size restictions.
-            :param max_len: max allows length of a sentence
             :param sentence: the cleaned sentence
             :param semantic: the cleaned correspondign semantic for the sentence
         """
-        if isInt(max_len) and isStr(sentence) and isNotNone(semantic):
-
-            sen_size = max_len
-            sem_size = max_len*2
-
-            if (max_len < 1) or ((len(sentence) < (sen_size+1)) and (len(semantic) < (sem_size+1))):
+        try:
+            if (self.size_restriction < 1) or ((len(sentence) < (self.size_restriction+1)) and (len(semantic) < (self.size_restriction+1))):
                 return [sentence, semantic]
-
-        else:
-            print('WRONG INPUT FOR [RestrictionCorpus]')
-            return None
+            else:
+                return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetExtractor.RestrictionCorpus]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def ExtractSentence(self, in_content, index):
         """
@@ -40,10 +39,15 @@ class Extractor:
             :param in_content: raw amr string fragment from split of full AMR dataset string
             :param index: position where the sentence was found
         """
-        raw_start_index = in_content[index].find(self.constants.SENTENCE_DELIM)+6
-        sentence = in_content[index]
-        sent_len = len(sentence)
-        return sentence[raw_start_index:sent_len-1]
+        try:
+            raw_start_index = in_content[index].find(self.constants.SENTENCE_DELIM)+6
+            sentence = in_content[index]
+            sent_len = len(sentence)
+            return sentence[raw_start_index:sent_len-1]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetExtractor.ExtractSentence]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def ExtractSemantic(self, in_content, index):
         """
@@ -51,16 +55,19 @@ class Extractor:
             :param in_content: raw amr string fragment from split of full AMR dataset string
             :param index: position where the semantic was found
         """
-        raw_content = in_content[index].split('.txt')
-        raw_con_index = len(raw_content)-1
-        return raw_content[raw_con_index]
+        try:
+            raw_content = in_content[index].split('.txt')
+            return raw_content[len(raw_content)-1]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetExtractor.ExtractSemantic]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-    def Extract(self,max_len):
+    def Extract(self):
         """
         This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
-            :param max_len: maximal allowed length of a sentence and semantics
         """
-        if isNotNone(self.context):
+        try:
             sentence = ''
             semantic = ''
             result_pair = None
@@ -81,7 +88,7 @@ class Extractor:
                     semantic_found = True
 
                 if sentence_found and semantic_found:
-                    result_pair = self.RestrictionCorpus(max_len, sentence, semantic)
+                    result_pair = self.RestrictionCorpus(sentence, semantic)
                     sentence_found = False
                     semantic_found = False
 
@@ -96,6 +103,7 @@ class Extractor:
             else:
                 print('WRONG OUTPUT FOR [ExtractContent]... Size of outputs dont match!')
                 return None
-        else:
-            print('WRONG INPUT FOR [ExtractContent]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetExtractor.Extract]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

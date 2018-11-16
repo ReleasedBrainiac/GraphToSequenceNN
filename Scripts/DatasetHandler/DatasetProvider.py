@@ -175,9 +175,7 @@ class DatasetPipelines:
 
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
-
-            sentence_lengths, semantic_lengths, pairs = Extractor(dataset).Extract(max_len=self.context_max_length)        
-
+            sentence_lengths, semantic_lengths, pairs = Extractor(in_content=dataset, in_size_restriction=self.context_max_length).Extract()
             mean_value_sentences = self.eval_Helper.CalculateMeanValue(sentence_lengths)
             mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     
 

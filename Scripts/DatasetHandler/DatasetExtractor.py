@@ -8,6 +8,11 @@ class Extractor:
     size_restriction = -1
 
     def __init__(self, in_content=None, in_size_restriction=-1):
+        """
+        This class constructor store all passed values to global placeholders.
+            :param in_content: input context by default None
+            :param in_size_restriction: sentence and semantics restriction by default -1
+        """   
         try:
             self.context = in_content
             self.size_restriction = in_size_restriction
@@ -78,7 +83,6 @@ class Extractor:
             pairs = []
 
             for index, elem in enumerate(self.context):
-                
                 if (self.constants.SENTENCE_DELIM in elem):
                     sentence = self.ExtractSentence(self.context, index)
                     sentence_found = True
@@ -96,12 +100,11 @@ class Extractor:
                         sentence_lengths.append(len(result_pair[0]))
                         semantic_lengths.append(len(result_pair[1]))
                         if isNotNone(result_pair[1]) and isNotNone(result_pair[1]): pairs.append(result_pair)
-                        result_pair = []
+                        result_pair = None
 
             if(len(sentence_lengths) == len(semantic_lengths) and isNotNone(pairs)):
                 return [sentence_lengths, semantic_lengths, pairs]
             else:
-                print('WRONG OUTPUT FOR [ExtractContent]... Size of outputs dont match!')
                 return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetExtractor.Extract]. Arguments:\n{1!r}"

@@ -1,12 +1,15 @@
 from DatasetHandler.ContentSupport import isStr, isInt, isNotNone
+from Configurable.ProjectConstants import Constants
 
 class Extractor:
 
     context = None
+    constants = None
 
     def __init__(self, in_content=None):
         try:
             self.context = in_content
+            self.constants = Constants()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetExtractor.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -31,14 +34,13 @@ class Extractor:
             print('WRONG INPUT FOR [RestrictionCorpus]')
             return None
 
-    def ExtractSentence(self, x_delim, in_content, index):
+    def ExtractSentence(self, in_content, index):
         """
         This function extract the sentence element from AMR corpus element!
-            :param x_delim: marker/delim to find the sentence fragment
             :param in_content: raw amr string fragment from split of full AMR dataset string
             :param index: position where the sentence was found
         """
-        raw_start_index = in_content[index].find(x_delim)+6
+        raw_start_index = in_content[index].find(self.constants.SENTENCE_DELIM)+6
         sentence = in_content[index]
         sent_len = len(sentence)
         return sentence[raw_start_index:sent_len-1]
@@ -53,15 +55,13 @@ class Extractor:
         raw_con_index = len(raw_content)-1
         return raw_content[raw_con_index]
 
-    def Extract(self,max_len, x_delim, y_delim):
+    def Extract(self,max_len):
         """
         This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
             :param in_content: raw amr string fragment from split of full AMR dataset string
             :param max_len: maximal allowed length of a sentence and semantics
-            :param x_delim: marker/delim to validate fragment as raw sentence
-            :param y_delim: marker/delim to validate fragment as raw semantic
         """
-        if isNotNone(self.context) and isStr(x_delim) and isStr(y_delim):
+        if isNotNone(self.context):
             in_content = self.context
             sentence = ''
             semantic = ''
@@ -74,11 +74,11 @@ class Extractor:
 
             for index, elem in enumerate(in_content):
                 
-                if (x_delim in elem):
-                    sentence = self.ExtractSentence(x_delim, in_content, index)
+                if (self.constants.SENTENCE_DELIM in elem):
+                    sentence = self.ExtractSentence(in_content, index)
                     sentence_found = True
 
-                if (y_delim in elem and sentence_found):
+                if (self.constants.FILE_DELIM in elem and sentence_found):
                     semantic = self.ExtractSemantic(in_content, index)
                     semantic_found = True
 

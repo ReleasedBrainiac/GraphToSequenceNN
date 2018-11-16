@@ -58,11 +58,9 @@ class Extractor:
     def Extract(self,max_len):
         """
         This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
-            :param in_content: raw amr string fragment from split of full AMR dataset string
             :param max_len: maximal allowed length of a sentence and semantics
         """
         if isNotNone(self.context):
-            in_content = self.context
             sentence = ''
             semantic = ''
             result_pair = None
@@ -72,14 +70,14 @@ class Extractor:
             semantic_lengths = []
             pairs = []
 
-            for index, elem in enumerate(in_content):
+            for index, elem in enumerate(self.context):
                 
                 if (self.constants.SENTENCE_DELIM in elem):
-                    sentence = self.ExtractSentence(in_content, index)
+                    sentence = self.ExtractSentence(self.context, index)
                     sentence_found = True
 
                 if (self.constants.FILE_DELIM in elem and sentence_found):
-                    semantic = self.ExtractSemantic(in_content, index)
+                    semantic = self.ExtractSemantic(self.context, index)
                     semantic_found = True
 
                 if sentence_found and semantic_found:

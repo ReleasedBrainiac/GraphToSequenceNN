@@ -156,7 +156,7 @@ class DatasetPipelines:
         """
         try:
             dataset_pairs_sent_sem = []
-            for i in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(data_pairs[i]))
+            for pair in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(pair))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"

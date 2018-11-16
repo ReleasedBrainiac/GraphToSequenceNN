@@ -93,17 +93,16 @@ class DatasetPipelines:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeAmrSemanticString(self, semantic, semantic_flag):
+    def ForgeAmrSemanticString(self, semantic):
         """
         This function allows to convert a raw AMR semantic into a cleaned and minimalized version of it.
             :param semantic: raw semantic input
-            :param semantic_flag: marker/delim added to the cleaned semantic
         """
         try:
             cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
             if cleaner.isCleaned:
                 self.extension_dict = cleaner.extension_dict
-                return '#'+semantic_flag+' \n'+cleaner.cleaned_context+'\n'+'\n'
+                return '#'+self.constants.SEMANTIC_DELIM+' \n'+cleaner.cleaned_context+'\n'+'\n'
             else:
                 self.dataset_drop_outs += 1
                 return None
@@ -112,35 +111,33 @@ class DatasetPipelines:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeAmrTree(self, semantic, semantic_flag):
+    def ForgeAmrTree(self, semantic):
         """
         This function allows to convert a raw AMR semantic (graph-) string
         into a cleaned and minimalized anytree reprenstation of it.
             :param semantic: raw semantic input
-            :param semantic_flag: marker/delim to add to cleaned semantic
         """
         try:
-            out = '#'+semantic_flag+' '+semantic+'\n'+'\n'
-            return self.t_parser.Execute(out, semantic_flag, self.is_showing_feedback, self.is_saving)
+            out = '#'+self.constants.SEMANTIC_DELIM+' '+semantic+'\n'+'\n'
+            return self.t_parser.Execute(out, self.constants.SEMANTIC_DELIM, self.is_showing_feedback, self.is_saving)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectDatasetPair(self, sentence_flag, semantic_flag, data_pair):
+    def CollectDatasetPair(self, sentence_flag, data_pair):
         """
         This function collect a data pair from raw sentences and semantics.
         ATTENTION: [as_amr = true] does not support conversion with ConvertToTensorMatrices!
             :param sentence_flag: a marker to attach to the cleaned sentence, make it easier to find later
-            :param semantic_flag: a marker to attach to the cleaned semantic, make it easier to find later
             :param data_pair: amr data pair
         """
         try:
             sentence = self.RemoveEnclosingAngleBracket(sentence_flag+' '+data_pair[0])
             if(self.as_amr):
-                semantic = self.ForgeAmrSemanticString(data_pair[1], semantic_flag)
+                semantic = self.ForgeAmrSemanticString(data_pair[1])
             else: 
-                semantic = self.ForgeAmrTree(data_pair[1], semantic_flag)
+                semantic = self.ForgeAmrTree(data_pair[1])
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]
@@ -151,18 +148,17 @@ class DatasetPipelines:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectAllDatasetPairs(self, sentence_flag, semantic_flag, data_pairs):
+    def CollectAllDatasetPairs(self, sentence_flag, data_pairs):
         """
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
             :param sentence_flag: a marker to attach to the cleaned sentence, make it easier to find later
-            :param semantic_flag: a marker to attach to the cleaned semantic, make it easier to find later
             :param data_pairs: array of amr data pairs
         """
         try:
             dataset_pairs_sent_sem = []
-            for i in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(sentence_flag, semantic_flag, data_pairs[i]))
+            for i in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(sentence_flag, data_pairs[i]))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -189,8 +185,7 @@ class DatasetPipelines:
             mean_value_sentences = self.eval_Helper.CalculateMeanValue(sentence_lengths)
             mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     
 
-            data_pairs = self.CollectAllDatasetPairs(self.constants.SENTENCE_DELIM, 
-                                                     self.constants.SEMANTIC_DELIM, 
+            data_pairs = self.CollectAllDatasetPairs(self.constants.SENTENCE_DELIM,  
                                                      pairs)
 
             print('Max restriction: ', self.context_max_length)

@@ -2,6 +2,16 @@ from DatasetHandler.ContentSupport import isStr, isInt, isNotNone
 
 class Extractor:
 
+    context = None
+
+    def __init__(self, in_content=None):
+        try:
+            self.context = in_content
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetExtractor.Constructor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def RestrictionCorpus(self, max_len, sentence, semantic):
         """
         This funtion check a sentence and semantic pair satisfy the size restictions.
@@ -43,7 +53,7 @@ class Extractor:
         raw_con_index = len(raw_content)-1
         return raw_content[raw_con_index]
 
-    def Extract(self, in_content, max_len, x_delim, y_delim):
+    def Extract(self,max_len, x_delim, y_delim):
         """
         This function collect the AMR-String-Representation and the corresponding sentence from AMR corpus.
             :param in_content: raw amr string fragment from split of full AMR dataset string
@@ -51,7 +61,8 @@ class Extractor:
             :param x_delim: marker/delim to validate fragment as raw sentence
             :param y_delim: marker/delim to validate fragment as raw semantic
         """
-        if isNotNone(in_content) and isStr(x_delim) and isStr(y_delim):
+        if isNotNone(self.context) and isStr(x_delim) and isStr(y_delim):
+            in_content = self.context
             sentence = ''
             semantic = ''
             result_pair = None

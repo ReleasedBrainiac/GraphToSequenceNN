@@ -9,7 +9,7 @@ import re
 from DatasetHandler.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone, setOrDefault
 from DatasetHandler.FileReader import Reader
 from DatasetHandler.FileWriter import Writer
-from DatasetHandler.ExtractContentFromDataset import Extractor
+from DatasetHandler.DatasetExtractor import Extractor
 from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
@@ -25,7 +25,6 @@ class DatasetPipelines:
     extension_dict =  Reader(input_path=look_up_extension_replace_path).LineReadContent()
 
     # Class inits
-    extractor = Extractor()
     constants = Constants()
     eval_Helper = EvaluationHelpers()
     gt_converter = GraphBuilder()
@@ -183,10 +182,9 @@ class DatasetPipelines:
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
 
-            sentence_lengths, semantic_lengths, pairs = self.extractor.Extract(in_content=dataset, 
-                                                                               max_len=self.context_max_length, 
-                                                                               x_delim=self.constants.SENTENCE_DELIM, 
-                                                                               y_delim=self.constants.FILE_DELIM)        
+            sentence_lengths, semantic_lengths, pairs = Extractor(dataset).Extract(max_len=self.context_max_length, 
+                                                                                   x_delim=self.constants.SENTENCE_DELIM, 
+                                                                                   y_delim=self.constants.FILE_DELIM)        
 
             mean_value_sentences = self.eval_Helper.CalculateMeanValue(sentence_lengths)
             mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     

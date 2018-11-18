@@ -13,8 +13,6 @@ class Writer:
 
     # Class init 
     constants = Constants()
-    
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def __init__(self, input_path, in_output_extender='output',data_pairs=None, in_context=None):
         """
@@ -47,8 +45,6 @@ class Writer:
             template = "An exception of type {0} occurred in [FileWriter.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-        
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def SavingCorpus(self, data_pair):
         """

@@ -5,8 +5,6 @@ class Reader:
     path = None
     delimiter = None
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
     def __init__(self, input_path, delimiter='#'):
         """
         The class constructor check for valid input. 
@@ -20,8 +18,6 @@ class Reader:
             template = "An exception of type {0} occurred in [FileReader.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def LineReadContent(self):
         """

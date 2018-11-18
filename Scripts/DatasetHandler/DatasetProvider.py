@@ -18,7 +18,7 @@ from GraphHandler.GraphBuilder import GraphBuilder
 from AMRHandler.AMRCleaner import Cleaner
 
 
-class DatasetPipelines:
+class DatasetPipeline:
 
     # Variables inits
     look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
@@ -118,8 +118,8 @@ class DatasetPipelines:
             :param semantic: raw semantic input
         """
         try:
-            out = '#'+self.constants.SEMANTIC_DELIM+' '+semantic+'\n'+'\n'
-            return self.t_parser.Execute(out, self.constants.SEMANTIC_DELIM, self.is_showing_feedback, self.is_saving)
+            print('Semantic Input: ', semantic)
+            return self.t_parser.Execute(semantic, self.constants.SEMANTIC_DELIM, self.is_showing_feedback, self.is_saving)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -136,7 +136,8 @@ class DatasetPipelines:
             if(self.as_amr):
                 semantic = self.ForgeAmrSemanticString(data_pair[1])
             else: 
-                semantic = self.ForgeAmrTree(data_pair[1])
+
+                semantic = self.ForgeAmrTree(self.ForgeAmrSemanticString(data_pair[1]))
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]

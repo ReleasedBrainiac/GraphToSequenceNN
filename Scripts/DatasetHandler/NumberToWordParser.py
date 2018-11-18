@@ -17,15 +17,11 @@ class NumWordParser:
     result = ""
     in_content = -1
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
     def __init__(self, number):
         try:
             self.in_content = int(number)
         except ValueError:
             print("No valid number passed. Try again...")
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
     def MergeForamted(self, first_word, second_word):
         try:
@@ -74,8 +70,6 @@ class NumWordParser:
             return l
         except ValueError:
             print("No valid number passed. Try again...")
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
     def GetIntervalZroToTwenty(self, number):
         try:
@@ -157,8 +151,6 @@ class NumWordParser:
                 return None
         except ValueError:
             print("No valid number passed. Try again...")
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
     def GetSelectCorrectWordUntilHundred(self, number):
 

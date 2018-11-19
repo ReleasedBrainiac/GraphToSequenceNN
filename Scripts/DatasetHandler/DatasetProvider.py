@@ -13,6 +13,7 @@ from DatasetHandler.DatasetExtractor import Extractor
 from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
+from GraphHandler.SemanticMatricBuilder import MatrixBuilder as MParser
 from TreeHandler.AMRGraphParser import GParser
 from GraphHandler.GraphBuilder import GraphBuilder
 from AMRHandler.AMRCleaner import Cleaner
@@ -124,6 +125,14 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def ForgeMatrices(self, semantic):
+        try:
+            return MParser(semantic).Execute()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def CollectDatasetPair(self, data_pair):
         """
         This function collect a data pair from raw sentences and semantics.
@@ -135,7 +144,8 @@ class DatasetPipeline:
             if(self.as_amr):
                 semantic = self.ForgeAmrSemanticString(data_pair[1])
             else: 
-                semantic = self.ForgeAmrTree(self.ForgeAmrSemanticString(data_pair[1]))
+                #semantic = self.ForgeAmrTree(self.ForgeAmrSemanticString(data_pair[1]))
+                semantic = self.ForgeMatrices(self.ForgeAmrSemanticString(data_pair[1]))
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]

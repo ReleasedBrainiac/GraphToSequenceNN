@@ -1,4 +1,4 @@
-from DatasetHandler.DatasetProvider import DatasetPipelines
+from DatasetHandler.DatasetProvider import DatasetPipeline
 
 #===========================================================#
 #                            Test                           #
@@ -9,7 +9,7 @@ inpath = './Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
 
 # show_feedback = True => this wont work if you only store arm cause no anynode is calced!
 
-pipe = DatasetPipelines(in_path=inpath, 
+pipe = DatasetPipeline(in_path=inpath, 
                         output_path_extender='ouput', 
                         max_length=-1, 
                         show_feedback=True, 

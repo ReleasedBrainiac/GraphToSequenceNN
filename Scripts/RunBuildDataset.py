@@ -1,11 +1,15 @@
-from DatasetHandler.DatasetProvider import DatasetPipelines as Pipe
+from DatasetHandler.DatasetProvider import DatasetPipeline
 
 #===========================================================#
 #                            Test                           #
 #===========================================================#
-max_length = -1
-output_extender = 'dc.ouput'
-inpath = '../Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-dev.txt'
-print_activated_anynode = False  # this wont work if you only store arm cause no anynode is calced!
+inpath = './Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
+pipe = DatasetPipeline(in_path=inpath, 
+                       output_path_extender='dc.ouput', 
+                       max_length=-1, 
+                       show_feedback=True, 
+                       saving=False, 
+                       keep_edges=False
+                       )
 
-Pipe().DataPipeline(inpath, output_extender, max_length, False, print_activated_anynode)
+pipe.ProvideData()

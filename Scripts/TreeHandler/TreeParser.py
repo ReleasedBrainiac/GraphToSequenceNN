@@ -11,6 +11,7 @@ from DatasetHandler.ContentSupport import isDict, isAnyNode, isStr, isInt, isODi
 from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, toInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
+from Configurable.ProjectConstants import Constants
 
 '''
     This class library allow to extract content from AMR String representation.
@@ -18,56 +19,93 @@ from anytree.importer import JsonImporter
 '''
 class TParser:
 
-    #==                    Export informations                ==#
-    # This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
-    def ExportToJson(self, root):
-        if(isAnyNode(root)):
-            exporter = JsonExporter(indent=2, sort_keys=True)
-            return '#::smt\n' + exporter.export(root) + '\n'
-        else:
-            print('WRONG INPUT FOR [ExportToJson]')
-            return None
+    constants = None
+    amr_input = None
+    show = False
+    saving = False
 
-    #==                    Import informations                ==#
-    # This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
+
+    def __init__(self, in_amr_stringified, show_process, is_saving):
+        """
+        This class constructor only collect necessary inputs and initialize the constants.
+            :param in_amr_stringified: amr input as string
+            :param show_process: switch allow to print some processing steps
+            :param is_saving: switch allow to show further passing strategy after processing data
+        """   
+        try:
+            self.constants = Constants()
+            self.amr_input = in_amr_stringified
+            self.show = show_process
+            self.saving = is_saving
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.Constructor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def ExportToJson(self, anytree_root):
+        """
+        This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
+            :param anytree_root: root of an anytree object
+        """   
+        try:
+            exporter = JsonExporter(indent=2, sort_keys=True)
+            return '#::smt\n' + exporter.export(anytree_root) + '\n'
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.ExportToJson]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def ImportAsJson(self, json):
-        if(isStr(json)):
+        """
+        This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
+            :param json: json string defining a anytree
+        """   
+        try:
             importer = JsonImporter()
             return importer.import_(json)
-        else:
-            print('WRONG INPUT FOR [ImportAsJson]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.ImportAsJson]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-
-    #==         Get nodes sentence from string sequence       ==#
-    # This function allow to collect the raw node sequence containing the label 
-    # and maybe some additional values like flags and description content.
     def ExtractRawNodeSequence(self, sequence):
-        if(isStr(sequence)):
+        """
+        This function allow to collect the raw node sequence containing the label 
+        and maybe some additional values like flags and description content.
+            :param sequence: node sequence string
+        """   
+        try:
             node_sent = re.sub(' +',' ',sequence+')')
             result = node_sent[node_sent.find("(")+1:node_sent.find(")")]
             if isInStr("(", result) or isInStr(")", result):
                 print("ERROR: ", result)
             return result 
-        else:
-            print('WRONG INPUT FOR [ExtractSentence]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.ExtractRawNodeSequence]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==               Get nodes label and content             ==#
     # This function allow to collect the Label and eventually a label content 
     # from string of a AMR Graph variable.
     def GetSplittedContent(self, str):
-        if(isStr(str)):
-            if(isNotInStr('/', str)):
+        """
+        This function allow to collect the label or the full node definition 
+        from amr substring variable.
+            :param str: amr substring containing at least just 1 node.
+        """   
+        try:
+            if isNotInStr('/', str):
                 return str, None
             else:
                 parts = str.split('/')
                 label = parts[0].replace(" ", "")
                 content = parts[1].replace(" ", "")
                 return label, content
-        else:
-            print('WRONG INPUT FOR [GetSplittedContent]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetSplittedContent]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==                    Cleanup AMR spacing                ==#
     # This function clean up the whitespacing in the AMR Graphstring by a given value.
@@ -462,19 +500,15 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def Execute(self, amr_stringified, semantic_flag, print_to_console, is_saving):
+    def Execute(self):
         """
         This function handle the execution of the gatherer.
         The result is a importable json if you like to store [to_process = False] 
-        or a AnyNode Tree if you want to process it further [to_process = True] .
-            :param amr_stringified: 
-            :param semantic_flag: 
-            :param print_to_console: 
-            :param is_saving: 
+        or a AnyNode Tree if you want to process it further [to_process = True]
         """   
         try:
-            root = self.Pipeline(amr_stringified, semantic_flag, print_to_console)
-            if(is_saving):
+            root = self.Pipeline(self.amr_input, self.constants.SEMANTIC_DELIM, self.show)
+            if(self.saving):
                 return self.ExportToJson(root)
             else:
                 return root

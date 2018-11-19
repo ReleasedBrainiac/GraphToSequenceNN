@@ -28,7 +28,7 @@ class DatasetPipeline:
     constants = Constants()
     eval_Helper = EvaluationHelpers()
     gt_converter = GraphBuilder()
-    t_parser = TParser()
+    t_parser = None
     g_parser = None
     dataset_drop_outs = 0
 
@@ -118,8 +118,7 @@ class DatasetPipeline:
             :param semantic: raw semantic input
         """
         try:
-            print('Semantic Input: ', semantic)
-            return self.t_parser.Execute(semantic, self.constants.SEMANTIC_DELIM, self.is_showing_feedback, self.is_saving)
+            return TParser(semantic, self.is_showing_feedback, self.is_saving).Execute()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -136,7 +135,6 @@ class DatasetPipeline:
             if(self.as_amr):
                 semantic = self.ForgeAmrSemanticString(data_pair[1])
             else: 
-
                 semantic = self.ForgeAmrTree(self.ForgeAmrSemanticString(data_pair[1]))
                 
             if isNotNone(semantic) and isNotNone(sentence): 

@@ -7,7 +7,7 @@
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from DatasetHandler.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone
+from DatasetHandler.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone, isNotEmptyString
 from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, toInt
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
@@ -75,11 +75,8 @@ class TParser:
             :param sequence: node sequence string
         """   
         try:
-            node_sent = re.sub(' +',' ',sequence+')')
-            result = node_sent[node_sent.find("(")+1:node_sent.find(")")]
-            if isInStr("(", result) or isInStr(")", result):
-                print("ERROR: ", result)
-            return result 
+            node_sentence = sequence.lstrip(' ')+')'
+            return node_sentence[node_sentence.find("(")+1:node_sentence.find(")")] 
         except Exception as ex:
             template = "An exception of type {0} occurred in [TreeParser.ExtractRawNodeSequence]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -88,19 +85,19 @@ class TParser:
     #==               Get nodes label and content             ==#
     # This function allow to collect the Label and eventually a label content 
     # from string of a AMR Graph variable.
-    def GetSplittedContent(self, str):
+    def GetSplittedContent(self, input_node):
         """
         This function allow to collect the label or the full node definition 
         from amr substring variable.
-            :param str: amr substring containing at least just 1 node.
+            :param input_node: amr substring containing at least just 1 node.
         """   
         try:
-            if isNotInStr('/', str):
-                return str, None
+            parts = input_node.lstrip(' ').split('/')
+            if len(parts) == 1:
+                return parts, None
             else:
-                parts = str.split('/')
-                label = parts[0].replace(" ", "")
-                content = parts[1].replace(" ", "")
+                label = parts[0]
+                content = parts[1]
                 return label, content
         except Exception as ex:
             template = "An exception of type {0} occurred in [TreeParser.GetSplittedContent]. Arguments:\n{1!r}"
@@ -110,80 +107,86 @@ class TParser:
     #==                    Cleanup AMR spacing                ==#
     # This function clean up the whitespacing in the AMR Graphstring by a given value.
     def AddLeadingWhitespaces(self, str, amount):
-        if(isStr(str)) and (isInt(amount)):
+        try:
             for _ in range(amount):
                 str = ' '+str
 
             ws_count = len(str) - len(str.lstrip(' '))
             return [str, ws_count]
-
-        else:
-            print('WRONG INPUT FOR [AddLeadingWhitespaces]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.AddLeadingWhitespaces]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def CleanSubSequence(self, elements):
-        results = []
+        try:
+            results = []
 
-        if isNotNone(elements) and isList(elements):
-            # Clean the content
-            for value in elements:
-                if(isInStr("-", value)) or (isInStr(":", value)):
-                    if(isInStr("-", value)) and (isNotInStr(":", value)):
-                        str1 = value[0: value.rfind('-')]
-                        if(len(str1) > 0):
-                            results.append(str1)
+            if isNotNone(elements) and isList(elements):
+                # Clean the content
+                for value in elements:
+                    if(isInStr("-", value)) or (isInStr(":", value)):
+                        if(isInStr("-", value)) and (isNotInStr(":", value)):
+                            str1 = value[0: value.rfind('-')]
+                            if(len(str1) > 0):
+                                results.append(str1)
+                        else:
+                            continue
                     else:
-                        continue
-                else:
-                    if(len(value) > 0):
-                        results.append(value)
-        else:
-            print('No content is given!')
+                        if(len(value) > 0):
+                            results.append(value)
+            else:
+                print('No content is given!')
 
-        return results
+            return results
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.CleanSubSequence]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==          Cleaning nodes sequence from garbage         ==#
     # This function allow to clean the node sequence from all staff so it return label and content only.
     # It will also cut of word extensions so we just get the basis word of a nodes content!
     def CleanNodeSequence(self, sequence):
-        if (isStr(sequence)):
+        try:
             node_seq = self.ExtractRawNodeSequence(sequence)
             # If we have more then just a label
             if(isInStr(' ', node_seq)):
                 elements = node_seq.split(' ')
                 results = self.CleanSubSequence(elements)
                 node_seq = ' '.join(results)
-            else:   
-                # If we just have label
-                node_seq = node_seq[0: node_seq.rfind('-')]
 
             return node_seq
-        else:
-            print('WRONG INPUT FOR [CleanNodeSequence]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.CleanNodeSequence]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==             Show RLDAG tree representation            ==#
     # This function show a rendered representation of a AnyNode tree on console!
     def ShowRLDAGTree(self, root):
-        if(isAnyNode(root)):
+        try:
             print(RenderTree(root))
-        else:
-            print('WRONG INPUT FOR [ShowRLDAGTree]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.ShowRLDAGTree]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==               Search for depending parent             ==#
     # This function allow to get the parent node of the given node depending on a given depth.
     # The depth is needed to find the correct node during navigation through a graph construction.
     # We search with the previous node and define the steps we have to step up in the tree. 
     def GetParentWithPrev(self, node, cur_depth):
-        if isAnyNode(node) and isInt(cur_depth) and isNotNone(cur_depth):
+        try:
             cur_parent = node.parent
             while((cur_parent.depth + 1) > cur_depth):
                 cur_parent = cur_parent.parent
 
             return cur_parent
-        else:
-            print('WRONG INPUT FOR [GetParentWithPrev]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetParentWithPrev]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==               Search for new node parent              ==#
     # This function allow to get the parent for a new node depending on:
@@ -192,7 +195,7 @@ class TParser:
     # 3. previous AnyNode element at insertion in the tree
     # This method is used in the BuildNextNode function only because its a part of the workaround!
     def GetParentOfNewNode(self, depth, p_depth, prev_node):
-        if isInt(depth) and isInt(p_depth) and isAnyNode(prev_node):
+        try:
             #Next step down in the Rooted Label DAG (RLDAG)
             if(depth > p_depth):
                 return prev_node
@@ -203,24 +206,40 @@ class TParser:
                 #Next rising layer Node in the RLDAG
                 else:
                     return self.GetParentWithPrev(prev_node, depth)
-        else:
-            print('WRONG INPUT FOR [GetParentOfNewNode]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetParentOfNewNode]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==          Create edge-matrix from GraphTree            ==#
     def GetEdgeMatrixFromGraphTree(self):
-        print('The method [GetEdgeMatrixFromGraphTree] is currently not implemented!')
-        return None
+        try:
+            print('The method [GetEdgeMatrixFromGraphTree] is currently not implemented!')
+            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetEdgeMatrixFromGraphTree]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==          Create edge-matrix from GraphTree            ==#
     def GetOrderedLabelListFromGraphTree(self):
-        print('The method [GetOrderedLabelListFromGraphTree] is currently not implemented!')
-        return None
+        try:
+            print('The method [GetOrderedLabelListFromGraphTree] is currently not implemented!')
+            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetOrderedLabelListFromGraphTree]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==          Create edge-matrix from GraphTree            ==#
     def GetSemiEncodedDataset(self):
-        print('The method [GetSemiEncodedDataset] is currently not implemented!')
-        return None
+        try:
+            print('The method [GetSemiEncodedDataset] is currently not implemented!')
+            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetSemiEncodedDataset]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #===========================================================#
     #==                      Build Methods                    ==#
@@ -230,64 +249,65 @@ class TParser:
     # This function build a Graph as tree structure with labeld nodes, 
     # which can usde to navigate like in a graph.
     def BuildTreeLikeGraphFromRLDAG(self, orderedNodesDepth, orderedNodesContent):
-        if (isODict(orderedNodesDepth)) and (isODict(orderedNodesContent)):
-            if(len(orderedNodesDepth) != len(orderedNodesContent)):
-                print('INSERTIONS CONTENT SIZE NOT EQUAL AND ERROR FOR [BuildTreeLikeGraphFromRLDAG]')
-                return None
-            else:
-                root = None
-                prev_index = -1
-                prev_node = None
-                depth = None
-                label = None
-                content = None
+        try:
+            if (isODict(orderedNodesDepth)) and (isODict(orderedNodesContent)):
+                if(len(orderedNodesDepth) != len(orderedNodesContent)):
+                    print('INSERTIONS CONTENT SIZE NOT EQUAL AND ERROR FOR [BuildTreeLikeGraphFromRLDAG]')
+                    return None
+                else:
+                    root = None
+                    prev_index = -1
+                    prev_node = None
+                    depth = None
+                    label = None
+                    content = None
 
-                # For all ordered graphnodes gathered by there depth in the graph
-                for index in range(len(orderedNodesDepth)):
-                    depth = orderedNodesDepth[index]
-                    label, content = self.GetSplittedContent(orderedNodesContent[index])
+                    # For all ordered graphnodes gathered by there depth in the graph
+                    for index in range(len(orderedNodesDepth)):
+                        depth = orderedNodesDepth[index]
+                        label, content = self.GetSplittedContent(orderedNodesContent[index])
 
-                    #Setup rooted node
-                    if(index == 0):
-                        root = self.NewAnyNode( index,
-                                                'root',
-                                                depth,
-                                                False,
-                                                [],
-                                                True,
-                                                [],
-                                                label,
-                                                content)
+                        #Setup rooted node
+                        if(index == 0):
+                            root = self.NewAnyNode( index,
+                                                    'root',
+                                                    depth,
+                                                    False,
+                                                    [],
+                                                    True,
+                                                    [],
+                                                    label,
+                                                    content)
 
-                        prev_node = root
+                            prev_node = root
 
-                    #Handle the subgraph parts
-                    else:
-                        if label is '':
-                            print('ERROR! => [', orderedNodesContent[index], ']')
+                        #Handle the subgraph parts
+                        else:
+                            if label is '':
+                                print('ERROR! => [', orderedNodesContent[index], ']')
 
-                        prev_node = self.BuildNextNode( prev_node,
-                                                        index,
-                                                        orderedNodesDepth[prev_index],
-                                                        None,
-                                                        depth,
-                                                        True,
-                                                        [],
-                                                        False,
-                                                        [],
-                                                        label,
-                                                        content)
-
-                    prev_index = index
-            return root
-        else:
-            print('WRONG INPUT FOR [BuildTreeLikeGraphFromRLDAG]')
-            return None
+                            prev_node = self.BuildNextNode( prev_node,
+                                                            index,
+                                                            orderedNodesDepth[prev_index],
+                                                            None,
+                                                            depth,
+                                                            True,
+                                                            [],
+                                                            False,
+                                                            [],
+                                                            label,
+                                                            content)
+                        prev_index = index
+                return root
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.BuildTreeLikeGraphFromRLDAG]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==                    Create a new nodes                 ==#
     # This function creates a new AnyNode with the given input.
     def NewAnyNode(self, nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
-        if isInt(nId) and isBool(nHasInputNode) and isBool(nHasFollowerNodes) and isList(nFollowerNodes):
+        try:
             if(nHasInputNode == False):
                     nInputNode = None
 
@@ -301,15 +321,16 @@ class TParser:
                             followerNodes=nFollowerNodes,
                             label=nLabel,
                             content=nContent)
-        else:
-            print('WRONG INPUT FOR [NewAnyNode]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.NewAnyNode]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==                   Build next RLDAG node               ==#
     # This function create a new node depending on a given node or tree.
     # Here the node gets its position inside the tree depending on the given prev node which is the root or a tree structure.
     def BuildNextNode(self, prev_node, index, p_depth, state, depth, hasInputs, input, hasFollowers, followers, label, content):
-        if isInt(index) and isInt(depth) and isInt(p_depth):
+        try:
             if(index > 0):
                 input = self.GetParentOfNewNode(depth, p_depth, prev_node)
                 prev_node = self.NewAnyNode(index,
@@ -323,9 +344,10 @@ class TParser:
                                             content)
 
             return prev_node
-        else:
-            print('WRONG INPUT FOR [BuildNextNode]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.BuildNextNode]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
 
     #===========================================================#
@@ -335,7 +357,7 @@ class TParser:
     #==             Set Node state if not navigated           ==#
     # This funtion set the state of a node in the GraphTree.
     def NormalState(self, node):
-        if isAnyNode(node):
+        try:
             if (node.is_leaf) and not (node.is_root):
                 node.state = 'destination'
                 node.name = 'destination_' + str(node.id)
@@ -346,8 +368,10 @@ class TParser:
             else:
                 node.state = 'subnode'
                 node.name = 'subnode_' + str(node.id)
-        else:
-            print('WRONG INPUT FOR [NormalState]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.NormalState]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #=        Check Node is navigated and set state           ==#
     # This function chech notes if they are root, subnode or child (-> DAG review as Tree)
@@ -355,7 +379,7 @@ class TParser:
     # Otherwise it sets state to 'navigator'.
     # Graph of Rank 1 is a sigle root node!
     def NavigateState(self, graph_root, node):
-        if isAnyNode(graph_root) and isAnyNode(node):
+        try:
             if isNotNone(node.label) and isNone(node.content):
                 label = node.label
                 regex = str('\\b'+label+'\\b')
@@ -381,37 +405,37 @@ class TParser:
                     node.name = 'navigator_' + str(node.id)
             else:
                 self.NormalState(node)
-        else:
-            print('WRONG INPUT FOR [NavigateState]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.NavigateState]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #=                  Get direct subnodes                  ==#
     # This function place sub nodes to the current node if some exist.
     def GetSubnodes(self, node):
-        if isAnyNode(node):
+        try:
             followers = [node.label for node in node.children]
             if(len(followers) > 0):
                 node.hasFollowerNodes = True
                 node.followerNodes = followers
-        else:
-            print('WRONG INPUT FOR [GetSubnodes]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GetSubnodes]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-    #==                   Reforge single node                ==#
-    # This function wrap state setup and child info placement for 1 node.
-    def SingleNodeReforge(self, graph_root, node):
-        if isAnyNode(graph_root) and isAnyNode(node):
-            self.NavigateState(graph_root, node)
-            self.GetSubnodes(node)
-        else:
-            print('WRONG INPUT FOR [SingleNodeReforge]')
-
-    #==                   Reforge all nodes                  ==#
-    # This function wrap the SingleNodeReforge for all GraphTree nodes.
     def GraphReforge(self, root):
-        if (isAnyNode(root)) and (isNotNone(root.children)):
+        """
+        This function wrap the SingleNodeReforge for all GraphTree nodes.
+            :param root: 
+        """
+        try:
             for node in PreOrderIter(root):
-                self.SingleNodeReforge(root, node)
-        else:
-            print('WRONG INPUT FOR [ReforgeGraphContent]')
+                self.NavigateState(root, node)
+                self.GetSubnodes(node)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.GraphReforge]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def ShowGathererInfo(self, amr_stringified, root):
         """
@@ -431,10 +455,30 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==       Preprocessor for AMR-String-Representation      ==#
-    # This function fixes format problems and collect nodes depth and there content ordered by appearance.
-    # So its possible to rebuild the AMR structure.
-    def AMRPreprocessor(self, semantic_flag, graph_nodes, nodes_depth, nodes_content):
+    def Preprocessor(self, graph_nodes, nodes_depth, nodes_content):
+        """
+        docstring here
+            :param graph_nodes: 
+            :param nodes_depth: 
+            :param nodes_content: 
+        """   
+        try:
+            depth = -1
+            k = 0
+            for line in graph_nodes:
+                if isNotEmptyString(line):
+                    if(self.constants.SEMANTIC_DELIM not in line):
+                        depth = depth + line.count('(')
+                        nodes_depth[k] = depth
+                        nodes_content[k] = self.CleanNodeSequence(line)
+                        depth = depth - line.count(')')
+                        k = k + 1
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.Preprocessor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    '''def AMRPreprocessor(self, graph_nodes, nodes_depth, nodes_content):
         """
         This function fixes format problems and collect nodes depth and there content ordered by appearance.
         So its possible to rebuild the AMR structure.
@@ -449,7 +493,7 @@ class TParser:
             
             # Each line is a node definition
             for line in graph_nodes:
-                if(semantic_flag not in line) and (line != ''):
+                if(self.constants.SEMANTIC_DELIM not in line) and (line != ''):
                     s = len(line) - len(line.lstrip(' '))
                     t_rest = s%v
                     t = s/v
@@ -473,7 +517,7 @@ class TParser:
         except Exception as ex:
             template = "An exception of type {0} occurred in [TreeParser.AMRPreprocessor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print(message)
+            print(message)'''
 
     def Pipeline(self, amr_stringified, semantic_flag, print_to_console):
         """
@@ -483,17 +527,21 @@ class TParser:
             :param print_to_console: 
         """   
         try:
-            graph_nodes = amr_stringified.split('\n')
             nodes_depth = OrderedDict()
             nodes_content = OrderedDict()
-
-            self.AMRPreprocessor(semantic_flag, graph_nodes, nodes_depth, nodes_content)
-            root = self.BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
+            #print('Do Next')
+            self.Preprocessor(amr_stringified.split('\n'), 
+                                 nodes_depth, 
+                                 nodes_content
+                                 )
+            #print('Done Prep')
+            root = self.BuildTreeLikeGraphFromRLDAG(nodes_depth, 
+                                                    nodes_content)
+            #print('Done Reforge')
             self.GraphReforge(root)
 
-            if(print_to_console):
-                self.ShowGathererInfo(amr_stringified, root)
-
+            #print('Final Print')
+            if(print_to_console): self.ShowGathererInfo(amr_stringified, root)
             return root
         except Exception as ex:
             template = "An exception of type {0} occurred in [TreeParser.Pipeline]. Arguments:\n{1!r}"
@@ -508,10 +556,8 @@ class TParser:
         """   
         try:
             root = self.Pipeline(self.amr_input, self.constants.SEMANTIC_DELIM, self.show)
-            if(self.saving):
-                return self.ExportToJson(root)
-            else:
-                return root
+            if(self.saving): return self.ExportToJson(root)
+            else: return root
         except Exception as ex:
             template = "An exception of type {0} occurred in [TreeParser.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

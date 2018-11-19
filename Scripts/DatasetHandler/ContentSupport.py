@@ -116,7 +116,16 @@ def isSet(input):
         :param input: unknown type object
     """
     return isinstance(input, set)
-    
+
+def isNotEmptyString(input):
+    """
+    this function check a string is not empty.
+        :param input: string
+    """
+    tmp = input.lstrip(' ')
+    return isStr(input) and (len(tmp) > 0)
+
+
 def hasContent(input):
     """
     This function check sequences/collections containing at least min 1 value.

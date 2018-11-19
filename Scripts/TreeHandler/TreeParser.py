@@ -375,35 +375,43 @@ class TParser:
         else:
             print('WRONG INPUT FOR [ReforgeGraphContent]')
 
-
-    #===========================================================#
-    #==             Gather the  graph informations            ==#
-    #===========================================================#
-
-    #==                Print Results to Console               ==#
-    # This function print the input and result of the gatherer.
-    # This allow to evaluate the gatherers work easily.
-    def ShowGathererInfo(self, amr_graph, root):
-        if isStr(amr_graph) and isAnyNode(root):
+    def ShowGathererInfo(self, amr_stringified, root):
+        """
+        This function print the input and result of the gatherer.
+        This allow to evaluate the gatherers work easily.
+            :param self: 
+            :param amr_stringified: 
+            :param root: 
+        """   
+        try:
             print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
-            print(amr_graph)
+            print(amr_stringified)
             self.ShowRLDAGTree(root)
             print('\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n')
-        else:
-            print('WRONG INPUT FOR [ShowGathererInfo]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.ShowGathererInfo]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     #==       Preprocessor for AMR-String-Representation      ==#
     # This function fixes format problems and collect nodes depth and there content ordered by appearance.
     # So its possible to rebuild the AMR structure.
-    def AMRPreprocessor(self, sem_flag, graph_nodes, nodes_depth, nodes_content):
-        if isStr(sem_flag) and isList(graph_nodes) and isODict(nodes_depth) and isODict(nodes_depth):
+    def AMRPreprocessor(self, semantic_flag, graph_nodes, nodes_depth, nodes_content):
+        """
+        This function fixes format problems and collect nodes depth and there content ordered by appearance.
+        So its possible to rebuild the AMR structure.
+            :param semantic_flag: 
+            :param graph_nodes: 
+            :param nodes_depth: 
+            :param nodes_content: 
+        """   
+        try:
             v = 6   # Definition of 1 depth step in AMR
             k = 0
             
             # Each line is a node definition
             for line in graph_nodes:
-                if(sem_flag not in line) and (line != ''):
+                if(semantic_flag not in line) and (line != ''):
                     s = len(line) - len(line.lstrip(' '))
                     t_rest = s%v
                     t = s/v
@@ -424,37 +432,53 @@ class TParser:
                         print('Raw: ', line)
 
                     k = k + 1
-        else:
-            print('WRONG INPUT FOR [AMRPreprocessor]')
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.AMRPreprocessor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-
-    #==  Pipeline for AMR-String-Representation to TreeGraph  ==#
-    # This function gather a TreeGraph as AnyNode Tree from AMR-String-Representation.
-    def Pipeline(self, amr_graph, sem_flag, print_to_console):
-        if isStr(amr_graph) and isStr(sem_flag) and isBool(print_to_console):
-            graph_nodes = amr_graph.split('\n')
+    def Pipeline(self, amr_stringified, semantic_flag, print_to_console):
+        """
+        This function gather a TreeGraph as AnyNode Tree from AMR-String-Representation.
+            :param amr_stringified: 
+            :param semantic_flag: 
+            :param print_to_console: 
+        """   
+        try:
+            graph_nodes = amr_stringified.split('\n')
             nodes_depth = OrderedDict()
             nodes_content = OrderedDict()
 
-            self.AMRPreprocessor(sem_flag, graph_nodes, nodes_depth, nodes_content)
+            self.AMRPreprocessor(semantic_flag, graph_nodes, nodes_depth, nodes_content)
             root = self.BuildTreeLikeGraphFromRLDAG(nodes_depth, nodes_content)
             self.GraphReforge(root)
 
             if(print_to_console):
-                self.ShowGathererInfo(amr_graph, root)
+                self.ShowGathererInfo(amr_stringified, root)
 
             return root
-        else:
-            print('WRONG INPUT FOR [GatherGraphInfo]')
-            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.Pipeline]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
-    #==        Main execution function for the gatherer       ==#
-    # This function handle the execution of the gatherer.
-    # The result is a importable json if you like to store [to_process = False] 
-    # or a AnyNode Tree if you want to process it further [to_process = True] .
-    def Execute(self, amr_graph, sem_flag, print_to_console, is_saving):
-        root = self.Pipeline(amr_graph, sem_flag, print_to_console)
-        if(is_saving):
-            return self.ExportToJson(root)
-        else:
-            return root
+    def Execute(self, amr_stringified, semantic_flag, print_to_console, is_saving):
+        """
+        This function handle the execution of the gatherer.
+        The result is a importable json if you like to store [to_process = False] 
+        or a AnyNode Tree if you want to process it further [to_process = True] .
+            :param amr_stringified: 
+            :param semantic_flag: 
+            :param print_to_console: 
+            :param is_saving: 
+        """   
+        try:
+            root = self.Pipeline(amr_stringified, semantic_flag, print_to_console)
+            if(is_saving):
+                return self.ExportToJson(root)
+            else:
+                return root
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [TreeParser.Execute]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

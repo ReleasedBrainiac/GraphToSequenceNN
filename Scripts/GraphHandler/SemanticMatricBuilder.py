@@ -29,8 +29,8 @@ class MatrixBuilder:
     def BuildNpEdgeMatrix(self, connections_dict, ordered_vertex_dict):
         """
         This function build a edge matrix on a given connections list and return it with its corresponding vertex list.
-            :param connections_dict: list of found connections
-            :param ordered_vertex_dict: 
+            :param connections_dict: dict of found connections
+            :param ordered_vertex_dict: ordered of collected verticies
         """   
         try:
             array_format = (len(ordered_vertex_dict), len(ordered_vertex_dict))
@@ -51,6 +51,10 @@ class MatrixBuilder:
             print(message)
 
     def CollectNewNode(self, node_string):
+        """
+        This function collect amr node definitions from amr node string.
+            :param node_string: amr string fragment containing a node definition
+        """   
         try:
             parts = node_string.replace(' ', '').replace('\n', '').replace('(', '').replace(')', '').split('/')
             if len(parts) > 1:
@@ -70,6 +74,9 @@ class MatrixBuilder:
             print(message)
 
     def Execute(self):
+        """
+        This function execute the matrix building and vertex collecting process.
+        """   
         try:
             nodes_stack = []
             connections_list = []

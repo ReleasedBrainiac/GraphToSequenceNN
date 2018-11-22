@@ -297,3 +297,12 @@ def getFileLength(path):
     else:
         print('WRONG INPUT FOR [getFileLength]')
         return 0
+
+def getIndexedODictLookUp(dictionary):
+    try:
+        ind= {k:i for i,k in enumerate(dictionary.keys())}
+        return ind
+    except Exception as ex:
+            template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

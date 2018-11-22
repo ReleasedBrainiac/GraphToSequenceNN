@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from Configurable.ProjectConstants import Constants
-from DatasetHandler.ContentSupport import isNotEmptyString
+from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
+import numpy as np
 
 class MatrixBuilder:
 
@@ -18,6 +19,28 @@ class MatrixBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def BuildNpEdgeMatrix(self, edge_dict, ordered_vertex_dict):
+        try:
+            array_format = (len(ordered_vertex_dict), len(ordered_vertex_dict))
+            edge_matrix = np.zeros(array_format)
+
+            for edge in edge_dict:
+                start_vertex = edge[0]
+                end_vertex = edge[1]
+                indexed_verticies = getIndexedODictLookUp(ordered_vertex_dict)
+
+                start_index = indexed_verticies[start_vertex]
+                end_index = indexed_verticies[end_vertex]
+
+                edge_matrix[start_index, end_index] = 1
+                edge_matrix[end_index,start_index] = 1
+
+            return [edge_matrix, indexed_verticies]
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [SemanticMatricBuilder.BuildNpEdgeMatrix]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def CollectNewNode(self, node_string):
         try:
@@ -66,9 +89,14 @@ class MatrixBuilder:
 
                     if prev_node != None: connections_list.append([prev_node, next_node])
             
-            print('Nodes: ',self.graph_nodes)
-            print('Cons.: ',connections_list)
-            print('Stack: ',nodes_stack)
+            edges, verticies = self.BuildNpEdgeMatrix(connections_list, self.graph_nodes)
+            print('#####################################')
+            print('Input:\n', self.input_semantic)
+            print('Nodes:\n',self.graph_nodes)
+            print('Cons.:\n',connections_list)
+            print('Vertices:\n', verticies)
+            print('Edges:\n', edges)
+            return [edges, verticies]
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"

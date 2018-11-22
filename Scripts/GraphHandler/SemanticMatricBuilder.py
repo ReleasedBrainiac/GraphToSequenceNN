@@ -8,10 +8,17 @@ class MatrixBuilder:
     input_semantic = None
     constants = None
     graph_nodes = None
+    show_response = False
 
-    def __init__(self, input):
+    def __init__(self, context, show_console_reponse=False):
+        """
+        This class constructor stores the given context and allow to activation of showing the process results on the console.
+            :param context: amr input string
+            :param show_console_reponse: switch allows to show process response on console or not
+        """   
         try:
-            self.input_semantic = input
+            self.input_semantic = context
+            self.show_response = show_console_reponse
             self.constants = Constants()
             self.graph_nodes = OrderedDict()
         except Exception as ex:
@@ -19,19 +26,20 @@ class MatrixBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildNpEdgeMatrix(self, edge_dict, ordered_vertex_dict):
+    def BuildNpEdgeMatrix(self, connections_dict, ordered_vertex_dict):
+        """
+        This function build a edge matrix on a given connections list and return it with its corresponding vertex list.
+            :param connections_dict: list of found connections
+            :param ordered_vertex_dict: 
+        """   
         try:
             array_format = (len(ordered_vertex_dict), len(ordered_vertex_dict))
             edge_matrix = np.zeros(array_format)
+            indexed_verticies = getIndexedODictLookUp(ordered_vertex_dict)
 
-            for edge in edge_dict:
-                start_vertex = edge[0]
-                end_vertex = edge[1]
-                indexed_verticies = getIndexedODictLookUp(ordered_vertex_dict)
-
-                start_index = indexed_verticies[start_vertex]
-                end_index = indexed_verticies[end_vertex]
-
+            for edge in connections_dict:
+                start_index = indexed_verticies[edge[0]]
+                end_index = indexed_verticies[edge[1]]
                 edge_matrix[start_index, end_index] = 1
                 edge_matrix[end_index,start_index] = 1
 
@@ -90,12 +98,15 @@ class MatrixBuilder:
                     if prev_node != None: connections_list.append([prev_node, next_node])
             
             edges, verticies = self.BuildNpEdgeMatrix(connections_list, self.graph_nodes)
-            print('#####################################')
-            print('Input:\n', self.input_semantic)
-            print('Nodes:\n',self.graph_nodes)
-            print('Cons.:\n',connections_list)
-            print('Vertices:\n', verticies)
-            print('Edges:\n', edges)
+
+            if self.show_response:
+                print('#####################################')
+                print('Input:\n', self.input_semantic)
+                print('Nodes:\n',self.graph_nodes)
+                print('Cons.:\n',connections_list)
+                print('Vertices:\n', verticies)
+                print('Edges:\n', edges)
+            
             return [edges, verticies]
 
         except Exception as ex:

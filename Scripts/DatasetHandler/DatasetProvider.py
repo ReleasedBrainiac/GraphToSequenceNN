@@ -15,7 +15,6 @@ from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
 from GraphHandler.SemanticMatricBuilder import MatrixBuilder as MParser
 from TreeHandler.AMRGraphParser import GParser
-from GraphHandler.GraphBuilder import GraphBuilder
 from AMRHandler.AMRCleaner import Cleaner
 
 
@@ -28,7 +27,6 @@ class DatasetPipeline:
     # Class inits
     constants = Constants()
     eval_Helper = EvaluationHelpers()
-    gt_converter = GraphBuilder()
     t_parser = None
     g_parser = None
     dataset_drop_outs = 0
@@ -127,7 +125,7 @@ class DatasetPipeline:
 
     def ForgeMatrices(self, semantic):
         try:
-            return MParser(semantic).Execute()
+            return MParser(context=semantic, show_console_reponse=self.is_showing_feedback).Execute()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -144,7 +142,6 @@ class DatasetPipeline:
             if(self.as_amr):
                 semantic = self.ForgeAmrSemanticString(data_pair[1])
             else: 
-                #semantic = self.ForgeAmrTree(self.ForgeAmrSemanticString(data_pair[1]))
                 semantic = self.ForgeMatrices(self.ForgeAmrSemanticString(data_pair[1]))
                 
             if isNotNone(semantic) and isNotNone(sentence): 
@@ -181,7 +178,6 @@ class DatasetPipeline:
             2. as AnyNode  [else]
         """
         try:
-
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
             sentence_lengths, semantic_lengths, pairs = Extractor(in_content=dataset, in_size_restriction=self.context_max_length).Extract()
@@ -190,13 +186,14 @@ class DatasetPipeline:
 
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
-            print('Max restriction: ', self.context_max_length)
-            print('Path input: ', self.in_path)
-            print('Count sentences: ', len(sentence_lengths))
-            print('Count semantics: ', len(semantic_lengths))
-            print('Mean sentences: ', mean_value_sentences)
-            print('Mean semantics: ', mean_value_semantics)
-            print('Data dropouts:', self.dataset_drop_outs)
+            if self.is_showing_feedback:
+                print('Max restriction: ', self.context_max_length)
+                print('Path input: ', self.in_path)
+                print('Count sentences: ', len(sentence_lengths))
+                print('Count semantics: ', len(semantic_lengths))
+                print('Mean sentences: ', mean_value_sentences)
+                print('Mean semantics: ', mean_value_semantics)
+                print('Data dropouts:', self.dataset_drop_outs)
 
             return data_pairs
         except Exception as ex:
@@ -227,7 +224,7 @@ class DatasetPipeline:
         This function calls the Pipeline and return the cleaned dataset for ANN usage.
         """
         try:
-            return self.gt_converter.GetDataSet(self.Pipeline())
+            return self.Pipeline()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

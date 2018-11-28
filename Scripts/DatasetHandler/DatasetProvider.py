@@ -186,6 +186,8 @@ class DatasetPipeline:
 
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
+            #//TODO hier die GloVe umwandlung einbauen
+
             if self.is_showing_feedback:
                 print('Max restriction: ', self.context_max_length)
                 print('Path input: ', self.in_path)

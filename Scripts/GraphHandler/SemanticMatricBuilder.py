@@ -114,7 +114,7 @@ class MatrixBuilder:
                 print('Vertices:\n', verticies)
                 print('Edges:\n', edges)
             
-            return [edges, verticies]
+            return [edges, self.graph_nodes]
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"

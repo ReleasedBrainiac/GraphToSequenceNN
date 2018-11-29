@@ -14,7 +14,6 @@ from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
 from GraphHandler.SemanticMatricBuilder import MatrixBuilder as MParser
-from TreeHandler.AMRGraphParser import GParser
 from AMRHandler.AMRCleaner import Cleaner
 
 

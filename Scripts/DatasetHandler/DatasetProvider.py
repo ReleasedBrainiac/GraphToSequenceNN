@@ -226,7 +226,7 @@ class DatasetPipeline:
         """
         try:
             datapairs = self.Pipeline()
-            print(datapairs)
+            print('Resultstructure: [Sentence (Raw), EdgeArray (Adjacent), NodeDict(Label, Content)]')
             return datapairs
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"

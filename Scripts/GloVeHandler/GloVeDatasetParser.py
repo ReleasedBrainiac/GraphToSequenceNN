@@ -31,13 +31,14 @@ class GloVeEmbedding:
     use_whole_glove = False
 
 
-    def __init__(self, nodes_context, glove_file_path = '../../Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, use_whole_glove_ww=False):
+    def __init__(self, nodes_context, vocab_size, glove_file_path = '../../Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, use_whole_glove_ww=False):
         """
         This class constructor stores the passed input sentences and the given GloVe embedding file path.
         Additionally it initialzes the max_length and the Keras tokenizer.
         The output_dim values should be adapted from the correpsonding pre-trained word vectors.
         For further informations take a look at => https://nlp.stanford.edu/projects/glove/ => [Download pre-trained word vectors]
             :param nodes_context: the nodes context values of the dataset 
+            :param vocab_size: amount of different words in the dataset or in the GloVe word vector
             :param glove_file_path: path of the desired GloVe word vector file
             :param output_dim: the general vector size for each word embedding
             :param use_whole_glove_ww: switch allow to load the whole glove word vector or only the values for the unique values
@@ -49,13 +50,17 @@ class GloVeEmbedding:
 
             if isBool(use_whole_glove_ww): self.use_whole_glove = use_whole_glove_ww
 
+            if isInt(vocab_size) and (vocab_size > 0): self.tokenizer = Tokenizer(num_words=vocab_size, 
+                                                                                  lower=True, 
+                                                                                  split=' ', 
+                                                                                  char_level=False)
+
             if isNotNone(nodes_context) and isIterable(nodes_context): 
                 self.context_values = []
                 for sentence in nodes_context: 
                     self.context_values.append(sentence)
 
                 self.max_length = len(self.context_values)
-                self.tokenizer = Tokenizer()
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -68,9 +73,9 @@ class GloVeEmbedding:
         The vocab size will be set additionally.
         """   
         try:
-            self.tokenizer.one_hot(self.context_values)
-            self.vocab_size = len(self.tokenizer.word_index) + 1
-            return self.tokenizer.texts_to_sequences(self.context_values)
+            vocab_size = len(self.tokenizer.word_index) + 1
+            encoded_docs = [self.tokenizer.one_hot(self.context_values, vocab_size) for d in self.context_values]
+            return encoded_docs
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.EncodedDocuments]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

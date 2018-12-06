@@ -63,9 +63,12 @@ class MatrixBuilder:
                 else:
                     if (self.graph_nodes[parts[0]] == None) and (parts[1] != None):
                         self.graph_nodes[parts[0]] = parts[1].replace(' ', '')
-            else: 
+            else:
                 if parts[0] not in self.graph_nodes:
-                    self.graph_nodes[parts[0]] = None
+                    if parts[0].isdigit():
+                        self.graph_nodes[parts[0]] = parts[0]
+                    else:
+                        self.graph_nodes[parts[0]] = None
 
             return parts[0]    
         except Exception as ex:

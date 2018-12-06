@@ -65,7 +65,6 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
- 
     def CollectWordSet(self, datasets):
         """
         This function collect all node values of each dataset into a set of unique values.
@@ -76,7 +75,8 @@ class GloVeEmbedding:
             for dataset in datasets:
                 node_dict = dataset[1][1]
                 for key in node_dict:
-                    self.word_set.add(node_dict[key])
+                    if node_dict[key] is not None:
+                        self.word_set.add(node_dict[key])
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.CollectWordSet]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -108,13 +108,9 @@ class GloVeEmbedding:
         This function tokenize all text samples.
         """   
         try:
-            print('Step_0')
             self.tokenizer.fit_on_texts(self.word_set)
-            print('Step_1')
             sequences = self.tokenizer.texts_to_sequences(self.word_set)
-            print('Step_2')
             self.word_index = self.tokenizer.word_index
-            print('Length sequences ', len(sequences))
             return sequences
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.TokenizeDatasets]. Arguments:\n{1!r}"

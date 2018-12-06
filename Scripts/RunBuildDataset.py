@@ -5,7 +5,7 @@ from GloVeHandler.GloVeDatasetParser import GloVeEmbedding
 #                            Test                           #
 #===========================================================#
 inpath = './Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
-glove_file_path = '../../Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
+glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
 embedding_out = 100
 
 pipe = DatasetPipeline(in_path=inpath, 
@@ -17,10 +17,7 @@ pipe = DatasetPipeline(in_path=inpath,
                        )
 
 datapairs = pipe.ProvideData()
-node_context_values = []
-for datapair in datapairs: node_context_values.append(datapair[1])
-
-embedding = GloVeEmbedding(nodes_context=node_context_values, vocab_size=400000 ,glove_file_path=glove_file_path, output_dim=embedding_out, use_whole_glove_ww=True).GetGloveEmbeddingLayer()
+embedding = GloVeEmbedding(nodes_context=datapairs, vocab_size=400000 ,glove_file_path=glove_file_path, output_dim=embedding_out).GetGloveEmbeddingLayer()
 
 #//TODO 1. Erst natural Encoding für den tokenizer erstellen!
 

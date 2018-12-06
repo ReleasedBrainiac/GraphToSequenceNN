@@ -20,12 +20,21 @@ from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt, i
 
 class GloVeEmbedding:
 
+    GLOVE_DIR = None
+    DATASET_DTYPE = 'float32'
+
+    MAX_SEQUENCE_LENGTH = -1
+    MAX_NUM_WORDS = 20000
+    EMBEDDING_DIM = 100
+    VALIDATION_SPLIT = 0.2
+
+
     context_values = None
     max_length = -1
     tokenizer = None
-    glove_path = None
+    
     vocab_size = -1
-    DATASET_DTYPE = 'float32'
+    
     out_dim = -1
     unique_words = None
     use_whole_glove = False
@@ -38,22 +47,21 @@ class GloVeEmbedding:
         The output_dim values should be adapted from the correpsonding pre-trained word vectors.
         For further informations take a look at => https://nlp.stanford.edu/projects/glove/ => [Download pre-trained word vectors]
             :param nodes_context: the nodes context values of the dataset 
-            :param vocab_size: amount of different words in the dataset or in the GloVe word vector
+            :param vocab_size: maximum number of words to keep, based on word frequency
             :param glove_file_path: path of the desired GloVe word vector file
             :param output_dim: the general vector size for each word embedding
             :param use_whole_glove_ww: switch allow to load the whole glove word vector or only the values for the unique values
         """   
         try:
-            if isStr(glove_file_path): self.glove_path = glove_file_path
+            if isStr(glove_file_path): self.GLOVE_DIR = glove_file_path
 
             if isInt(output_dim) and (output_dim > 0): self.out_dim = output_dim
 
             if isBool(use_whole_glove_ww): self.use_whole_glove = use_whole_glove_ww
 
-            if isInt(vocab_size) and (vocab_size > 0): self.tokenizer = Tokenizer(num_words=vocab_size, 
-                                                                                  lower=True, 
-                                                                                  split=' ', 
-                                                                                  char_level=False)
+            if isInt(vocab_size) and (vocab_size > 0): 
+                self.MAX_NUM_WORDS = vocab_size
+                self.tokenizer = Tokenizer(num_words=vocab_size, lower=True, split=' ', char_level=False)                                            
 
             if isNotNone(nodes_context) and isIterable(nodes_context): 
                 self.context_values = []
@@ -73,8 +81,11 @@ class GloVeEmbedding:
         The vocab size will be set additionally.
         """   
         try:
-            vocab_size = len(self.tokenizer.word_index) + 1
-            encoded_docs = [self.tokenizer.one_hot(self.context_values, vocab_size) for d in self.context_values]
+            self.tokenizer.fit_on_texts(self.context_values)
+            sequences = self.tokenizer.texts_to_sequences(self.context_values)
+
+            word_index = self.tokenizer.word_index
+            
             return encoded_docs
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.EncodedDocuments]. Arguments:\n{1!r}"
@@ -94,40 +105,21 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CreateUniqueWordsList(self, context_values):
-        """
-        This function creates a list of all unique words in the given dataset.
-            :param context_values: the dataset, list of words collected from nodes context values
-        """   
-        try:
-            self.unique_words = set()
-            for word in context_values: self.unique_words.add(word)
-            return self.unique_words
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [GloVeDatasetParser.CreateUniqueWordsList]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    def LoadGloVeEmbeddingIndices(self, context_values):
+    # DONE FUNCTION
+    def LoadGloVeEmbeddingIndices(self):
         """
         This function load the world vector embedding indices from defined glove file.
         Additionally, the function can load all whole vector embedding indices or only for the the unique context values, 
         depending on the switch value set at the constructor.
-            :param context_values: 
         """   
         try:
             embeddings_index = dict()
-            f = open(self.glove_path)
-
-            if (not self.use_whole_glove): uniques = self.CreateUniqueWordsList(context_values=context_values)
-                
-            for line in f:
-                if (not self.use_whole_glove and line in uniques) or (self.use_whole_glove):
+            with open(self.GLOVE_DIR) as f:
+                for line in f:
                     values = line.split()
                     word = values[0]
                     coefs = asarray(values[1:], dtype=self.DATASET_DTYPE)
                     embeddings_index[word] = coefs
-            f.close()
             return embeddings_index
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.LoadGloVeEmbeddingIndices]. Arguments:\n{1!r}"
@@ -156,18 +148,21 @@ class GloVeEmbedding:
         This function build and return the GloVe word to vector mapping layer.
         """   
         try:
-            encoded_context_values = self.EncodedDocuments()
-            print('Encoded:', encoded_context_values)
-
-            padded_sequence = self.SequencePadding(max_length_padding=2,encoded_nodes_context_values=encoded_context_values)
-            print('Padded: ',padded_sequence)
-
+            print('File path: ', self.GLOVE_DIR)
             embeddings_index = self.LoadGloVeEmbeddingIndices()
             print('Loaded %s word vectors.' % len(embeddings_index))
 
-            embedding_matrix = self.GenerateTrainMatrix(embeddings_index)
+            #encoded_context_values = self.EncodedDocuments()
+            #print('Encoded:', encoded_context_values)
 
-            return Embedding(self.vocab_size, self.out_dim, weights=[embedding_matrix], input_length=4, trainable=False)
+            #padded_sequence = self.SequencePadding(max_length_padding=2,encoded_nodes_context_values=encoded_context_values)
+            #print('Padded: ',padded_sequence)
+
+            
+
+            #embedding_matrix = self.GenerateTrainMatrix(embeddings_index)
+
+            #return Embedding(self.vocab_size, self.out_dim, weights=[embedding_matrix], input_length=4, trainable=False)
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.GetGloveEmbeddingLayer]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

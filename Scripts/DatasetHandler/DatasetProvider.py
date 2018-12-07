@@ -13,7 +13,7 @@ from DatasetHandler.DatasetExtractor import Extractor
 from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
-from GraphHandler.SemanticMatricBuilder import MatrixBuilder as MParser
+from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
 from AMRHandler.AMRCleaner import Cleaner
 
 

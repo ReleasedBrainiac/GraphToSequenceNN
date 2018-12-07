@@ -10,7 +10,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.initializers import Constant
 from keras.layers import Embedding
-from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt, isBool
+from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt, isBool, isODict, isList
 
 class GloVeEmbedding:
 
@@ -47,20 +47,20 @@ class GloVeEmbedding:
             print('################ Setup ################')
             if isStr(glove_file_path): 
                 self.GLOVE_DIR = glove_file_path
-                print('GloVe file: ', self.GLOVE_DIR)
+                print('GloVe file:\t\t', self.GLOVE_DIR)
 
             if isInt(output_dim) and (output_dim > 0): 
                 self.EMBEDDING_DIM = output_dim
-                print('Output dimension: ', self.EMBEDDING_DIM)
+                print('Output dimension:\t', self.EMBEDDING_DIM)
 
             if isInt(max_sequence_length) and (max_sequence_length > 0): 
                 self.MAX_SEQUENCE_LENGTH = max_sequence_length
-                print('Input/padding length: ', self.MAX_SEQUENCE_LENGTH)
+                print('Input/padding:\t\t', self.MAX_SEQUENCE_LENGTH)
 
             if isInt(vocab_size) and (vocab_size > 0): 
                 self.MAX_NUM_WORDS = vocab_size
                 self.tokenizer = Tokenizer(num_words=vocab_size, split=' ', char_level=False)
-                print('Vocab size: ', self.MAX_NUM_WORDS)
+                print('Vocab size:\t\t', self.MAX_NUM_WORDS)
 
             if isBool(show_feedback): self.show_response = show_feedback
             print('#######################################')
@@ -78,15 +78,18 @@ class GloVeEmbedding:
             :param datasets: list of cleaned and parsed amr datasets
         """   
         try:
-            if self.show_response: print('Collecting nodes values!')
+            if self.show_response: print('Collecting vocab!')
             self.word_set = set()
             for dataset in datasets:
-                node_dict = dataset[1][1]
-                for key in node_dict:
-                    if node_dict[key] is not None:
-                        self.word_set.add(node_dict[key])
+                node_values = dataset[1][1]
+                for elem in node_values:
+                    if isODict(node_values) and isNotNone(node_values[elem]):
+                            self.word_set.add(node_values[elem])
+                    elif isList(node_values) and isNotNone(elem): 
+                        self.word_set.add(elem)
                     else:
-                        print('Found None: ', key , ' | ', node_dict[key])
+                        print('Found None: ', elem , ' | ', node_values[elem])
+
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.CollectVocab]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -183,13 +186,13 @@ class GloVeEmbedding:
         """   
         try:
             embeddings_indexes = self.LoadGloVeEmbeddingIndices()
-            if self.show_response: print('Loaded %s word vectors.' % len(embeddings_indexes))
+            if self.show_response: print('\t=> Loaded %s word vectors.' % len(embeddings_indexes))
 
             tokenized_sequences = self.TokenizeVocab()
-            if self.show_response: print('Found %s unique tokens.' % self.word_index)
+            if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
             vectorized_sequences = self.VectorizeVocab(tokenized_sequences)
-            if self.show_response: print('Shape of data tensor:', vectorized_sequences.shape)
+            if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
             embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)
             return self.BuildVocabEmbeddingLayer(embedding_matrix)

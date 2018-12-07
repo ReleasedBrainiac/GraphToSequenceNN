@@ -9,6 +9,7 @@ class MatrixBuilder:
     constants = None
     graph_nodes = None
     show_response = False
+    nodes_as_dict = False
 
     def __init__(self, context, show_feedback=False):
         """
@@ -79,6 +80,7 @@ class MatrixBuilder:
     def Execute(self):
         """
         This function execute the matrix building and vertex collecting process.
+        The whole implementation is inspired by stack processing.
         """   
         try:
             nodes_stack = []
@@ -117,7 +119,10 @@ class MatrixBuilder:
                 print('Vertices:\n', verticies)
                 print('Edges:\n', edges)
             
-            return [edges, self.graph_nodes]
+            if self.nodes_as_dict:
+                return [edges, self.graph_nodes]
+            else:
+                return [edges, list(self.graph_nodes.values())]
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"

@@ -124,7 +124,7 @@ class DatasetPipeline:
 
     def ForgeMatrices(self, semantic):
         try:
-            return MParser(context=semantic, show_console_reponse=self.is_showing_feedback).Execute()
+            return MParser(context=semantic, show_feedback=self.is_showing_feedback).Execute()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

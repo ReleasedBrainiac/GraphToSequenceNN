@@ -10,7 +10,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.initializers import Constant
 from keras.layers import Embedding
-from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt
+from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt, isBool
 
 class GloVeEmbedding:
 
@@ -23,13 +23,14 @@ class GloVeEmbedding:
     EMBEDDING_DIM = -1
 
     tokenizer = None
+    show_response = False
 
     word_set = None
     word_index = None
     number_words = -1
     max_length = -1
 
-    def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100):
+    def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
         """
         This class constructor stores all given parameters. 
         Further it execute the word collecting process from the datasets node dictionairies.
@@ -40,6 +41,7 @@ class GloVeEmbedding:
             :param max_sequence_length: max length length over all sequences (padding)
             :param glove_file_path: path of the desired GloVe word vector file
             :param output_dim: the general vector size for each word embedding
+            :param show_feedback: switch allows to show process response on console or not
         """   
         try:
             print('################ Setup ################')
@@ -58,7 +60,9 @@ class GloVeEmbedding:
             if isInt(vocab_size) and (vocab_size > 0): 
                 self.MAX_NUM_WORDS = vocab_size
                 self.tokenizer = Tokenizer(num_words=vocab_size, split=' ', char_level=False)
-                print('Vocab size: ', self.MAX_NUM_WORDS)                                          
+                print('Vocab size: ', self.MAX_NUM_WORDS)
+
+            if isBool(show_feedback): self.show_response = show_feedback
             print('#######################################')
 
             if isNotNone(nodes_context) and isIterable(nodes_context): self.CollectVocab(nodes_context)
@@ -74,7 +78,7 @@ class GloVeEmbedding:
             :param datasets: list of cleaned and parsed amr datasets
         """   
         try:
-            print('Collecting nodes values!')
+            if self.show_response: print('Collecting nodes values!')
             self.word_set = set()
             for dataset in datasets:
                 node_dict = dataset[1][1]
@@ -93,7 +97,7 @@ class GloVeEmbedding:
         This function load the word vector embedding indices from defined glove file.
         """   
         try:
-            print('Loading GloVe indices!')
+            if self.show_response: print('Loading GloVe indices!')
             embeddings_index = dict()
             with open(self.GLOVE_DIR, 'r', encoding=self.GLOVE_ENC) as f:
                 for line in f:
@@ -112,7 +116,7 @@ class GloVeEmbedding:
         This function tokenize the collected vocab and set the global word index list.
         """   
         try:
-            print('Tokenize vocab!')
+            if self.show_response: print('Tokenize vocab!')
             self.tokenizer.fit_on_texts(self.word_set)
             sequences = self.tokenizer.texts_to_sequences(self.word_set)
             self.word_index = self.tokenizer.word_index
@@ -128,7 +132,7 @@ class GloVeEmbedding:
             :param tokenized_sequences: tokenized vocab samples
         """   
         try:
-            print('Vectorize vocab!')
+            if self.show_response: print('Vectorize vocab!')
             return pad_sequences(tokenized_sequences, maxlen=self.MAX_SEQUENCE_LENGTH)
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.VectorizeVocab]. Arguments:\n{1!r}"
@@ -142,7 +146,7 @@ class GloVeEmbedding:
             :param embeddings_indexes: the indices from GloVe loader
         """   
         try:
-            print('Building vocab embedding matrix!')
+            if self.show_response: print('Building vocab embedding matrix!')
             self.number_words = min(self.MAX_NUM_WORDS, len(self.tokenizer.word_index)) + 1
             embedding_matrix = zeros((self.number_words, self.EMBEDDING_DIM))
             for word, i in self.tokenizer.word_index.items():
@@ -162,7 +166,7 @@ class GloVeEmbedding:
             :param embedding_matrix: the vocab embedding matrix
         """   
         try:
-            print('Building vocab embedding layer!')
+            if self.show_response: print('Building vocab embedding layer!')
             return Embedding(self.number_words,
                              self.EMBEDDING_DIM,
                              embeddings_initializer=Constant(embedding_matrix),
@@ -178,15 +182,14 @@ class GloVeEmbedding:
         This function build and return the GloVe word to vector mapping layer, depending on the vocab.
         """   
         try:
-            
             embeddings_indexes = self.LoadGloVeEmbeddingIndices()
-            print('Loaded %s word vectors.' % len(embeddings_indexes))
+            if self.show_response: print('Loaded %s word vectors.' % len(embeddings_indexes))
 
             tokenized_sequences = self.TokenizeVocab()
-            print('Found %s unique tokens.' % self.word_index)
+            if self.show_response: print('Found %s unique tokens.' % self.word_index)
 
             vectorized_sequences = self.VectorizeVocab(tokenized_sequences)
-            print('Shape of data tensor:', vectorized_sequences.shape)
+            if self.show_response: print('Shape of data tensor:', vectorized_sequences.shape)
 
             embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)
             return self.BuildVocabEmbeddingLayer(embedding_matrix)

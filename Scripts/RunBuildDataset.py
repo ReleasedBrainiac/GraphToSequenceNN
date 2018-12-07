@@ -11,13 +11,13 @@ embedding_out = 100
 pipe = DatasetPipeline(in_path=inpath, 
                        output_path_extender='dc.ouput', 
                        max_length=-1, 
-                       show_feedback=False, 
+                       show_feedback=True, 
                        saving=False, 
                        keep_edges=False
                        )
 
 datapairs = pipe.ProvideData()
-embedding = GloVeEmbedding(nodes_context=datapairs, vocab_size=400000 ,glove_file_path=glove_file_path, output_dim=embedding_out).BuildGloveVocabEmbeddingLayer()
+embedding = GloVeEmbedding(nodes_context=datapairs, vocab_size=400000 ,glove_file_path=glove_file_path, output_dim=embedding_out, show_feedback=True).BuildGloveVocabEmbeddingLayer()
 
 #//TODO 1. Erst natural Encoding für den tokenizer erstellen!
 

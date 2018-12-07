@@ -10,15 +10,15 @@ class MatrixBuilder:
     graph_nodes = None
     show_response = False
 
-    def __init__(self, context, show_console_reponse=False):
+    def __init__(self, context, show_feedback=False):
         """
         This class constructor stores the given context and allow to activation of showing the process results on the console.
             :param context: amr input string
-            :param show_console_reponse: switch allows to show process response on console or not
+            :param show_feedback: switch allows to show process response on console or not
         """   
         try:
             self.input_semantic = context
-            self.show_response = show_console_reponse
+            self.show_response = show_feedback
             self.constants = Constants()
             self.graph_nodes = OrderedDict()
         except Exception as ex:
@@ -26,7 +26,7 @@ class MatrixBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildNpEdgeMatrix(self, connections_dict, ordered_vertex_dict):
+    def BuildEdgeMatrix(self, connections_dict, ordered_vertex_dict):
         """
         This function build a edge matrix on a given connections list and return it with its corresponding vertex list.
             :param connections_dict: dict of found connections
@@ -46,7 +46,7 @@ class MatrixBuilder:
             return [edge_matrix, indexed_verticies]
 
         except Exception as ex:
-            template = "An exception of type {0} occurred in [SemanticMatricBuilder.BuildNpEdgeMatrix]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [SemanticMatricBuilder.BuildEdgeMatrix]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -107,7 +107,7 @@ class MatrixBuilder:
 
                     if prev_node != None: connections_list.append([prev_node, next_node])
             
-            edges, verticies = self.BuildNpEdgeMatrix(connections_list, self.graph_nodes)
+            edges, verticies = self.BuildEdgeMatrix(connections_list, self.graph_nodes)
 
             if self.show_response:
                 print('#####################################')

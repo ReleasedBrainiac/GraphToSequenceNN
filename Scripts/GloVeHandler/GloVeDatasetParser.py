@@ -3,6 +3,7 @@
     1. https://machinelearningmastery.com/use-word-embedding-layers-deep-learning-keras/ 
     2. https://github.com/keras-team/keras/blob/master/examples/pretrained_word_embeddings.py
     3. https://www.kaggle.com/hamishdickson/bidirectional-lstm-in-keras-with-glove-embeddings 
+    4. https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html 
 
     The GloVe dataset was provided at https://nlp.stanford.edu/projects/glove/#Download%20pre-trained%20word%20vectors 
 '''
@@ -28,11 +29,13 @@ class GloVeEmbedding:
     tokenizer = None
     show_response = False
 
-    word_set = None
-    edge_set = None
+    node_words_list = None
+    edge_matrices = None
     word_index = None
     number_words = -1
     max_length = -1
+
+    # TODO hier mal das node_words_list leeren wenn es nicht mehr benötigt wird.
 
     def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
         """
@@ -69,47 +72,28 @@ class GloVeEmbedding:
             if isBool(show_feedback): self.show_response = show_feedback
             print('#######################################')
 
-            if isNotNone(nodes_context) and isIterable(nodes_context): self.CollectVocab(nodes_context)
+            if isNotNone(nodes_context) and isIterable(nodes_context): self.CollectDatasamples(nodes_context)
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectValues(self, node_values, edge_values):
-
-        if isODict(node_values): node_values = node_values.values()
-
-
-        for idx, elem in enumerate(node_values):
-            if isNotNone(edge_values) and isNotNone(node_values[elem]):
-                if isODict(node_values) and isNotNone(node_values[elem]):
-                    self.word_set.add(node_values[elem])
-                    self.edge_set.add(edge_values[idx])
-                elif isList(node_values) and isNotNone(elem): 
-                    self.word_set.add(elem)
-                    self.edge_set.add(edge_values[idx])
-                else:
-                    print('Found None: ', elem , ' | ', node_values[elem])
-
-    def CollectVocab(self, datasets):
+    def CollectDatasamples(self, datasets):
         """
-        This function collect all node values from each dataset into a set of unique values (vocab).
+        This function collect all dataset word lists and edge matrices for further processing.
             :param datasets: list of cleaned and parsed amr datasets
         """   
         try:
-            if self.show_response: print('Collecting vocab!')
-            self.word_set = oset()
-            self.edge_set = oset()
-            for dataset in datasets:
-                node_values = dataset[1][1]
-                edge_values = dataset[1][0]
-                print('length control: ', (len(node_values) == len(edge_values)))
-
-                if len(node_values) == len(edge_values): self.CollectValues(node_values, edge_values)
-
+            if self.show_response: print('Collecting data samples!')
+            self.node_words_list = []
+            self.edge_matrices = []
+            for dataset in datasets: 
+                if isNotNone(dataset[1][0]) and (len(dataset[1][1]) == len(dataset[1][0])): 
+                    self.node_words_list.append(dataset[1][1])
+                    self.edge_matrices.append(dataset[1][0])
         except Exception as ex:
-            template = "An exception of type {0} occurred in [GloVeDatasetParser.CollectVocab]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [GloVeDatasetParser.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -138,8 +122,8 @@ class GloVeEmbedding:
         """   
         try:
             if self.show_response: print('Tokenize vocab!')
-            self.tokenizer.fit_on_texts(self.word_set)
-            sequences = self.tokenizer.texts_to_sequences(self.word_set)
+            self.tokenizer.fit_on_texts(self.node_words_list)
+            sequences = self.tokenizer.texts_to_sequences(self.node_words_list)
             self.word_index = self.tokenizer.word_index
             return sequences
         except Exception as ex:
@@ -154,7 +138,9 @@ class GloVeEmbedding:
         """   
         try:
             if self.show_response: print('Vectorize vocab!')
-            return pad_sequences(tokenized_sequences, maxlen=self.MAX_SEQUENCE_LENGTH)
+            padded_sequences = pad_sequences(tokenized_sequences, maxlen=self.MAX_SEQUENCE_LENGTH)
+            indices = np.arange(padded_sequences.shape[0])
+            return padded_sequences, indices
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.VectorizeVocab]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -213,7 +199,8 @@ class GloVeEmbedding:
             tokenized_sequences = self.TokenizeVocab()
             if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
-            vectorized_sequences = self.VectorizeVocab(tokenized_sequences)
+            # TODO build new dataset from padded sequences and edge lists with the indices! Should be easy as fuck, now! 
+            vectorized_sequences, indices = self.VectorizeVocab(tokenized_sequences)
             if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
             embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)

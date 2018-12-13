@@ -1,7 +1,7 @@
 # - *- coding: utf- 8*-
 
 import argparse
-import os
+import os, sys
 import platform as pf
 from subprocess import call
 
@@ -98,8 +98,9 @@ class Graph2SequenceTool():
             template = "An exception of type {0} occurred in [Main.RunTool]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+            sys.exit(1)
 
-    def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=400000, out_dim_emb=100, is_show=True, is_keeping_edges=False):
+    def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, is_keeping_edges=False):
         """
         This function execute the training pipeline for the graph2seq tool.
             :param in_dataset: input dataset
@@ -126,7 +127,7 @@ class Graph2SequenceTool():
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
-            embedding_layer = GloVeEmbedding(nodes_context=datapairs, vocab_size=in_vocab_size, glove_file_path=in_glove, output_dim=out_dim_emb, show_feedback=is_show).BuildGloveVocabEmbeddingLayer()
+            embedding_layer = GloVeEmbedding(nodes_context=datapairs, vocab_size=in_vocab_size, glove_file_path=in_glove, output_dim=out_dim_emb, show_feedback=True).BuildGloveVocabEmbeddingLayer()
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")
@@ -152,6 +153,7 @@ class Graph2SequenceTool():
             template = "An exception of type {0} occurred in [Main.RunTrainProcess]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+            sys.exit(1)
 
     def RunStoringCleanedAMR(self, in_dataset, in_extender, in_max_length, is_show, is_keeping_edges, is_amr_saving):
         """
@@ -178,6 +180,7 @@ class Graph2SequenceTool():
             template = "An exception of type {0} occurred in [Main.RunStoringCleanedAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+            sys.exit(1)
 
 if __name__ == "__main__":
     Graph2SequenceTool().RunTool()

@@ -2,9 +2,12 @@
     This part of my work is inspired by the code of:
     1. https://machinelearningmastery.com/use-word-embedding-layers-deep-learning-keras/ 
     2. https://github.com/keras-team/keras/blob/master/examples/pretrained_word_embeddings.py
+    3. https://www.kaggle.com/hamishdickson/bidirectional-lstm-in-keras-with-glove-embeddings 
 
     The GloVe dataset was provided at https://nlp.stanford.edu/projects/glove/#Download%20pre-trained%20word%20vectors 
 '''
+from oset import oset
+import numpy as np
 from numpy import asarray, zeros
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -26,6 +29,7 @@ class GloVeEmbedding:
     show_response = False
 
     word_set = None
+    edge_set = None
     word_index = None
     number_words = -1
     max_length = -1
@@ -72,6 +76,22 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def CollectValues(self, node_values, edge_values):
+
+        if isODict(node_values): node_values = node_values.values()
+
+
+        for idx, elem in enumerate(node_values):
+            if isNotNone(edge_values) and isNotNone(node_values[elem]):
+                if isODict(node_values) and isNotNone(node_values[elem]):
+                    self.word_set.add(node_values[elem])
+                    self.edge_set.add(edge_values[idx])
+                elif isList(node_values) and isNotNone(elem): 
+                    self.word_set.add(elem)
+                    self.edge_set.add(edge_values[idx])
+                else:
+                    print('Found None: ', elem , ' | ', node_values[elem])
+
     def CollectVocab(self, datasets):
         """
         This function collect all node values from each dataset into a set of unique values (vocab).
@@ -79,16 +99,14 @@ class GloVeEmbedding:
         """   
         try:
             if self.show_response: print('Collecting vocab!')
-            self.word_set = set()
+            self.word_set = oset()
+            self.edge_set = oset()
             for dataset in datasets:
                 node_values = dataset[1][1]
-                for elem in node_values:
-                    if isODict(node_values) and isNotNone(node_values[elem]):
-                            self.word_set.add(node_values[elem])
-                    elif isList(node_values) and isNotNone(elem): 
-                        self.word_set.add(elem)
-                    else:
-                        print('Found None: ', elem , ' | ', node_values[elem])
+                edge_values = dataset[1][0]
+                print('length control: ', (len(node_values) == len(edge_values)))
+
+                if len(node_values) == len(edge_values): self.CollectValues(node_values, edge_values)
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.CollectVocab]. Arguments:\n{1!r}"
@@ -155,7 +173,11 @@ class GloVeEmbedding:
             for word, i in self.tokenizer.word_index.items():
                 if i > self.MAX_NUM_WORDS: continue
                 embedding_vector = embeddings_indexes.get(word)
-                if embedding_vector is not None: embedding_matrix[i] = embedding_vector
+
+                if embedding_vector is not None: 
+                    embedding_matrix[i] = embedding_vector
+                else:
+                    embedding_matrix[i] = np.random.randn(self.EMBEDDING_DIM)
             return embedding_matrix
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.BuildVocabEmbeddingMatrix]. Arguments:\n{1!r}"
@@ -195,6 +217,8 @@ class GloVeEmbedding:
             if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
             embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)
+            if self.show_response: print('\t=> Embedding matrix:\n',embedding_matrix,'.')
+
             return self.BuildVocabEmbeddingLayer(embedding_matrix)
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetParser.BuildGloveVocabEmbeddingLayer]. Arguments:\n{1!r}"

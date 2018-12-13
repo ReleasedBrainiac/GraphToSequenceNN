@@ -99,7 +99,7 @@ class Graph2SequenceTool():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=400000, out_dim_emb=100, is_show=False, is_keeping_edges=False):
+    def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=400000, out_dim_emb=100, is_show=True, is_keeping_edges=False):
         """
         This function execute the training pipeline for the graph2seq tool.
             :param in_dataset: input dataset

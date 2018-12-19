@@ -23,6 +23,7 @@ class GloVeDatasetPreprocessor:
     edge_matrices = None
     sentences_list = None
     word_index = None
+    tokenizer_words = None
 
     def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, show_feedback=False):
         """
@@ -36,7 +37,7 @@ class GloVeDatasetPreprocessor:
             :param show_feedback: switch allows to show process response on console or not
         """   
         try:
-            print('################ Setup ################')
+            print('###### GloVe Dataset Preprocessor #####')
             if isInt(max_sequence_length) and (max_sequence_length > 0): 
                 self.MAX_SEQUENCE_LENGTH = max_sequence_length
                 print('Input/padding:\t\t', self.MAX_SEQUENCE_LENGTH)
@@ -46,10 +47,8 @@ class GloVeDatasetPreprocessor:
                 print('Vocab size:\t\t', vocab_size)
 
             if isBool(show_feedback): self.show_response = show_feedback
-            print('#######################################')
-
+            
             if isNotNone(nodes_context) and isIterable(nodes_context): self.CollectDatasamples(nodes_context)
-
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -123,14 +122,18 @@ class GloVeDatasetPreprocessor:
         Structure: [sentences, edges, nodes, indices]
         """   
         try:
+            print('################# Run #################')
             tokenized_sequences = self.TokenizeVocab()
             if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
             vectorized_sequences, indices = self.VectorizeVocab(tokenized_sequences)
             if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
+            self.tokenizer_words = self.tokenizer.word_index.items()
             node_words_list = None
-            print('Glove-PP Result Structure: [Sentences, EdgeArrays, VectorizedNodesLists, Indices]')
+
+            print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedNodesLists, Indices]')
+            print('#######################################')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"

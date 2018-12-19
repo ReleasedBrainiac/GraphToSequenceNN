@@ -1,11 +1,15 @@
 import argparse
 import os, sys
 import platform as pf
+import numpy as np
 from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
 from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
+
+from NetworkHandler.LambdaNodeEmbedding import GetKerasNAP, KerasEval
+from NetworkHandler.NetworkHandler import GetKerasInputLayerPairs, GetMyKerasLambda, GetTestDense
 
 class Graph2SequenceTool():
 
@@ -24,6 +28,7 @@ class Graph2SequenceTool():
     KEEP_EDGES = False
     GLOVE_OUTPUT_DIM = 100
     GLOVE_VOCAB_SIZE = 20000
+    VALIDATION_SPLIT = 0.2
 
     def RunTool(self):
         """
@@ -47,6 +52,7 @@ class Graph2SequenceTool():
             ap.add_argument("-bats" , "--batch_size"        , type=int      , required=False, default=self.BATCH_SIZE             , help="Size of batches for the network training process!")
             ap.add_argument("-god"  , "--glove_out_dim"     , type=int      , required=False, default=self.GLOVE_OUTPUT_DIM       , help="Dimension of the glove embedding output! This has to be equel to the used Glove file definition!")
             ap.add_argument("-gvs"  , "--glove_vocab_size"  , type=int      , required=False, default=self.GLOVE_VOCAB_SIZE       , help="Amount of most words the embedding should keep!The rest will be mapped to zero!")
+            ap.add_argument("-dvs"  , "--dataset_val_split" , type=float    , required=False, default=self.VALIDATION_SPLIT       , help="Spitting percentage of the dataset for treaining and testing!")
             #ap.add_argument("-btype", "--build_type"        , type=int      , required=False, default=self.BUILDTYPE              , help="Build type for the network training process!")
             ap.add_argument("-tll"  , "--tf_min_log_lvl"    , type=str      , required=False, default=self.TF_CPP_MIN_LOG_LEVEL   , help="Tensorflow logging level!")
             ap.add_argument("-ext"  , "--output_extender"   , type=str      , required=False, default=self.EXTENDER               , help="File extension element for cleaned amr output files!")
@@ -66,6 +72,7 @@ class Graph2SequenceTool():
             self.BATCH_SIZE = args["batch_size"]
             self.GLOVE_OUTPUT_DIM = args["glove_out_dim"]
             self.GLOVE_VOCAB_SIZE = args["glove_vocab_size"]
+            self.VALIDATION_SPLIT = args["dataset_val_split"]
             #self.BUILDTYPE = args["build_type"]
             self.TF_CPP_MIN_LOG_LEVEL = args["tf_min_log_lvl"]
             self.EXTENDER = args["output_extender"]
@@ -113,7 +120,7 @@ class Graph2SequenceTool():
         """   
         try:
             print("#######################################\n")
-            print("######## Dataset Preprocessing ########")
+            print("###### AMR Dataset Preprocessing ######")
             
             pipe = DatasetPipeline(in_path=in_dataset, 
                                 output_path_extender=in_extender, 
@@ -127,21 +134,73 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
-            glove_rdy_data_samples = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True).GetPreparedDataSamples()
-            glove_embedding_layer = GloVeEmbeddingLayer(vocab_size=in_vocab_size, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
+            glove_dataset_processor = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True)
+            network_rdy_sentences, network_rdy_edge_matrices, network_rdy_vectorized_nodes, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
+
+            glove_embedding_layer = GloVeEmbeddingLayer(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True).BuildGloveVocabEmbeddingLayer()
+
+            print("#######################################\n")
+            print("############ Split Dataset ############")
+
+            
+            np.random.shuffle(dataset_indices)
+
+            print('Indices: ', dataset_indices)
+            input_edge_matrices = network_rdy_edge_matrices[dataset_indices]
+            input_vectorized_features = network_rdy_vectorized_nodes[dataset_indices]
+            result_sentences = network_rdy_sentences[dataset_indices]
+
+            nb_validation_samples = int(self.VALIDATION_SPLIT * input_edge_matrices.shape[0])
+            print('Samples: ', nb_validation_samples)
+
+            x_train_edge = input_edge_matrices[:-nb_validation_samples]
+            x_train_features = input_vectorized_features[:-nb_validation_samples]
+            y_train_sentences = result_sentences[:-nb_validation_samples]
+            print('Train set!')
+
+
+            x_validation_edge = input_edge_matrices[-nb_validation_samples:]
+            x_validation_features = input_vectorized_features[-nb_validation_samples:]
+            y_validation_sentences = result_sentences[-nb_validation_samples:]
+            print('Test set!')
+
+            print('Shape features: ', x_train_features.shape[0])
 
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")
 
-            print("#######################################\n")
-            print("############ Split Dataset ############")
+
+            #ins = GetKerasInputLayerPairs((None,),"edges",(9,),"features")
+            
+
+
+            
 
             print("#######################################\n")
             print("########## Construct Network ##########")
 
+            '''
+            x = GetMyKerasLambda(ins,(9,),"MyLambda")
+            x = GetTestDense(9, "softmax", "LastDenseLayer", x)
+            model = Model(inputs=ins, outputs=x)
+            model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], callbacks=[History])
+            model.metrics_tensors += [layer.output for layer in model.layers] 
+            print(model.summary())
+            '''
+
             print("#######################################\n")
             print("########### Starts Training ###########")
+
+            '''
+            model.fit(test_in, 
+                      test_in, 
+                      steps_per_epoch=1, 
+                      validation_steps=1, 
+                      epochs=1, 
+                      verbose=0, 
+                      shuffle=False)
+            '''
 
             print("#######################################\n")
             print("############# Save Model ##############")

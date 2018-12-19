@@ -12,7 +12,8 @@ import numpy as np
 from numpy import asarray, zeros
 from keras.layers import Embedding
 from keras.initializers import Constant
-from DatasetHandler.ContentSupport import isStr, isInt, isBool
+from keras.preprocessing.text import Tokenizer
+from DatasetHandler.ContentSupport import isStr, isInt, isBool, isDict, isNotNone
 
 
 class GloVeEmbeddingLayer:
@@ -27,13 +28,16 @@ class GloVeEmbeddingLayer:
 
     show_response = False
     number_words = -1
+    final_tokenizer = None
 
-    def __init__(self, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
+
+    def __init__(self, tokenizer, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
         """
         This class constructor stores all given parameters. 
         Further it execute the word collecting process from the datasets node dictionairies.
         The output_dim values should be adapted from the correpsonding pre-trained word vectors.
         For further informations take a look at => https://nlp.stanford.edu/projects/glove/ => [Download pre-trained word vectors]
+            :param tokenizer: tokenizer from GloVe dataset preprocessing.
             :param vocab_size: maximum number of words to keep, based on word frequency
             :param max_sequence_length: max length length over all sequences (padding)
             :param glove_file_path: path of the desired GloVe word vector file
@@ -41,7 +45,7 @@ class GloVeEmbeddingLayer:
             :param show_feedback: switch allows to show process response on console or not
         """   
         try:
-            if self.show_response: print('##### Build Embeddinglayer GloVe ######')
+            print('##### Build Embeddinglayer GloVe ######')
             if isStr(glove_file_path): 
                 self.GLOVE_DIR = glove_file_path
                 print('GloVe file:\t\t', self.GLOVE_DIR)
@@ -58,9 +62,11 @@ class GloVeEmbeddingLayer:
                 self.MAX_NUM_WORDS = vocab_size
                 print('Vocab size:\t\t', self.MAX_NUM_WORDS)
 
-            if isBool(show_feedback): self.show_response = show_feedback
-            print('#######################################')
+            if isNotNone(tokenizer): 
+                self.final_tokenizer = tokenizer
+                print('Tokenizer: \t\t reloaded')
 
+            if isBool(show_feedback): self.show_response = show_feedback
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -74,9 +80,9 @@ class GloVeEmbeddingLayer:
         """   
         try:
             if self.show_response: print('Building vocab embedding matrix!')
-            self.number_words = min(self.MAX_NUM_WORDS, len(self.tokenizer.word_index)) + 1
+            self.number_words = min(self.MAX_NUM_WORDS, len(self.final_tokenizer.word_index)) + 1
             embedding_matrix = zeros((self.number_words, self.EMBEDDING_DIM))
-            for word, i in self.tokenizer.word_index.items():
+            for word, i in self.final_tokenizer.word_index.items():
                 if i > self.MAX_NUM_WORDS: continue
                 embedding_vector = embeddings_indexes.get(word)
 
@@ -127,18 +133,36 @@ class GloVeEmbeddingLayer:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildGloveVocabEmbeddingLayer(self):
+    def FreeResources(self):
         """
-        This function build and return the GloVe word to vector mapping layer, depending on the vocab.
+        Free the resource the process don't need later.
+            :param self: 
         """   
         try:
+            self.final_tokenizer = None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.FreeResources]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def BuildGloveVocabEmbeddingLayer(self):
+        """
+        This function build the GloVe embedding layer.
+        """   
+        try:
+            print('################# Run #################')
             embeddings_indexes = self.LoadGloVeEmbeddingIndices()
             if self.show_response: print('\t=> Loaded %s word vectors.' % len(embeddings_indexes))
 
             embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)
             if self.show_response: print('\t=> Embedding matrix:\n',embedding_matrix,'.')
 
-            return self.BuildVocabEmbeddingLayer(embedding_matrix)
+            embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix)
+            if self.show_response: print('\t=> Embedding layer:\n',embedding_layer,'.')
+
+            self.FreeResources()
+            print('#######################################')
+            return embedding_layer
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.BuildGloveVocabEmbeddingLayer]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

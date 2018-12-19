@@ -171,7 +171,7 @@ class Graph2SequenceTool():
             print("######## Nodes Embedding Layer ########")
 
 
-            #ins = GetKerasInputLayerPairs((None,),"edges",(9,),"features")
+            #ins = GetKerasInputLayerPairs((None,),"edges",(self.GLOVE_OUTPUT_DIM,),"features")
             
 
 
@@ -181,8 +181,7 @@ class Graph2SequenceTool():
             print("########## Construct Network ##########")
 
             '''
-            x = GetMyKerasLambda(ins,(9,),"MyLambda")
-            x = GetTestDense(9, "softmax", "LastDenseLayer", x)
+            x = CustomKerasNodeEmbeddingLambdaLayer(ins,(9,),"MyLambda")
             model = Model(inputs=ins, outputs=x)
             model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], callbacks=[History])
             model.metrics_tensors += [layer.output for layer in model.layers] 

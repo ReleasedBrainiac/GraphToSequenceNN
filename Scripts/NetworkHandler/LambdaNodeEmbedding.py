@@ -7,6 +7,10 @@
 import numpy as np
 import tensorflow as tf
 
+#TODO missing documentation and maybe try catch of keras backend!
+#TODO maybe test needed
+#TODO maybe create a class 
+
 '''
     This class library allow to use tensorflow api, 
     to get the direct node neigbour embedding of graph nodes 

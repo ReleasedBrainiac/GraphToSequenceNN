@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF
 
+#TODO here is a bug which needs to be fixed, also missing documentation
 def get_session(gpu_fraction=0.3):
     '''Assume that you have 6GB of GPU memory and want to allocate ~2GB'''
 
@@ -14,5 +15,6 @@ def get_session(gpu_fraction=0.3):
             gpu_options=gpu_options, intra_op_parallelism_threads=num_threads))
     else:
         return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+
 
 KTF.set_session(get_session())

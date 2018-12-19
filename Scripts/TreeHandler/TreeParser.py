@@ -19,6 +19,8 @@ from Configurable.ProjectConstants import Constants
 '''
 class TParser:
 
+    #TODO add/edit documentation remove unclean comments
+
     constants = None
     amr_input = None
     show = False
@@ -38,7 +40,7 @@ class TParser:
             self.show = show_process
             self.saving = is_saving
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.Constructor]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -51,7 +53,7 @@ class TParser:
             exporter = JsonExporter(indent=2, sort_keys=True)
             return '#::smt\n' + exporter.export(anytree_root) + '\n'
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.ExportToJson]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.ExportToJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -64,7 +66,7 @@ class TParser:
             importer = JsonImporter()
             return importer.import_(json)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.ImportAsJson]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.ImportAsJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -78,7 +80,7 @@ class TParser:
             node_sentence = sequence.lstrip(' ')+')'
             return node_sentence[node_sentence.find("(")+1:node_sentence.find(")")] 
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.ExtractRawNodeSequence]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.ExtractRawNodeSequence]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -100,7 +102,7 @@ class TParser:
                 content = parts[1]
                 return label, content
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetSplittedContent]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.GetSplittedContent]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -114,7 +116,7 @@ class TParser:
             ws_count = len(str) - len(str.lstrip(' '))
             return [str, ws_count]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.AddLeadingWhitespaces]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.AddLeadingWhitespaces]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -140,7 +142,7 @@ class TParser:
 
             return results
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.CleanSubSequence]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.CleanSubSequence]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -158,7 +160,7 @@ class TParser:
 
             return node_seq
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.CleanNodeSequence]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.CleanNodeSequence]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -168,7 +170,7 @@ class TParser:
         try:
             print(RenderTree(root))
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.ShowRLDAGTree]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.ShowRLDAGTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -184,7 +186,7 @@ class TParser:
 
             return cur_parent
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetParentWithPrev]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.GetParentWithPrev]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -207,53 +209,19 @@ class TParser:
                 else:
                     return self.GetParentWithPrev(prev_node, depth)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetParentOfNewNode]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.GetParentOfNewNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==          Create edge-matrix from GraphTree            ==#
-    def GetEdgeMatrixFromGraphTree(self):
-        try:
-            print('The method [GetEdgeMatrixFromGraphTree] is currently not implemented!')
-            return None
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetEdgeMatrixFromGraphTree]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    #==          Create edge-matrix from GraphTree            ==#
-    def GetOrderedLabelListFromGraphTree(self):
-        try:
-            print('The method [GetOrderedLabelListFromGraphTree] is currently not implemented!')
-            return None
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetOrderedLabelListFromGraphTree]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    #==          Create edge-matrix from GraphTree            ==#
-    def GetSemiEncodedDataset(self):
-        try:
-            print('The method [GetSemiEncodedDataset] is currently not implemented!')
-            return None
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetSemiEncodedDataset]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    #===========================================================#
-    #==                      Build Methods                    ==#
-    #===========================================================#
-
-    #==               Build a tree like graph                 ==#
-    # This function build a Graph as tree structure with labeld nodes, 
-    # which can usde to navigate like in a graph.
-    def BuildTreeLikeGraphFromRLDAG(self, orderedNodesDepth, orderedNodesContent):
+    def BuildTreeGraph(self, orderedNodesDepth, orderedNodesContent):
+        """
+        This function build a graph like tree from (R)outed (L)abeled (D)irected (A)cyclic (G)raph [RLDAG].
+            :param orderedNodesDepth: list of nodes depths in order of occurrence
+            :param orderedNodesContent: list of nodes labels and featues in order of occurrence
+        """   
         try:
             if (isODict(orderedNodesDepth)) and (isODict(orderedNodesContent)):
-                if(len(orderedNodesDepth) != len(orderedNodesContent)):
-                    print('INSERTIONS CONTENT SIZE NOT EQUAL AND ERROR FOR [BuildTreeLikeGraphFromRLDAG]')
-                    return None
+                if(len(orderedNodesDepth) != len(orderedNodesContent)): return None
                 else:
                     root = None
                     prev_index = -1
@@ -262,74 +230,71 @@ class TParser:
                     label = None
                     content = None
 
-                    # For all ordered graphnodes gathered by there depth in the graph
                     for index in range(len(orderedNodesDepth)):
                         depth = orderedNodesDepth[index]
                         label, content = self.GetSplittedContent(orderedNodesContent[index])
 
-                        #Setup rooted node
                         if(index == 0):
-                            root = self.NewAnyNode( index,
-                                                    'root',
-                                                    depth,
-                                                    False,
-                                                    [],
-                                                    True,
-                                                    [],
-                                                    label,
-                                                    content)
-
+                            root = self.NewAnyNode( index, 'root', depth, False, [], True, [], label, content)
                             prev_node = root
-
-                        #Handle the subgraph parts
                         else:
-                            if label is '':
-                                print('ERROR! => [', orderedNodesContent[index], ']')
+                            parent_depth = orderedNodesDepth[prev_index]
+                            prev_node = self.BuildNextNode( prev_node, index, parent_depth, None, depth, True, [], False, [], label, content)
 
-                            prev_node = self.BuildNextNode( prev_node,
-                                                            index,
-                                                            orderedNodesDepth[prev_index],
-                                                            None,
-                                                            depth,
-                                                            True,
-                                                            [],
-                                                            False,
-                                                            [],
-                                                            label,
-                                                            content)
                         prev_index = index
                 return root
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.BuildTreeLikeGraphFromRLDAG]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.BuildTreeGraph]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==                    Create a new nodes                 ==#
-    # This function creates a new AnyNode with the given input.
-    def NewAnyNode(self, nId, nState, nDepth, nHasInputNode, nInputNode, nHasFollowerNodes, nFollowerNodes, nLabel, nContent):
+    def NewAnyNode(self, node_id, node_State, node_Depth, node_HasInputNode, node_InputNode, node_HasFollowerNodes, node_FollowerNodes, node_Label, node_Content):
+        """
+        This function create a new node containing the given params.
+            :param node_id: node id
+            :param node_State: node type
+            :param node_Depth: node position in depth
+            :param node_HasInputNode: parent check for at least 1
+            :param node_InputNode: list of parents
+            :param node_HasFollowerNodes: children check for at least 1
+            :param node_FollowerNodes: list of children
+            :param node_Label: obviously the node label
+            :param node_Content: the features stored in the node
+        """   
         try:
-            if(nHasInputNode == False):
-                    nInputNode = None
+            if(node_HasInputNode == False): node_InputNode = None
 
-            return AnyNode( id=nId,
-                            name=nState,
-                            state=nState,
-                            depth=nDepth,
-                            hasInputNode=nHasInputNode,
-                            parent=nInputNode,
-                            hasFollowerNodes=nHasFollowerNodes,
-                            followerNodes=nFollowerNodes,
-                            label=nLabel,
-                            content=nContent)
+            return AnyNode( id=node_id,
+                            name=node_State,
+                            state=node_State,
+                            depth=node_Depth,
+                            hasInputNode=node_HasInputNode,
+                            parent=node_InputNode,
+                            hasFollowerNodes=node_HasFollowerNodes,
+                            followerNodes=node_FollowerNodes,
+                            label=node_Label,
+                            content=node_Content)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.NewAnyNode]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.NewAnyNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==                   Build next RLDAG node               ==#
-    # This function create a new node depending on a given node or tree.
-    # Here the node gets its position inside the tree depending on the given prev node which is the root or a tree structure.
     def BuildNextNode(self, prev_node, index, p_depth, state, depth, hasInputs, input, hasFollowers, followers, label, content):
+        """
+        This function create a new node depending on a given node or tree.
+        Here the node gets its position inside the tree depending on the given prev node which is the root or a tree structure.
+            :param prev_node: 
+            :param index: 
+            :param p_depth: 
+            :param state: 
+            :param depth: 
+            :param hasInputs: 
+            :param input: 
+            :param hasFollowers: 
+            :param followers: 
+            :param label: 
+            :param content: 
+        """   
         try:
             if(index > 0):
                 input = self.GetParentOfNewNode(depth, p_depth, prev_node)
@@ -345,18 +310,15 @@ class TParser:
 
             return prev_node
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.BuildNextNode]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.BuildNextNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-
-    #===========================================================#
-    #==                 Node Manipulation Methods             ==#
-    #===========================================================#
-
-    #==             Set Node state if not navigated           ==#
-    # This funtion set the state of a node in the GraphTree.
     def NormalState(self, node):
+        """
+        This funtion set the state of a node in the GraphTree.
+            :param node: 
+        """   
         try:
             if (node.is_leaf) and not (node.is_root):
                 node.state = 'destination'
@@ -369,16 +331,19 @@ class TParser:
                 node.state = 'subnode'
                 node.name = 'subnode_' + str(node.id)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.NormalState]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.NormalState]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #=        Check Node is navigated and set state           ==#
-    # This function chech notes if they are root, subnode or child (-> DAG review as Tree)
-    # If this check is true it calls NormalState function.
-    # Otherwise it sets state to 'navigator'.
-    # Graph of Rank 1 is a sigle root node!
     def NavigateState(self, graph_root, node):
+        """
+        This function chech notes if they are root, subnode or child (-> DAG review as Tree)
+        If this check is true it calls NormalState function.
+        Otherwise it sets state to 'navigator'.
+        Graph of Rank 1 is a sigle root node!
+            :param graph_root: 
+            :param node: 
+        """   
         try:
             if isNotNone(node.label) and isNone(node.content):
                 label = node.label
@@ -394,7 +359,6 @@ class TParser:
 
                 if(len(desired) < 1):
                     print( node.state )
-                    #print('CONTROL: ', ShowRLDAGTree(graph_root))
                 elif(len(desired) == 1):
                     self.NormalState(node)
                 else:
@@ -406,20 +370,22 @@ class TParser:
             else:
                 self.NormalState(node)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.NavigateState]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.NavigateState]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #=                  Get direct subnodes                  ==#
-    # This function place sub nodes to the current node if some exist.
     def GetSubnodes(self, node):
+        """
+        This function place sub nodes to the current node if some exist.
+            :param node: 
+        """   
         try:
             followers = [node.label for node in node.children]
             if(len(followers) > 0):
                 node.hasFollowerNodes = True
                 node.followerNodes = followers
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GetSubnodes]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.GetSubnodes]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -433,7 +399,7 @@ class TParser:
                 self.NavigateState(root, node)
                 self.GetSubnodes(node)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.GraphReforge]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.GraphReforge]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -441,7 +407,6 @@ class TParser:
         """
         This function print the input and result of the gatherer.
         This allow to evaluate the gatherers work easily.
-            :param self: 
             :param amr_stringified: 
             :param root: 
         """   
@@ -451,7 +416,7 @@ class TParser:
             self.ShowRLDAGTree(root)
             print('\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n')
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.ShowGathererInfo]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.ShowGathererInfo]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -474,50 +439,9 @@ class TParser:
                         depth = depth - line.count(')')
                         k = k + 1
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.Preprocessor]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.Preprocessor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
-    '''def AMRPreprocessor(self, graph_nodes, nodes_depth, nodes_content):
-        """
-        This function fixes format problems and collect nodes depth and there content ordered by appearance.
-        So its possible to rebuild the AMR structure.
-            :param semantic_flag: 
-            :param graph_nodes: 
-            :param nodes_depth: 
-            :param nodes_content: 
-        """   
-        try:
-            v = 6   # Definition of 1 depth step in AMR
-            k = 0
-            
-            # Each line is a node definition
-            for line in graph_nodes:
-                if(self.constants.SEMANTIC_DELIM not in line) and (line != ''):
-                    s = len(line) - len(line.lstrip(' '))
-                    t_rest = s%v
-                    t = s/v
-
-                    if(t_rest > 0):
-                        line, s = self.AddLeadingWhitespaces(line, (v-t_rest))
-                        t = s/v
-
-                    if(k > 0) and ((t - nodes_depth[k-1]) > 1):
-                        nodes_depth[k] = nodes_depth[k-1]+1
-                    else:
-                        nodes_depth[k] = t
-
-                    nodes_depth[k] = toInt(t)
-                    nodes_content[k] = self.CleanNodeSequence(line)
-
-                    if nodes_content[k] is '':
-                        print('Raw: ', line)
-
-                    k = k + 1
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.AMRPreprocessor]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)'''
 
     def Pipeline(self, amr_stringified, semantic_flag, print_to_console):
         """
@@ -529,22 +453,13 @@ class TParser:
         try:
             nodes_depth = OrderedDict()
             nodes_content = OrderedDict()
-            #print('Do Next')
-            self.Preprocessor(amr_stringified.split('\n'), 
-                                 nodes_depth, 
-                                 nodes_content
-                                 )
-            #print('Done Prep')
-            root = self.BuildTreeLikeGraphFromRLDAG(nodes_depth, 
-                                                    nodes_content)
-            #print('Done Reforge')
+            self.Preprocessor(amr_stringified.split('\n'), nodes_depth, nodes_content)
+            root = self.BuildTreeGraph(nodes_depth, nodes_content)
             self.GraphReforge(root)
-
-            #print('Final Print')
             if(print_to_console): self.ShowGathererInfo(amr_stringified, root)
             return root
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.Pipeline]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.Pipeline]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -559,6 +474,6 @@ class TParser:
             if(self.saving): return self.ExportToJson(root)
             else: return root
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TreeParser.Execute]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

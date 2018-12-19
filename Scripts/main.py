@@ -9,7 +9,7 @@ from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
 
 from NetworkHandler.LambdaNodeEmbedding import GetKerasNAP, KerasEval
-from NetworkHandler.NetworkHandler import GetKerasInputLayerPairs, GetMyKerasLambda, GetTestDense
+from NetworkHandler.NetworkHandler import CustomLayerDefinitions
 
 class Graph2SequenceTool():
 
@@ -29,6 +29,7 @@ class Graph2SequenceTool():
     GLOVE_OUTPUT_DIM = 100
     GLOVE_VOCAB_SIZE = 20000
     VALIDATION_SPLIT = 0.2
+    CustomLayers = CustomLayerDefinitions()
 
     def RunTool(self):
         """
@@ -171,7 +172,7 @@ class Graph2SequenceTool():
             print("######## Nodes Embedding Layer ########")
 
 
-            #ins = GetKerasInputLayerPairs((None,),"edges",(self.GLOVE_OUTPUT_DIM,),"features")
+            #ins = CustomLayers.GraphInputPairLayers((None,),"edges",(self.GLOVE_OUTPUT_DIM,),"features")
             
 
 
@@ -181,7 +182,7 @@ class Graph2SequenceTool():
             print("########## Construct Network ##########")
 
             '''
-            x = CustomKerasNodeEmbeddingLambdaLayer(ins,(9,),"MyLambda")
+            x = CustomLayers.CustomNodeLambdaLayer(ins,(9,),"MyLambda")
             model = Model(inputs=ins, outputs=x)
             model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], callbacks=[History])
             model.metrics_tensors += [layer.output for layer in model.layers] 

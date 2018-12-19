@@ -1,5 +1,3 @@
-# - *- coding: utf- 8*-
-
 import argparse
 import os, sys
 import platform as pf
@@ -7,6 +5,7 @@ from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
 from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
+from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
 
 class Graph2SequenceTool():
 
@@ -127,7 +126,10 @@ class Graph2SequenceTool():
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
-            glove_rdy_data_samples = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, max_sequence_length=1000, show_feedback=True).GetPreparedDataSamples()
+            #TODO check switches!
+            glove_rdy_data_samples = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True).GetPreparedDataSamples()
+            glove_embedding_layer = GloVeEmbeddingLayer(vocab_size=in_vocab_size, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
+
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")

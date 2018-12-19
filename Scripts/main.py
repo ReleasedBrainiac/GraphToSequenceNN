@@ -6,7 +6,7 @@ import platform as pf
 from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from GloVeHandler.GloVeDatasetParser import GloVeEmbedding
+from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
 
 class Graph2SequenceTool():
 
@@ -127,7 +127,7 @@ class Graph2SequenceTool():
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
-            embedding_layer = GloVeEmbedding(nodes_context=datapairs, vocab_size=in_vocab_size, glove_file_path=in_glove, output_dim=out_dim_emb, show_feedback=True).BuildGloveVocabEmbeddingLayer()
+            glove_rdy_data_samples = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, max_sequence_length=1000, show_feedback=True).GetPreparedDataSamples()
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")

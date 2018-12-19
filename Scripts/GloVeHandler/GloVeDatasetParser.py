@@ -23,8 +23,6 @@ class GloVeDatasetPreprocessor:
     edge_matrices = None
     sentences_list = None
     word_index = None
-    number_words = -1
-    max_length = -1
 
     def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, show_feedback=False):
         """
@@ -132,6 +130,7 @@ class GloVeDatasetPreprocessor:
             if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
             node_words_list = None
+            print('Glove-PP Result Structure: [Sentences, EdgeArrays, VectorizedNodesLists, Indices]')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"

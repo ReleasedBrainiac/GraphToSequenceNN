@@ -26,6 +26,7 @@ class GloVeEmbeddingLayer:
     EMBEDDING_DIM = -1
 
     show_response = False
+    number_words = -1
 
     def __init__(self, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
         """

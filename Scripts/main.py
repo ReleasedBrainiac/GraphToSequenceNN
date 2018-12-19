@@ -24,7 +24,7 @@ class Graph2SequenceTool():
     SAVING_CLEANED_AMR = False
     KEEP_EDGES = False
     GLOVE_OUTPUT_DIM = 100
-    GLOVE_VOCAB_SIZE = 400000
+    GLOVE_VOCAB_SIZE = 20000
 
     def RunTool(self):
         """

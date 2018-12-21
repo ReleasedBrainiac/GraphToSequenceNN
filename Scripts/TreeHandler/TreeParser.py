@@ -27,16 +27,16 @@ class TParser:
     saving = False
 
 
-    def __init__(self, in_amr_stringified, show_process, is_saving):
+    def __init__(self, in_amr_string, show_process, is_saving):
         """
         This class constructor only collect necessary inputs and initialize the constants.
-            :param in_amr_stringified: amr input as string
+            :param in_amr_string: amr input as string
             :param show_process: switch allow to print some processing steps
             :param is_saving: switch allow to show further passing strategy after processing data
         """   
         try:
             self.constants = Constants()
-            self.amr_input = in_amr_stringified
+            self.amr_input = in_amr_string
             self.show = show_process
             self.saving = is_saving
         except Exception as ex:
@@ -46,7 +46,7 @@ class TParser:
 
     def ExportToJson(self, anytree_root):
         """
-        This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation.
+        This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation containing the initial '#::smt' flag.
             :param anytree_root: root of an anytree object
         """   
         try:
@@ -64,7 +64,7 @@ class TParser:
         """   
         try:
             importer = JsonImporter()
-            return importer.import_(json)
+            return importer.import_(json.replace('#::smt\n', ''))
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.ImportAsJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -73,7 +73,7 @@ class TParser:
     def ExtractRawNodeSequence(self, sequence):
         """
         This function allow to collect the raw node sequence containing the label 
-        and maybe some additional values like flags and description content.
+        and existing features like flags and descriptional content.
             :param sequence: node sequence string
         """   
         try:
@@ -84,13 +84,10 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==               Get nodes label and content             ==#
-    # This function allow to collect the Label and eventually a label content 
-    # from string of a AMR Graph variable.
-    def GetSplittedContent(self, input_node):
+    def CollectNodeDefinition(self, input_node):
         """
-        This function allow to collect the label or the full node definition 
-        from amr substring variable.
+        This function allow to collect the full node definition from amr substring variable.
+        Depending on the node it will contain at least the label and maybe additional features.
             :param input_node: amr substring containing at least just 1 node.
         """   
         try:
@@ -98,51 +95,52 @@ class TParser:
             if len(parts) == 1:
                 return parts, None
             else:
-                label = parts[0]
-                content = parts[1]
-                return label, content
+                return parts[0], parts[1]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TParser.GetSplittedContent]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.CollectNodeDefinition]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==                    Cleanup AMR spacing                ==#
-    # This function clean up the whitespacing in the AMR Graphstring by a given value.
-    def AddLeadingWhitespaces(self, str, amount):
+    '''
+    def AddLeadingWhitespaces(self, amr_str, amount):
+        """
+        This function clean up the white-spacing in the AMR string by a given value. 
+            :param amr_str: input containing whitespaces amr string
+            :param amount: amount of whitespaces we need to add at the beginning of the string
+        """ 
+        #TODO this can be solved smarter if we first store the input and calc difference over the iteration result instead of stripping later.
         try:
-            for _ in range(amount):
-                str = ' '+str
+            for _ in range(amount): amr_str = self.constants.WHITESPACE + amr_str
 
-            ws_count = len(str) - len(str.lstrip(' '))
-            return [str, ws_count]
+            return [amr_str, len(amr_str) - len(amr_str.lstrip(self.constants.WHITESPACE))]
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.AddLeadingWhitespaces]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+    '''
 
-    def CleanSubSequence(self, elements):
+    def RemoveExtensionsAndFlags(self, node_elements):
+        """
+        This function remove all word extensions and flag elements in a given node_sequence
+            :param node_elements: a list of split elements defining the node sequence
+        """   
         try:
             results = []
 
-            if isNotNone(elements) and isList(elements):
-                # Clean the content
-                for value in elements:
-                    if(isInStr("-", value)) or (isInStr(":", value)):
-                        if(isInStr("-", value)) and (isNotInStr(":", value)):
-                            str1 = value[0: value.rfind('-')]
-                            if(len(str1) > 0):
-                                results.append(str1)
+            if isNotNone(node_elements) and isList(node_elements):
+                for node_element in node_elements:
+                    if isInStr("-", node_element) or  isInStr(":", node_element):
+                        if isInStr("-", node_element) and isNotInStr(":", node_element):
+                            sub_sequence = node_element[0: node_element.rfind('-')]
+                            if(len(sub_sequence) > 0): results.append(sub_sequence)
                         else:
                             continue
                     else:
-                        if(len(value) > 0):
-                            results.append(value)
-            else:
-                print('No content is given!')
+                        if(len(node_element) > 0): results.append(node_element)
 
             return results
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TParser.CleanSubSequence]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.RemoveExtensionsAndFlags]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -155,7 +153,7 @@ class TParser:
             # If we have more then just a label
             if(isInStr(' ', node_seq)):
                 elements = node_seq.split(' ')
-                results = self.CleanSubSequence(elements)
+                results = self.RemoveExtensionsAndFlags(elements)
                 node_seq = ' '.join(results)
 
             return node_seq
@@ -232,7 +230,7 @@ class TParser:
 
                     for index in range(len(orderedNodesDepth)):
                         depth = orderedNodesDepth[index]
-                        label, content = self.GetSplittedContent(orderedNodesContent[index])
+                        label, content = self.CollectNodeDefinition(orderedNodesContent[index])
 
                         if(index == 0):
                             root = self.NewAnyNode( index, 'root', depth, False, [], True, [], label, content)

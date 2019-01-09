@@ -154,7 +154,7 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("############ Split Dataset ############")
 
-            nb_validation_samples = int(self.VALIDATION_SPLIT * input_edge_matrices.shape[0])
+            nb_validation_samples = int(self.VALIDATION_SPLIT * len(input_edge_matrices))
             print('Samples: ', nb_validation_samples)
 
             x_train_edge = input_edge_matrices[:-nb_validation_samples]

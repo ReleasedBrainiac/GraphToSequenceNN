@@ -142,31 +142,17 @@ class Graph2SequenceTool():
             glove_embedding_layer = GloVeEmbeddingLayer(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True).BuildGloveVocabEmbeddingLayer()
 
             print("#######################################\n")
-            print("############ Split Dataset ############")
+            print("######### Random Order Dataset ########")
 
 
             np.random.shuffle(dataset_indices)
-
-            
-            print('Indices: ', dataset_indices)
-
-            print('Len_Features: ', len(network_rdy_vectorized_nodes))
-            print('Type_Features: ', type(network_rdy_vectorized_nodes))
-            print('First_Val_Features: ', network_rdy_vectorized_nodes[0])
             input_vectorized_features = network_rdy_vectorized_nodes[dataset_indices]
-
-            print('Len_Sentences. ', len(network_rdy_sentences))
-            print('Type_Sentences: ', type(network_rdy_sentences))
-            print('First_Val_Sentences: ', network_rdy_sentences[0])
-            result_sentences = network_rdy_sentences[dataset_indices]
-
-            print('Len_Edges: ', len(network_rdy_edge_matrices))
-            print('Type_Edges: ', type(network_rdy_edge_matrices))
-            print('First_Val_Edges: ', network_rdy_edge_matrices[0])
-            input_edge_matrices = network_rdy_edge_matrices[dataset_indices]
+            result_sentences = ReorderListByIndices(network_rdy_sentences, dataset_indices)
+            input_edge_matrices = ReorderListByIndices(network_rdy_edge_matrices, dataset_indices)
 
 
-
+            print("#######################################\n")
+            print("############ Split Dataset ############")
 
             nb_validation_samples = int(self.VALIDATION_SPLIT * input_edge_matrices.shape[0])
             print('Samples: ', nb_validation_samples)

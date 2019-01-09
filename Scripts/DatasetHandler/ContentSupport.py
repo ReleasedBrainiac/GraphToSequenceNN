@@ -306,3 +306,16 @@ def getIndexedODictLookUp(dictionary):
             template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+def ReorderListByIndices(reorder_list, ordering_indices):
+    """
+    This function reorder a list by a given list of ordering indices.
+        :param reorder_list: list you want to reorder
+        :param ordering_indices: list of indices with desired value order
+    """
+    try:
+        return [y for x,y in sorted(zip(ordering_indices,reorder_list))] 
+    except Exception as ex:
+            template = "An exception of type {0} occurred in [ContentSupport.ReorderListByIndices]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

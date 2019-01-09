@@ -2,6 +2,7 @@ from collections import OrderedDict
 from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
 import numpy as np
+import sys
 
 class MatrixBuilder:
 
@@ -26,6 +27,40 @@ class MatrixBuilder:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def MatrixSplitOnPrincipalDiagonal(self, edge_matrix):
+        """
+        This function split a whole [M x N] edge matrix of a graph into 2 [M x N] matrices.
+        The 1. matrix will then contain all forward connections of origin edge matrix by zerofying all values under the principal diagonal. 
+        The 2. matrix will contain the incomming connections of each node by transposing the 1. matrix.
+        Attention: A directed graph will be threatened as a bidirected graph because we want to use it for text mapping, later. 
+                   In this case there is no need to keep concrete graph directions.
+        Additional: The algorith could use the numpy.matrix.transpose but it would cost more performance than creating both submatrices at once, so transpose is not used.
+            :param edge_matrix: numpy [M x N] edge matrix containing all forward and backward connections of a graph.
+        """
+        try:
+            forward_connections = np.zeros(edge_matrix.shape)
+            backward_connections = np.zeros(edge_matrix.shape)
+
+            r_index = -1
+            for row in edge_matrix:
+                r_index += 1
+                e_index = -1
+                for entry in row:
+                    e_index += 1
+                    if r_index >= e_index:
+                        forward_connections[r_index][e_index] = 0
+                        backward_connections[r_index][e_index] = entry
+                    else:
+                        forward_connections[r_index][e_index] = entry
+                        backward_connections[r_index][e_index] = 0
+            return [forward_connections, backward_connections]
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [SemanticMatricBuilder.MatrixSplitOnPrincipalDiagonal]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            
 
     def BuildEdgeMatrix(self, connections_dict, ordered_vertex_dict):
         """
@@ -110,6 +145,7 @@ class MatrixBuilder:
                     if prev_node != None: connections_list.append([prev_node, next_node])
             
             edges, verticies = self.BuildEdgeMatrix(connections_list, self.graph_nodes)
+            edge_pair = self.MatrixSplitOnPrincipalDiagonal(edges)
 
             if self.show_response:
                 print('#####################################')
@@ -117,12 +153,12 @@ class MatrixBuilder:
                 print('Nodes:\n',self.graph_nodes)
                 print('Cons.:\n',connections_list)
                 print('Vertices:\n', verticies)
-                print('Edges:\n', edges)
+                print('Edges:\n', edge_pair)
             
             if self.nodes_as_dict:
-                return [edges, self.graph_nodes]
+                return [edge_pair, self.graph_nodes]
             else:
-                return [edges, list(self.graph_nodes.values())]
+                return [edge_pair, list(self.graph_nodes.values())]
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"

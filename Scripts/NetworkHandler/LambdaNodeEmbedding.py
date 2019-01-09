@@ -16,7 +16,6 @@ import tensorflow as tf
     to get the direct node neigbour embedding of graph nodes 
     depending on the nodes feature vectors.
 '''
-
 def GetMaxColIndexFromTensor(tensor_x):
     count = tensor_x.get_shape()[0]
     return tf.convert_to_tensor(count)

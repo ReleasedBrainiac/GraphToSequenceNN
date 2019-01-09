@@ -76,11 +76,13 @@ class GloVeDatasetPreprocessor:
             self.node_words_list = []
             self.edge_matrices = []
             self.sentences_list = []
+
             for dataset in datasets: 
-                if isNotNone(dataset[1][0]) and (len(dataset[1][1]) == len(dataset[1][0])): 
+                if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]): 
                     self.node_words_list.append(dataset[1][1])
                     self.edge_matrices.append(dataset[1][0])
                     self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
+            if self.show_response: print('Collected data', len(self.sentences_list),' samples!')
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -132,7 +134,7 @@ class GloVeDatasetPreprocessor:
             self.tokenizer_words = self.tokenizer.word_index.items()
             node_words_list = None
 
-            print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedNodesLists, Indices]')
+            print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedNodesLists, SequenceIndices]')
             print('#######################################')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, indices]
         except Exception as ex:

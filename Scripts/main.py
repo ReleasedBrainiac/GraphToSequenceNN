@@ -5,11 +5,10 @@ import numpy as np
 from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
+from DatasetHandler.ContentSupport import ReorderListByIndices
 from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
-
-from NetworkHandler.LambdaNodeEmbedding import GetKerasNAP, KerasEval
-#from NetworkHandler.NetworkHandler import CustomLayerDefinitions
+from NetworkHandler.LayerBuilder import CustomLayerDefinitions
 
 class Graph2SequenceTool():
 
@@ -132,6 +131,8 @@ class Graph2SequenceTool():
                                 )
             datapairs = pipe.ProvideData()
 
+            print('Found Datapairs: ', len(datapairs))
+
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
@@ -143,13 +144,29 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("############ Split Dataset ############")
 
-            
+
             np.random.shuffle(dataset_indices)
 
+            
             print('Indices: ', dataset_indices)
-            input_edge_matrices = network_rdy_edge_matrices[dataset_indices]
+
+            print('Len_Features: ', len(network_rdy_vectorized_nodes))
+            print('Type_Features: ', type(network_rdy_vectorized_nodes))
+            print('First_Val_Features: ', network_rdy_vectorized_nodes[0])
             input_vectorized_features = network_rdy_vectorized_nodes[dataset_indices]
+
+            print('Len_Sentences. ', len(network_rdy_sentences))
+            print('Type_Sentences: ', type(network_rdy_sentences))
+            print('First_Val_Sentences: ', network_rdy_sentences[0])
             result_sentences = network_rdy_sentences[dataset_indices]
+
+            print('Len_Edges: ', len(network_rdy_edge_matrices))
+            print('Type_Edges: ', type(network_rdy_edge_matrices))
+            print('First_Val_Edges: ', network_rdy_edge_matrices[0])
+            input_edge_matrices = network_rdy_edge_matrices[dataset_indices]
+
+
+
 
             nb_validation_samples = int(self.VALIDATION_SPLIT * input_edge_matrices.shape[0])
             print('Samples: ', nb_validation_samples)

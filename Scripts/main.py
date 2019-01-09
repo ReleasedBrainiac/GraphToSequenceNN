@@ -9,7 +9,7 @@ from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
 
 from NetworkHandler.LambdaNodeEmbedding import GetKerasNAP, KerasEval
-from NetworkHandler.NetworkHandler import CustomLayerDefinitions
+#from NetworkHandler.NetworkHandler import CustomLayerDefinitions
 
 class Graph2SequenceTool():
 
@@ -29,7 +29,7 @@ class Graph2SequenceTool():
     GLOVE_OUTPUT_DIM = 100
     GLOVE_VOCAB_SIZE = 20000
     VALIDATION_SPLIT = 0.2
-    CustomLayers = CustomLayerDefinitions()
+    #CustomLayers = CustomLayerDefinitions()
 
     def RunTool(self):
         """

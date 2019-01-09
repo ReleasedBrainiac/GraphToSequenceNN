@@ -43,18 +43,6 @@ def GetMaxRankFromTensor(tensor_x):
 def GetShapeListFromTensor(tensor_x):
     return tensor_x.get_shape().as_list()
 
-# This function returns the given tensor and its transposed matrix
-# This means we get the next nodes and prev nodes tensor for each node
-def GetNextAndPrev(tensor_x):
-    next_nodes = tensor_x
-    prev_nodes = tf.transpose(tensor_x)
-    return tf.convert_to_tensor(next_nodes), tf.convert_to_tensor(prev_nodes)
-
-def GetKerasNAP(tensor_x):
-    next_nodes = tf.keras.backend.variable(value=tensor_x, dtype='float32')
-    prev_nodes = tf.keras.backend.variable(value=tf.transpose(tensor_x), dtype='float32')
-    return next_nodes, prev_nodes
-
 def KerasEval(tensor_x):
     return tf.keras.backend.eval(tensor_x)
 

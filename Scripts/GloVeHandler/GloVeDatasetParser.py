@@ -121,7 +121,7 @@ class GloVeDatasetPreprocessor:
     def GetPreparedDataSamples(self):
         """
         This function return all given data samples with replaced GloVe word to vector mapping for there nodes context.
-        Structure: [sentences, edges, nodes, indices]
+        Structure: [sentences, edges, vectorized_sequences, nodes, indices]
         """   
         try:
             print('################# Run #################')

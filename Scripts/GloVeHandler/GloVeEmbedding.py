@@ -46,7 +46,7 @@ class GloVeEmbedding:
             :param show_feedback: switch allows to show process response on console or not
         """   
         try:
-            print('##### Build Embeddinglayer GloVe ######')
+            print('######## Init Embedding GloVe #########')
             if isStr(glove_file_path): 
                 self.GLOVE_DIR = glove_file_path
                 print('GloVe file:\t\t', self.GLOVE_DIR)
@@ -96,7 +96,7 @@ class GloVeEmbedding:
             if len(datasets_nodes_values) != len(datasets_nodes_initial_features): 
                 print('ERROR: [Size_Match FAILED]')
                 sys.exit(0)
-                
+
             return datasets_nodes_initial_features
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ReplaceDatasetNodeValuesByEmbedding]. Arguments:\n{1!r}"

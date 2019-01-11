@@ -200,8 +200,6 @@ class GloVeEmbedding:
 
             embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix)
             if self.show_response: print('\t=> Embedding layer:\n',embedding_layer,'.')
-
-            self.ClearTokenizer()
             print('#######################################')
             return embedding_layer
         except Exception as ex:

@@ -7,7 +7,7 @@
 
     The GloVe dataset was provided at https://nlp.stanford.edu/projects/glove/#Download%20pre-trained%20word%20vectors 
 '''
-
+import sys
 import numpy as np
 from numpy import asarray, zeros
 from keras.layers import Embedding
@@ -68,8 +68,38 @@ class GloVeEmbedding:
                 print('Tokenizer: \t\t reloaded')
 
             if isBool(show_feedback): self.show_response = show_feedback
+
+            print('###### Collect Embedding Indices ######')
+            self.embedding_indices = self.LoadGloVeEmbeddingIndices()
+            if self.show_response: print('\t=> Loaded %s word vectors.' % len(self.embedding_indices))
+
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.Constructor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values):
+        try:
+            datasets_nodes_initial_features = []
+
+            for dataset in datasets_nodes_values:
+                dataset_nodes_initial_features = []
+                for word in dataset: 
+                    word_embedding = self.embedding_indices.get(word)
+                    dataset_nodes_initial_features.append(word_embedding)
+                
+                datasets_nodes_initial_features.append(dataset_nodes_initial_features)
+                if len(dataset) != len(dataset_nodes_initial_features): 
+                    print('ERROR: [Current_Size_Match FAILED]')
+                    sys.exit(0)
+                
+            if len(datasets_nodes_values) != len(datasets_nodes_initial_features): 
+                print('ERROR: [Size_Match FAILED]')
+                sys.exit(0)
+                
+            return datasets_nodes_initial_features
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ReplaceDatasetNodeValuesByEmbedding]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -163,10 +193,8 @@ class GloVeEmbedding:
         This function build the GloVe embedding layer.
         """   
         try:
-            print('################# Run #################')
-            self.embedding_indices = self.LoadGloVeEmbeddingIndices()
-            if self.show_response: print('\t=> Loaded %s word vectors.' % len(self.embedding_indices))
-
+            
+            print('######## Build Embedding Layer ########')
             embedding_matrix = self.BuildVocabEmbeddingMatrix(self.embedding_indices)
             if self.show_response: print('\t=> Embedding matrix:\n',embedding_matrix,'.')
 

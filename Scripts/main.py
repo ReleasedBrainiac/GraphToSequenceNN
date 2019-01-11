@@ -7,8 +7,9 @@ from subprocess import call
 from DatasetHandler.DatasetProvider import DatasetPipeline
 from DatasetHandler.ContentSupport import ReorderListByIndices
 from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
-from GloVeHandler.GloVeEmbeddingLayer import GloVeEmbeddingLayer
+from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from NetworkHandler.LayerBuilder import CustomLayerDefinitions
+from DatasetHandler.FileWriter import Writer
 
 class Graph2SequenceTool():
 
@@ -137,18 +138,35 @@ class Graph2SequenceTool():
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
             glove_dataset_processor = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True)
-            network_rdy_sentences, network_rdy_edge_matrices, network_rdy_vectorized_nodes, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
+            network_rdy_sentences, network_rdy_edge_matrices, network_rdy_vectorized_nodes, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
 
-            glove_embedding_layer = GloVeEmbeddingLayer(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True).BuildGloveVocabEmbeddingLayer()
+            glove_embedding = GloVeEmbedding(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
+            datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
+            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+
 
             print("#######################################\n")
             print("######### Random Order Dataset ########")
-
 
             np.random.shuffle(dataset_indices)
             input_vectorized_features = network_rdy_vectorized_nodes[dataset_indices]
             result_sentences = ReorderListByIndices(network_rdy_sentences, dataset_indices)
             input_edge_matrices = ReorderListByIndices(network_rdy_edge_matrices, dataset_indices)
+
+
+            # TODO just a control structure for a test
+            
+
+            #out_1 = 'DS_1: \n' + input_vectorized_features[0] + '\n' + result_sentences[0] + '\n' + input_edge_matrices[0]
+            #out_2 = 'DS_2: \n' + input_vectorized_features[1] + '\n' + result_sentences[1] + '\n' + input_edge_matrices[1]
+            #out_3 = 'DS_3: \n' + input_vectorized_features[2] + '\n' + result_sentences[2] + '\n' + input_edge_matrices[2]
+            #out_full = out_1 + '\n\n'+  out_2 + '\n\n' + out_3
+
+            #writer = Writer(input_path='./Datasets/TestOutputDataset.txt', in_context=out_full)
+
+
+            # TODO just a control structure for a test
+            #sys.exit(0)
 
 
             print("#######################################\n")

@@ -138,52 +138,42 @@ class Graph2SequenceTool():
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
             glove_dataset_processor = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True)
-            network_rdy_sentences, network_rdy_edge_matrices, network_rdy_vectorized_nodes, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
+            datasets_sentences, directed_edge_matrices, vectorized_sequences, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
 
             glove_embedding = GloVeEmbedding(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+
+            print('\t => Free (in further steps unused) resources from embedding process!', )
+            glove_embedding.ClearTokenizer()
+            glove_embedding.ClearEmbeddingIndices()
 
 
             print("#######################################\n")
             print("######### Random Order Dataset ########")
 
             np.random.shuffle(dataset_indices)
-            input_vectorized_features = network_rdy_vectorized_nodes[dataset_indices]
-            result_sentences = ReorderListByIndices(network_rdy_sentences, dataset_indices)
-            input_edge_matrices = ReorderListByIndices(network_rdy_edge_matrices, dataset_indices)
-
-
-            # TODO just a control structure for a test
-            
-
-            #out_1 = 'DS_1: \n' + input_vectorized_features[0] + '\n' + result_sentences[0] + '\n' + input_edge_matrices[0]
-            #out_2 = 'DS_2: \n' + input_vectorized_features[1] + '\n' + result_sentences[1] + '\n' + input_edge_matrices[1]
-            #out_3 = 'DS_3: \n' + input_vectorized_features[2] + '\n' + result_sentences[2] + '\n' + input_edge_matrices[2]
-            #out_full = out_1 + '\n\n'+  out_2 + '\n\n' + out_3
-
-            #writer = Writer(input_path='./Datasets/TestOutputDataset.txt', in_context=out_full)
-
-
-            # TODO just a control structure for a test
-            #sys.exit(0)
+            network_input_sentences = vectorized_sequences[dataset_indices]
+            network_input_raw_sentences = ReorderListByIndices(datasets_sentences, dataset_indices)
+            network_input_graph_features = ReorderListByIndices(datasets_nodes_embedding, dataset_indices)
+            network_input_directed_edge_matrices = ReorderListByIndices(directed_edge_matrices, dataset_indices)
 
 
             print("#######################################\n")
             print("############ Split Dataset ############")
 
-            nb_validation_samples = int(self.VALIDATION_SPLIT * len(input_edge_matrices))
+            nb_validation_samples = int(self.VALIDATION_SPLIT * len(network_input_directed_edge_matrices))
             print('Samples: ', nb_validation_samples)
 
-            x_train_edge = input_edge_matrices[:-nb_validation_samples]
-            x_train_features = input_vectorized_features[:-nb_validation_samples]
-            y_train_sentences = result_sentences[:-nb_validation_samples]
+            x_train_edge = network_input_directed_edge_matrices[:-nb_validation_samples]
+            x_train_features = network_input_graph_features[:-nb_validation_samples]
+            y_train_sentences = network_input_sentences[:-nb_validation_samples]
             print('Train set!')
 
 
-            x_validation_edge = input_edge_matrices[-nb_validation_samples:]
-            x_validation_features = input_vectorized_features[-nb_validation_samples:]
-            y_validation_sentences = result_sentences[-nb_validation_samples:]
+            x_validation_edge = network_input_directed_edge_matrices[-nb_validation_samples:]
+            x_validation_features = network_input_graph_features[-nb_validation_samples:]
+            y_validation_sentences = network_input_sentences[-nb_validation_samples:]
             print('Test set!')
 
             print('Shape features: ', x_train_features.shape[0])

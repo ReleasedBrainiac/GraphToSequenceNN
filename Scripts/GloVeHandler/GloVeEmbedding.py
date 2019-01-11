@@ -16,7 +16,7 @@ from keras.preprocessing.text import Tokenizer
 from DatasetHandler.ContentSupport import isStr, isInt, isBool, isDict, isNotNone
 
 
-class GloVeEmbeddingLayer:
+class GloVeEmbedding:
 
     GLOVE_DIR = None
     GLOVE_DTYPE = 'float32'
@@ -29,6 +29,7 @@ class GloVeEmbeddingLayer:
     show_response = False
     number_words = -1
     final_tokenizer = None
+    embedding_indices = None
 
 
     def __init__(self, tokenizer, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
@@ -72,11 +73,11 @@ class GloVeEmbeddingLayer:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildVocabEmbeddingMatrix(self, embeddings_indexes):
+    def BuildVocabEmbeddingMatrix(self, embedding_indices):
         """
         This function creates a weight matrix for all words in the vocab.
         Note, that words not found in embedding index, will be zeros.
-            :param embeddings_indexes: the indices from GloVe loader
+            :param embedding_indices: the indices from GloVe loader
         """   
         try:
             if self.show_response: print('Building vocab embedding matrix!')
@@ -84,7 +85,7 @@ class GloVeEmbeddingLayer:
             embedding_matrix = zeros((self.number_words, self.EMBEDDING_DIM))
             for word, i in self.final_tokenizer.word_index.items():
                 if i > self.MAX_NUM_WORDS: continue
-                embedding_vector = embeddings_indexes.get(word)
+                embedding_vector = embedding_indices.get(word)
 
                 if embedding_vector is not None: 
                     embedding_matrix[i] = embedding_vector
@@ -133,15 +134,27 @@ class GloVeEmbeddingLayer:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def FreeResources(self):
+    def ClearTokenizer(self):
         """
-        Free the resource the process don't need later.
+        Free the resource of the tokenizer cause they are not necessary later.
             :param self: 
         """   
         try:
             self.final_tokenizer = None
         except Exception as ex:
-            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.FreeResources]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ClearTokenizer]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def ClearEmbeddingIndices(self):
+        """
+        Free the resource of the embedding indices cause they are not necessary later.
+            :param self: 
+        """   
+        try:
+            self.final_tokenizer = None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ClearEmbeddingIndices]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -151,16 +164,16 @@ class GloVeEmbeddingLayer:
         """   
         try:
             print('################# Run #################')
-            embeddings_indexes = self.LoadGloVeEmbeddingIndices()
-            if self.show_response: print('\t=> Loaded %s word vectors.' % len(embeddings_indexes))
+            self.embedding_indices = self.LoadGloVeEmbeddingIndices()
+            if self.show_response: print('\t=> Loaded %s word vectors.' % len(self.embedding_indices))
 
-            embedding_matrix = self.BuildVocabEmbeddingMatrix(embeddings_indexes)
+            embedding_matrix = self.BuildVocabEmbeddingMatrix(self.embedding_indices)
             if self.show_response: print('\t=> Embedding matrix:\n',embedding_matrix,'.')
 
             embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix)
             if self.show_response: print('\t=> Embedding layer:\n',embedding_layer,'.')
 
-            self.FreeResources()
+            self.ClearTokenizer()
             print('#######################################')
             return embedding_layer
         except Exception as ex:

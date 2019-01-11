@@ -78,7 +78,7 @@ class GloVeDatasetPreprocessor:
             self.sentences_list = []
 
             for dataset in datasets: 
-                if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]): 
+                if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
                     self.node_words_list.append(dataset[1][1])
                     self.edge_matrices.append(dataset[1][0])
                     self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
@@ -94,8 +94,8 @@ class GloVeDatasetPreprocessor:
         """   
         try:
             if self.show_response: print('Tokenize vocab!')
-            self.tokenizer.fit_on_texts(self.node_words_list)
-            sequences = self.tokenizer.texts_to_sequences(self.node_words_list)
+            self.tokenizer.fit_on_texts(self.sentences_list)
+            sequences = self.tokenizer.texts_to_sequences(self.sentences_list)
             self.word_index = self.tokenizer.word_index
             return sequences
         except Exception as ex:
@@ -116,8 +116,8 @@ class GloVeDatasetPreprocessor:
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.VectorizeVocab]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print(message)
-   
+            print(message)                
+
     def GetPreparedDataSamples(self):
         """
         This function return all given data samples with replaced GloVe word to vector mapping for there nodes context.
@@ -134,9 +134,9 @@ class GloVeDatasetPreprocessor:
             self.tokenizer_words = self.tokenizer.word_index.items()
             node_words_list = None
 
-            print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedNodesLists, SequenceIndices]')
+            print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
             print('#######################################')
-            return [self.sentences_list, self.edge_matrices, vectorized_sequences, indices]
+            return [self.sentences_list, self.edge_matrices, vectorized_sequences, self.node_words_list, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

@@ -79,16 +79,24 @@ class GloVeEmbedding:
             print(message)
 
     def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values):
+        """
+        This function returns  embedding numpy arrays each dataset with stringified node values.
+        The word embedding is directly collected from embedding_indices dictionairy.
+            :param datasets_nodes_values: all datasets nodes vaulues defined by the raw word NOT the vectorized definition
+        """   
         try:
             datasets_nodes_initial_features = []
-
             for dataset in datasets_nodes_values:
                 dataset_nodes_initial_features = []
                 for word in dataset: 
                     word_embedding = self.embedding_indices.get(word)
-                    dataset_nodes_initial_features.append(word_embedding)
+
+                    if word_embedding is not None: 
+                        dataset_nodes_initial_features.append(word_embedding)
+                    else:
+                        dataset_nodes_initial_features.append(np.random.randn(self.EMBEDDING_DIM))
                 
-                datasets_nodes_initial_features.append(dataset_nodes_initial_features)
+                datasets_nodes_initial_features.append(np.vstack(dataset_nodes_initial_features))
                 if len(dataset) != len(dataset_nodes_initial_features): 
                     print('ERROR: [Current_Size_Match FAILED]')
                     sys.exit(0)
@@ -97,9 +105,9 @@ class GloVeEmbedding:
                 print('ERROR: [Size_Match FAILED]')
                 sys.exit(0)
 
-            return datasets_nodes_initial_features
+            return np.vstack(datasets_nodes_initial_features)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ReplaceDatasetNodeValuesByEmbedding]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ReplaceDatasetsNodeValuesByEmbedding]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 

@@ -1,7 +1,6 @@
 import tensorflow as tf
 from inits import zeros
 import configure as conf
-
 from BasicLayer import Layer
 
 '''

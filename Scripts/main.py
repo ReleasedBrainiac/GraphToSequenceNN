@@ -6,7 +6,7 @@ from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
 from DatasetHandler.ContentSupport import ReorderListByIndices
-from GloVeHandler.GloVeDatasetParser import GloVeDatasetPreprocessor
+from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from NetworkHandler.LayerBuilder import CustomLayerDefinitions
 from DatasetHandler.FileWriter import Writer
@@ -29,7 +29,6 @@ class Graph2SequenceTool():
     GLOVE_OUTPUT_DIM = 100
     GLOVE_VOCAB_SIZE = 20000
     VALIDATION_SPLIT = 0.2
-    #CustomLayers = CustomLayerDefinitions()
 
     def RunTool(self):
         """
@@ -107,6 +106,7 @@ class Graph2SequenceTool():
             print(message)
             sys.exit(1)
 
+    #TODO maybe rename cause train, test and predict will be solved at once
     def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, is_keeping_edges=False):
         """
         This function execute the training pipeline for the graph2seq tool.
@@ -154,8 +154,7 @@ class Graph2SequenceTool():
 
             np.random.shuffle(dataset_indices)
             network_input_sentences = vectorized_sequences[dataset_indices]
-            network_input_raw_sentences = ReorderListByIndices(datasets_sentences, dataset_indices)
-            network_input_graph_features = ReorderListByIndices(datasets_nodes_embedding, dataset_indices)
+            network_input_graph_features = datasets_nodes_embedding[dataset_indices]      
             network_input_directed_edge_matrices = ReorderListByIndices(directed_edge_matrices, dataset_indices)
 
 
@@ -176,29 +175,26 @@ class Graph2SequenceTool():
             y_validation_sentences = network_input_sentences[-nb_validation_samples:]
             print('Test set!')
 
+            print('x_train_edge: ', type(x_train_edge), '\n',x_train_edge[0])
+            print('x_train_features: ', type(x_train_features), '\n',x_train_features[0])
+            print('y_train_sentences: ', type(y_train_sentences), '\n',y_train_sentences[0])
+            print('x_validation_edge: ', type(x_validation_edge), '\n',x_validation_edge[0])
+            print('x_validation_features: ', type(x_validation_features), '\n',x_validation_features[0])
+            print('y_validation_sentences: ', type(y_validation_sentences), '\n',y_validation_sentences[0])
+
+
+
+
             print('Shape features: ', x_train_features.shape[0])
 
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")
-
-
-            #ins = CustomLayers.GraphInputPairLayers((None,),"edges",(self.GLOVE_OUTPUT_DIM,),"features")
-            
-
-
-            
+        
 
             print("#######################################\n")
             print("########## Construct Network ##########")
 
-            '''
-            x = CustomLayers.CustomNodeLambdaLayer(ins,(9,),"MyLambda")
-            model = Model(inputs=ins, outputs=x)
-            model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], callbacks=[History])
-            model.metrics_tensors += [layer.output for layer in model.layers] 
-            print(model.summary())
-            '''
 
             print("#######################################\n")
             print("########### Starts Training ###########")
@@ -218,8 +214,6 @@ class Graph2SequenceTool():
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
-
-            #print("Predict with model!")
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.RunTrainProcess]. Arguments:\n{1!r}"

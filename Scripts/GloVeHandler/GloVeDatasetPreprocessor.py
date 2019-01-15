@@ -38,6 +38,8 @@ class GloVeDatasetPreprocessor:
         """   
         try:
             print('###### GloVe Dataset Preprocessor #####')
+            if isBool(show_feedback): self.show_response = show_feedback
+
             if isInt(max_sequence_length) and (max_sequence_length > 0): 
                 self.MAX_SEQUENCE_LENGTH = max_sequence_length
                 print('Input/padding:\t\t', self.MAX_SEQUENCE_LENGTH)
@@ -45,10 +47,10 @@ class GloVeDatasetPreprocessor:
             if isInt(vocab_size) and (vocab_size > 0): 
                 self.tokenizer = Tokenizer(num_words=vocab_size, split=' ', char_level=False)
                 print('Vocab size:\t\t', vocab_size)
-
-            if isBool(show_feedback): self.show_response = show_feedback
             
-            if isNotNone(nodes_context) and isIterable(nodes_context): self.CollectDatasamples(nodes_context)
+            if isNotNone(nodes_context) and isIterable(nodes_context): 
+                self.CollectDatasamples(nodes_context)
+                
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

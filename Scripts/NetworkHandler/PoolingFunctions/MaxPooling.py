@@ -8,6 +8,7 @@ import tensorflow as tf
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
+#TODO try catch and documentation
 class MaxPooling:
 
     def handle_pad_max_pooling(self, input_tensor, last_dim):

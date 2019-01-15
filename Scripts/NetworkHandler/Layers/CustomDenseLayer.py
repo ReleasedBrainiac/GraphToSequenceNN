@@ -11,15 +11,21 @@ from BasicLayer import Layer
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
+
+#TODO try catch and documentation
 class Dense(Layer):
-    """Dense layer."""
-    def __init__(self, input_dim, output_dim, dropout=0.,
-                 act=tf.nn.relu, placeholders=None, bias=True, featureless=False,
+
+    def __init__(self, input_dim, 
+                 output_dim, 
+                 dropout=0.,
+                 act=tf.nn.relu, 
+                 placeholders=None, 
+                 bias=True, 
+                featureless=False,
                  sparse_inputs=False, **kwargs):
         super(Dense, self).__init__(**kwargs)
 
         self.dropout = dropout
-
         self.act = act
         self.featureless = featureless
         self.bias = bias
@@ -48,7 +54,6 @@ class Dense(Layer):
         output = tf.matmul(x, self.vars['weights'])
 
         # bias
-        if self.bias:
-            output += self.vars['bias']
+        if self.bias: output += self.vars['bias']
 
         return self.act(output)

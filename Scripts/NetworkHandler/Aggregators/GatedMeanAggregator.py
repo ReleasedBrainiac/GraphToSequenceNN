@@ -12,6 +12,7 @@ from pooling import mean_pool
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
+#TODO try catch and documentation
 class GatedMeanAggregator(Layer):
     def __init__(self, input_dim, output_dim, neigh_input_dim=None,
             dropout=0, bias=True, act=tf.nn.relu,

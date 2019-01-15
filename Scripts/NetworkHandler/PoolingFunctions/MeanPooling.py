@@ -8,6 +8,7 @@ import tensorflow as tf
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
+#TODO try catch and documentation
 class MeanPooling:
 
     def mean_pool(self, input_tensor, sequence_length=None):

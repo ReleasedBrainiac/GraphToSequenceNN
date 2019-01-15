@@ -9,7 +9,7 @@ import configure as conf
     
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
-
+#TODO try catch and documentation
 class Layer(object):
     """Base layer class. Defines basic API for all layer objects.
         Implementation inspired by keras (http://keras.io).
@@ -22,14 +22,19 @@ class Layer(object):
             __call__(inputs): Wrapper for _call()
         """
 
+    _LAYER_UIDS = {}
+
+
     def __init__(self, **kwargs):
         allowed_kwargs = {'name', 'logging', 'model_size'}
         for kwarg in kwargs.keys():
             assert kwarg in allowed_kwargs, 'Invalid keyword argument: ' + kwarg
         name = kwargs.get('name')
+
         if not name:
             layer = self.__class__.__name__.lower()
-            name = layer + '_' + str(get_layer_uid(layer))
+            name = layer + '_' + str(self.getLayerUid(layer))
+            
         self.name = name
         self.vars = {}
         logging = kwargs.get('logging', False)
@@ -43,3 +48,12 @@ class Layer(object):
         with tf.name_scope(self.name):
             outputs = self._call(inputs)
             return outputs
+
+    def getLayerUid(self, layer_name=''):
+        """Helper function, assigns unique layer IDs."""
+        if layer_name not in self._LAYER_UIDS:
+            self._LAYER_UIDS[layer_name] = 1
+            return 1
+        else:
+            self._LAYER_UIDS[layer_name] += 1
+            return self._LAYER_UIDS[layer_name]

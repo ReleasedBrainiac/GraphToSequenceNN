@@ -11,6 +11,7 @@ from pooling import mean_pool
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
+#TODO try catch and documentation
 class MeanAggregator(Layer):
     """Aggregates via mean followed by matmul and non-linearity."""
 

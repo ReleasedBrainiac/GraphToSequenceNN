@@ -5,6 +5,7 @@
     A implementation example of this paper from the IBM research team can be found at: https://github.com/IBM/Graph2Seq 
 '''
 
+#TODO implementation, try catch and documentation
 class GraphToSequenceModel:
 
     # TODO missing implementation

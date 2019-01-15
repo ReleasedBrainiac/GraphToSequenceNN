@@ -166,6 +166,24 @@ class Graph2SeqNN(object):
 
         return last_desired_aggregator((desired_hidden, neigh_vec_hidden, desired_sampled_neighbors_len))
 
+    #TODO missing docu
+    def ConcatHidden(self, forward_hidden, backward_hidden=None):
+        forward_hidden = tf.reshape(forward_hidden, [-1, self.single_graph_nodes_size, 2 * self.hidden_layer_dim])
+
+        if self.graph_encode_direction == "bi":
+            backward_hidden = tf.reshape(backward_hidden, [-1, self.single_graph_nodes_size, 2 * self.hidden_layer_dim])
+            return tf.nn.relu(tf.concat([forward_hidden, backward_hidden], axis=2))
+        else:
+            return tf.nn.relu(forward_hidden)
+
+    #TODO missing docu
+    def PooledConcatGraphEmbedding(self, hidden):
+        dim = 4 if (self.graph_encode_direction == "bi") else 2
+        pooled = tf.reduce_max(hidden, 1)
+        graph_embedding = tf.reshape(pooled, [-1, dim * self.hidden_layer_dim])
+        return LSTMStateTuple(c=graph_embedding, h=graph_embedding)
+
+    #TODO missing docu
     def Optimized_GCN_Encode(self):
         # [node_size, hidden_layer_dim]
         embedded_node_rep = self.encode_node_feature(self.word_embeddings, self.feature_info)
@@ -206,22 +224,10 @@ class Graph2SeqNN(object):
 
 
         # hidden stores the representation for all nodes
-        forward_hidden = tf.reshape(forward_hidden, [-1, self.single_graph_nodes_size, 2 * self.hidden_layer_dim])
-        if self.graph_encode_direction == "bi":
-            backward_hidden = tf.reshape(backward_hidden, [-1, self.single_graph_nodes_size, 2 * self.hidden_layer_dim])
-            hidden = tf.concat([forward_hidden, backward_hidden], axis=2)
-        else:
-            hidden = forward_hidden
+        hidden = self.ConcatHidden(forward_hidden=forward_hidden, backward_hidden=backward_hidden)
 
-        hidden = tf.nn.relu(hidden)
-
-        pooled = tf.reduce_max(hidden, 1)
-        if self.graph_encode_direction == "bi":
-            graph_embedding = tf.reshape(pooled, [-1, 4 * self.hidden_layer_dim])
-        else:
-            graph_embedding = tf.reshape(pooled, [-1, 2 * self.hidden_layer_dim])
-
-        graph_embedding = LSTMStateTuple(c=graph_embedding, h=graph_embedding)
+        # stores graph embedding
+        graph_embedding = self.PooledConcatGraphEmbedding(hidden)
 
         # shape of hidden: [batch_size, single_graph_nodes_size, 4 * hidden_layer_dim]
         # shape of graph_embedding: ([batch_size, 4 * hidden_layer_dim], [batch_size, 4 * hidden_layer_dim])

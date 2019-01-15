@@ -30,7 +30,7 @@ class MatrixBuilder:
 
     def MatrixSplitOnPrincipalDiagonal(self, edge_matrix):
         """
-        This function split a whole [M x N] edge matrix of a graph into 2 [M x N] matrices.
+        This function split a whole [M x N] adjacent edge matrix of a graph into 2 [M x N] adjacent matrices.
         The 1. matrix will then contain all forward connections of origin edge matrix by zerofying all values under the principal diagonal. 
         The 2. matrix will contain the incomming connections of each node by transposing the 1. matrix.
         Attention: A directed graph will be threatened as a bidirected graph because we want to use it for text mapping, later. 
@@ -54,7 +54,9 @@ class MatrixBuilder:
                     else:
                         forward_connections[r_index][e_index] = entry
                         backward_connections[r_index][e_index] = 0
-            return [forward_connections, backward_connections]
+
+            stack = np.stack((forward_connections, backward_connections), axis=0)
+            return stack
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.MatrixSplitOnPrincipalDiagonal]. Arguments:\n{1!r}"

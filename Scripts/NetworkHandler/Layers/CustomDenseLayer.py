@@ -2,11 +2,13 @@ import tensorflow as tf
 from inits import zeros
 import configure as conf
 
+from BasicLayer import Layer
+
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  
     The paper can be found at: https://arxiv.org/abs/1804.00823
     The original implementation snipped from the IBM research team can be found at: https://github.com/IBM/Graph2Seq/blob/master/main/layers.py
-    
+
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 

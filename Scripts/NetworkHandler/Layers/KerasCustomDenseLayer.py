@@ -21,7 +21,7 @@ import configure as conf
 
 
 #TODO try catch and documentation
-class Dense(Layer):
+class KerasCustomDense(Layer):
 
     def __init__(self, 
                  input_dim, 

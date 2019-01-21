@@ -131,8 +131,7 @@ class Graph2SequenceTool():
             :param is_keeping_edges: keep edgesduring cleaning
         """   
         try:
-            print("#######################################\n")
-            print("###### AMR Dataset Preprocessing ######")
+            print("\n###### AMR Dataset Preprocessing ######")
             
             pipe = DatasetPipeline(in_path=in_dataset, 
                                 output_path_extender=in_extender, 

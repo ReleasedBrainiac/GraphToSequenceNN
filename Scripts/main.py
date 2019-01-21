@@ -2,6 +2,8 @@ import argparse
 import os, sys
 import platform as pf
 import numpy as np
+import tensorflow as tf
+import keras
 from subprocess import call
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
@@ -38,10 +40,19 @@ class Graph2SequenceTool():
             print("######## Graph to Sequence ANN ########")
             print("#######################################\n")
 
-            print("System we running on is ", pf.system())
-            print("Release: ", pf.release())
+            print("~~~~~~~~~~ System Informations ~~~~~~~~")
+            print("Used OS:\t\t=> ", pf.system())
+            print("Release:\t\t=> ", pf.release())
+            print("Version:\t\t=> ", pf.version())
+            print("Architecture:\t\t=> ", pf.architecture())
+            print("Machine:\t\t=> ", pf.machine())
+            print("Platform:\t\t=> ", pf.platform())
+            print("CPU:\t\t\t=> ", pf.processor())
+            print("Python Version:\t\t=> ", pf.python_version())
+            print("Tensorflow version: \t=> ", tf.__version__)
+            print("Keras version: \t\t=> ", keras.__version__, '\n')
 
-            print("Parsing command-line attributes!")
+            print("Parsing CMD Attributes!")
             ap = argparse.ArgumentParser()
             ap.add_argument("-dp"   , "--dataset_path"      , type=str      , required=False, default=self.DATASET                , help="Path for the root folder of the dataset!")
             ap.add_argument("-gp"   , "--glove_path"        , type=str      , required=False, default=self.GLOVE                  , help="Path for the root folder glove word vector file!")
@@ -81,6 +92,7 @@ class Graph2SequenceTool():
             self.KEEP_EDGES = args["keep_edges"]
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.TF_CPP_MIN_LOG_LEVEL
 
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
             if self.SAVING_CLEANED_AMR:
                 self.RunStoringCleanedAMR(in_dataset=self.DATASET,
@@ -131,7 +143,7 @@ class Graph2SequenceTool():
                                 )
             datapairs = pipe.ProvideData()
 
-            print('Found Datapairs: ', len(datapairs))
+            print('Found Datapairs:\n\t=> ', len(datapairs))
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
@@ -143,7 +155,7 @@ class Graph2SequenceTool():
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
 
-            print('\t => Free (in further steps unused) resources from embedding process!', )
+            print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
 

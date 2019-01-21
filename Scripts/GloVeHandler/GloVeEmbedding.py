@@ -46,32 +46,32 @@ class GloVeEmbedding:
             :param show_feedback: switch allows to show process response on console or not
         """   
         try:
-            print('######## Init Embedding GloVe #########')
+            print('~~~~~~~~ Init Embedding GloVe ~~~~~~~~~')
             if isStr(glove_file_path): 
                 self.GLOVE_DIR = glove_file_path
-                print('GloVe file:\t\t', self.GLOVE_DIR)
+                print('GloVe file:\t\t=> ', self.GLOVE_DIR)
 
             if isInt(output_dim) and (output_dim > 0): 
                 self.EMBEDDING_DIM = output_dim
-                print('Output dimension:\t', self.EMBEDDING_DIM)
+                print('Output dimension:\t=> ', self.EMBEDDING_DIM)
 
             if isInt(max_sequence_length) and (max_sequence_length > 0): 
                 self.MAX_SEQUENCE_LENGTH = max_sequence_length
-                print('Input/padding:\t\t', self.MAX_SEQUENCE_LENGTH)
+                print('Input/padding:\t\t=> ', self.MAX_SEQUENCE_LENGTH)
 
             if isInt(vocab_size) and (vocab_size > 0): 
                 self.MAX_NUM_WORDS = vocab_size
-                print('Vocab size:\t\t', self.MAX_NUM_WORDS)
+                print('Vocab size:\t\t=> ', self.MAX_NUM_WORDS)
 
             if isNotNone(tokenizer): 
                 self.final_tokenizer = tokenizer
-                print('Tokenizer: \t\t reloaded')
+                print('Tokenizer: \t\t=>  reloaded')
 
             if isBool(show_feedback): self.show_response = show_feedback
 
-            print('###### Collect Embedding Indices ######')
+            print('~~~~~~ Collect Embedding Indices ~~~~~~')
             self.embedding_indices = self.LoadGloVeEmbeddingIndices()
-            if self.show_response: print('\t=> Loaded %s word vectors.' % len(self.embedding_indices))
+            if self.show_response: print('Loaded word vectors:\t=> ', len(self.embedding_indices))
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.Constructor]. Arguments:\n{1!r}"
@@ -118,7 +118,6 @@ class GloVeEmbedding:
             :param embedding_indices: the indices from GloVe loader
         """   
         try:
-            if self.show_response: print('Building vocab embedding matrix!')
             self.number_words = min(self.MAX_NUM_WORDS, len(self.final_tokenizer.word_index)) + 1
             embedding_matrix = zeros((self.number_words, self.EMBEDDING_DIM))
             for word, i in self.final_tokenizer.word_index.items():
@@ -140,7 +139,6 @@ class GloVeEmbedding:
         This function load the word vector embedding indices from defined glove file.
         """   
         try:
-            if self.show_response: print('Loading GloVe indices!')
             embeddings_index = dict()
             with open(self.GLOVE_DIR, 'r', encoding=self.GLOVE_ENC) as f:
                 for line in f:
@@ -161,7 +159,6 @@ class GloVeEmbedding:
             :param embedding_matrix: the vocab embedding matrix
         """   
         try:
-            if self.show_response: print('Building vocab embedding layer!')
             return Embedding(self.number_words,
                              self.EMBEDDING_DIM,
                              embeddings_initializer=Constant(embedding_matrix),
@@ -201,14 +198,13 @@ class GloVeEmbedding:
         This function build the GloVe embedding layer.
         """   
         try:
-            
-            print('######## Build Embedding Layer ########')
+            print('~~~~~~~~ Build Embedding Layer ~~~~~~~~')
             embedding_matrix = self.BuildVocabEmbeddingMatrix(self.embedding_indices)
-            if self.show_response: print('\t=> Embedding matrix:\n',embedding_matrix,'.')
+            if self.show_response: print('Embedding matrix:\n\t=> ',type(embedding_matrix))
 
             embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix)
-            if self.show_response: print('\t=> Embedding layer:\n',embedding_layer,'.')
-            print('#######################################')
+            if self.show_response: print('Embedding layer:\n\t=> ',type(embedding_layer))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return embedding_layer
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.BuildGloveVocabEmbeddingLayer]. Arguments:\n{1!r}"

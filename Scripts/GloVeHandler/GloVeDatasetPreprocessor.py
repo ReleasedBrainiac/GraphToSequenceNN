@@ -37,16 +37,16 @@ class GloVeDatasetPreprocessor:
             :param show_feedback: switch allows to show process response on console or not
         """   
         try:
-            print('###### GloVe Dataset Preprocessor #####')
+            print('~~~~~~ GloVe Dataset Preprocessor ~~~~~')
             if isBool(show_feedback): self.show_response = show_feedback
 
             if isInt(max_sequence_length) and (max_sequence_length > 0): 
                 self.MAX_SEQUENCE_LENGTH = max_sequence_length
-                print('Input/padding:\t\t', self.MAX_SEQUENCE_LENGTH)
+                print('Input/padding:\t\t => ', self.MAX_SEQUENCE_LENGTH)
 
             if isInt(vocab_size) and (vocab_size > 0): 
                 self.tokenizer = Tokenizer(num_words=vocab_size, split=' ', char_level=False)
-                print('Vocab size:\t\t', vocab_size)
+                print('Vocab size:\t\t => ', vocab_size)
             
             if isNotNone(nodes_context) and isIterable(nodes_context): 
                 self.CollectDatasamples(nodes_context)
@@ -74,7 +74,6 @@ class GloVeDatasetPreprocessor:
             :param datasets: list of cleaned and parsed amr datasets
         """   
         try:
-            if self.show_response: print('Collecting data samples!')
             self.node_words_list = []
             self.edge_matrices = []
             self.sentences_list = []
@@ -84,7 +83,7 @@ class GloVeDatasetPreprocessor:
                     self.node_words_list.append(dataset[1][1])
                     self.edge_matrices.append(dataset[1][0])
                     self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
-            if self.show_response: print('Collected data', len(self.sentences_list),' samples!')
+            if self.show_response: print('Collected samples:\t => ', len(self.sentences_list))
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -126,7 +125,7 @@ class GloVeDatasetPreprocessor:
         Structure: [sentences, edges, vectorized_sequences, nodes, indices]
         """   
         try:
-            print('################# Run #################')
+            print('~~~~~~~~~~~~~ Prepare Data ~~~~~~~~~~~~')
             tokenized_sequences = self.TokenizeVocab()
             if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
@@ -137,7 +136,7 @@ class GloVeDatasetPreprocessor:
             node_words_list = None
 
             print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
-            print('#######################################')
+            print('#######################################\n')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, self.node_words_list, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"

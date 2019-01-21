@@ -136,7 +136,7 @@ class GloVeDatasetPreprocessor:
             node_words_list = None
 
             print('Glove Parser Result! \n\t=> [Sentences, EdgeArrays, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
-            print('#######################################\n')
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, self.node_words_list, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"

@@ -85,6 +85,12 @@ class Graph2SeqNN(object):
 
 
 
+
+
+
+
+
+
     def Encode(self):
         with tf.variable_scope("embedding_layer"):
             pad_word_embedding = tf.zeros([1, self.word_embedding_dim])  # this is for the PAD symbol
@@ -122,7 +128,6 @@ class Graph2SeqNN(object):
         #node_repres = tf.reshape(feature_embedded_chars, [batch_size, -1])
 
         return tf.reshape(feature_embedded_chars, [batch_size, -1])
-
 
     def addMeanAggregators(self, layer_amount, dim_multiplicator, desired_aggregator_collector):
         """
@@ -234,6 +239,16 @@ class Graph2SeqNN(object):
         # shape of hidden: [batch_size, single_graph_nodes_size, 4 * hidden_layer_dim]
         # shape of graph_embedding: ([batch_size, 4 * hidden_layer_dim], [batch_size, 4 * hidden_layer_dim])
         return hidden, graph_embedding
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -36,9 +36,25 @@ class KerasCustomDense(Layer):
                  featureless=False,
                  sparse_inputs=False, 
                  **kwargs):
+        """
+        docstring here
+            :param self: 
+            :param input_dim: 
+            :param output_dim: 
+            :param name='kernel_weights': 
+            :param weight_init='glorot_uniform': 
+            :param dropout=0.: 
+            :param activation=activations.relu: 
+            :param placeholders=None: 
+            :param bias=True: 
+            :param bias_init='zeros': 
+            :param featureless=False: 
+            :param sparse_inputs=False: 
+            :param **kwargs: 
+        """
 
 
-        super(Dense, self).__init__(**kwargs)
+        super(KerasCustomDense, self).__init__(**kwargs)
 
         
         self.input_dim = input_dim
@@ -73,7 +89,7 @@ class KerasCustomDense(Layer):
                                       shape=(self.input_dim, self.output_dim),
                                       initializer=keras.initializers.glorot_normal(seed=None),
                                       trainable=True)
-        super(Dense, self).build(input_shape)
+        super(KerasCustomDense, self).build(input_shape)
 
 
     # Here lives the layer logic part

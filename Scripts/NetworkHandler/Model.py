@@ -67,7 +67,9 @@ class Graph2SeqNN(object):
 
         self.learning_rate = conf.learning_rate
 
-    def _init_decoder_train_connectors(self):
+
+
+    def initDecoderTrainConnectors(self):
         batch_size, sequence_size = tf.unstack(tf.shape(self._text))
         self.batch_size = batch_size
         GO_SLICE = tf.ones([batch_size, 1], dtype=tf.int32) * self.GO
@@ -83,7 +85,7 @@ class Graph2SeqNN(object):
 
 
 
-    def encode(self):
+    def Encode(self):
         with tf.variable_scope("embedding_layer"):
             pad_word_embedding = tf.zeros([1, self.word_embedding_dim])  # this is for the PAD symbol
             self.word_embeddings = tf.concat([pad_word_embedding,
@@ -95,7 +97,7 @@ class Graph2SeqNN(object):
             # self.encoder_outputs, self.encoder_state = self.gcn_encode()
 
             # this is for optimizing gcn
-            encoder_outputs, encoder_state = self.Optimized_GCN_Encode()
+            encoder_outputs, encoder_state = self.OptimizedGCNEncode()
 
             source_sequence_length = tf.reshape(
                 tf.ones([tf.shape(encoder_outputs)[0], 1], dtype=tf.int32) * self.single_graph_nodes_size,
@@ -103,9 +105,9 @@ class Graph2SeqNN(object):
 
             return encoder_outputs, encoder_state, source_sequence_length
 
-    def encode_node_feature(self, word_embeddings, feature_info):
+    def encodeNodeFeatures(self, word_embeddings, feature_info):
         # in some cases, we can use LSTM to produce the node feature representation
-        # cell = self._build_encoder_cell(conf.num_layers, conf.dim)
+        # cell = self.buildEncoderCell(conf.num_layers, conf.dim)
 
 
         feature_embedded_chars = tf.nn.embedding_lookup(word_embeddings, feature_info)
@@ -117,9 +119,9 @@ class Graph2SeqNN(object):
         #
         # node_repres = tf.concat([tf.slice(node_repres, [0,0], [batch_size-1, y]), tf.zeros([1, y])], 0)
 
-        node_repres = tf.reshape(feature_embedded_chars, [batch_size, -1])
+        #node_repres = tf.reshape(feature_embedded_chars, [batch_size, -1])
 
-        return node_repres
+        return tf.reshape(feature_embedded_chars, [batch_size, -1])
 
 
     def addMeanAggregators(self, layer_amount, dim_multiplicator, desired_aggregator_collector):
@@ -184,9 +186,9 @@ class Graph2SeqNN(object):
         return LSTMStateTuple(c=graph_embedding, h=graph_embedding)
 
     #TODO missing docu
-    def Optimized_GCN_Encode(self):
+    def OptimizedGCNEncode(self):
         # [node_size, hidden_layer_dim]
-        embedded_node_rep = self.encode_node_feature(self.word_embeddings, self.feature_info)
+        embedded_node_rep = self.encodeNodeFeatures(self.word_embeddings, self.feature_info)
 
         fw_sampler = UniformNeighborSampler(self.fw_adj_info)
         bw_sampler = UniformNeighborSampler(self.bw_adj_info)
@@ -233,7 +235,9 @@ class Graph2SeqNN(object):
         # shape of graph_embedding: ([batch_size, 4 * hidden_layer_dim], [batch_size, 4 * hidden_layer_dim])
         return hidden, graph_embedding
 
-    def decode(self, encoder_outputs, encoder_state, source_sequence_length):
+
+
+    def Decode(self, encoder_outputs, encoder_state, source_sequence_length):
         with tf.variable_scope("Decoder") as scope:
             beam_width = self.beam_width
             decoder_type = self.decoder_type
@@ -241,7 +245,7 @@ class Graph2SeqNN(object):
             batch_size = tf.shape(encoder_outputs)[0]
 
             if self.path_embed_method == "lstm":
-                self.decoder_cell = self._build_decode_cell()
+                self.decoder_cell = self.buildDecodeCell()
                 if self.mode == "test" and beam_width > 0:
                     memory = seq2seq.tile_batch(self.encoder_outputs, multiplier=beam_width)
                     source_sequence_length = seq2seq.tile_batch(self.source_sequence_length, multiplier=beam_width)
@@ -287,8 +291,9 @@ class Graph2SeqNN(object):
                                                           beam_width=beam_width,
                                                           output_layer=projection_layer)
 
-            decoder_outputs_infer, decoder_states_infer, decoder_seq_len_infer = seq2seq.dynamic_decode(decoder_infer,
-                                                                                                        maximum_iterations=seq_max_len)
+            #decoder_outputs_infer, decoder_states_infer, decoder_seq_len_infer = seq2seq.dynamic_decode(decoder_infer, maximum_iterations=seq_max_len)
+            decoder_outputs_infer, _, _ = seq2seq.dynamic_decode(decoder_infer, maximum_iterations=seq_max_len)
+
 
             if decoder_type == "beam":
                 self.decoder_logits_infer = tf.no_op()
@@ -298,7 +303,10 @@ class Graph2SeqNN(object):
                 self.decoder_logits_infer = decoder_outputs_infer.rnn_output
                 self.sample_id = decoder_outputs_infer.sample_id
 
-    def _build_decode_cell(self):
+
+
+
+    def buildDecodeCell(self):
         if self.num_layers == 1:
             cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=4*self.hidden_layer_dim)
             if self.mode == "train":
@@ -313,7 +321,7 @@ class Graph2SeqNN(object):
                 cell_list.append(single_cell)
             return tf.contrib.rnn.MultiRNNCell(cell_list)
 
-    def _build_encoder_cell(self, num_layers, hidden_layer_dim):
+    def buildEncoderCell(self, num_layers, hidden_layer_dim):
         if num_layers == 1:
             cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_layer_dim)
             if self.mode == "train":
@@ -328,7 +336,7 @@ class Graph2SeqNN(object):
                 cell_list.append(single_cell)
             return tf.contrib.rnn.MultiRNNCell(cell_list)
 
-    def _init_optimizer(self):
+    def initOptimizer(self):
         crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.decoder_train_targets, logits=self.decoder_logits_train)
         decode_loss = (tf.reduce_sum(crossent * self.loss_weights) / tf.cast(self.batch_size, tf.float32))
 
@@ -350,16 +358,11 @@ class Graph2SeqNN(object):
         optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
         self.train_op = optimizer.apply_gradients(zip(clipped_gradients, params))
 
-    def _build_graph(self):
-        encoder_outputs, encoder_state, source_sequence_length = self.encode()
-
-        if self.mode == "train":
-            self._init_decoder_train_connectors()
-
-        self.decode(encoder_outputs=encoder_outputs, encoder_state=encoder_state, source_sequence_length=source_sequence_length)
-
-        if self.mode == "train":
-            self._init_optimizer()
+    def buildGraph(self):
+        encoder_outputs, encoder_state, source_sequence_length = self.Encode()
+        if self.mode == "train": self.initDecoderTrainConnectors()
+        self.Decode(encoder_outputs=encoder_outputs, encoder_state=encoder_state, source_sequence_length=source_sequence_length)
+        if self.mode == "train": self.initOptimizer()
 
     def act(self, sess, mode, dict, if_pred_on_dev):
         text = np.array(dict['seq'])
@@ -383,10 +386,7 @@ class Graph2SeqNN(object):
             self.batch_nodes: batch_nodes
         }
 
-        if mode == "train" and not if_pred_on_dev:
-            output_feeds = [self.train_op, self.loss_op, self.cross_entropy_sum]
-        elif mode == "test" or if_pred_on_dev:
-            output_feeds = [self.sample_id]
+        if mode == "train" and not if_pred_on_dev: output_feeds = [self.train_op, self.loss_op, self.cross_entropy_sum]
+        elif mode == "test" or if_pred_on_dev: output_feeds = [self.sample_id]
 
-        results = sess.run(output_feeds, feed_dict)
-        return results
+        return sess.run(output_feeds, feed_dict)

@@ -1,12 +1,8 @@
 import tensorflow as tf
 import keras
 from keras import backend as K
-from keras import initializations, activations
+from keras import initializations, activations, regularizers
 from keras.layers import Layer
-
-from inits import zeros
-import configure as conf
-#from BasicLayer import Layer
 
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  
@@ -17,10 +13,13 @@ import configure as conf
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 
     Basics for CustomLayer resource: https://keras.io/layers/writing-your-own-keras-layers/
+    Further resources: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Layer
 '''
 
 
 #TODO try catch and documentation
+#TODO next layer to work over for keras
+
 class KerasCustomDense(Layer):
 
     def __init__(self, 
@@ -73,7 +72,7 @@ class KerasCustomDense(Layer):
         self.sparse_inputs = sparse_inputs
         if sparse_inputs: self.num_features_nonzero = placeholders['num_features_nonzero']
 
-        with tf.variable_scope(self.name + '_vars'):
+        ''' with tf.variable_scope(self.name + '_vars'):
             self.vars['weights'] = tf.get_variable( 'weights', 
                                                     shape=(input_dim, output_dim),
                                                     dtype=tf.float32,
@@ -81,20 +80,29 @@ class KerasCustomDense(Layer):
                                                     regularizer=tf.contrib.layers.l2_regularizer(conf.weight_decay))
 
             if self.bias: self.vars['bias'] = zeros([output_dim], name='bias')
-
+        '''
 
     # Here we build the weight matrix
     def build(self, input_shape):
-        self.kernel = self.add_weight(name=self.name, 
+        self.kernel = self.add_weight(name=self.name+'_weights',
                                       shape=(self.input_dim, self.output_dim),
                                       initializer=keras.initializers.glorot_normal(seed=None),
+                                      regularizer=regularizers.l2(0.),
                                       trainable=True)
+
+        self.bias_weights = self.add_weight(name=self.name+'_bias',
+                                            shape=self.output_dim,
+                                            initializer='zeros')
+
         super(KerasCustomDense, self).build(input_shape)
 
 
     # Here lives the layer logic part
-    def call(self, x):
-        return K.dot(x, self.kernel)
+    def call(self, inputs):
+        outputs = K.dot(inputs, self.kernel)
+        if self.bias: output += self.vars['bias']
+
+        return 
 
     # Here lives the output shape transformation logic
     def compute_output_shape(self, input_shape):

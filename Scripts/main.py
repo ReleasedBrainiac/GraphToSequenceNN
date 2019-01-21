@@ -8,7 +8,6 @@ from DatasetHandler.DatasetProvider import DatasetPipeline
 from DatasetHandler.ContentSupport import ReorderListByIndices
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
-from NetworkHandler.LayerBuilder import CustomLayerDefinitions
 from DatasetHandler.FileWriter import Writer
 
 class Graph2SequenceTool():
@@ -152,7 +151,9 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("######### Random Order Dataset ########")
 
+            print('Old order \t => ', dataset_indices)
             np.random.shuffle(dataset_indices)
+            print('New order \t => ', dataset_indices)
             network_input_sentences = vectorized_sequences[dataset_indices]
             network_input_graph_features = datasets_nodes_embedding[dataset_indices]      
             network_input_directed_edge_matrices = ReorderListByIndices(directed_edge_matrices, dataset_indices)
@@ -161,31 +162,33 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("############ Split Dataset ############")
 
+            print('Samples \t => ', len(network_input_directed_edge_matrices))
+
             nb_validation_samples = int(self.VALIDATION_SPLIT * len(network_input_directed_edge_matrices))
-            print('Samples: ', nb_validation_samples)
+            print('Validation \t => ', nb_validation_samples)
 
             x_train_edge = network_input_directed_edge_matrices[:-nb_validation_samples]
             x_train_features = network_input_graph_features[:-nb_validation_samples]
             y_train_sentences = network_input_sentences[:-nb_validation_samples]
-            print('Train set!')
+            print('Train set \t =>  defined!')
 
 
             x_validation_edge = network_input_directed_edge_matrices[-nb_validation_samples:]
             x_validation_features = network_input_graph_features[-nb_validation_samples:]
             y_validation_sentences = network_input_sentences[-nb_validation_samples:]
-            print('Test set!')
+            print('Test set \t =>  defined!')
 
-            print('x_train_edge: ', type(x_train_edge), '\n',x_train_edge[0])
-            print('x_train_features: ', type(x_train_features), '\n',x_train_features[0])
-            print('y_train_sentences: ', type(y_train_sentences), '\n',y_train_sentences[0])
-            print('x_validation_edge: ', type(x_validation_edge), '\n',x_validation_edge[0])
-            print('x_validation_features: ', type(x_validation_features), '\n',x_validation_features[0])
-            print('y_validation_sentences: ', type(y_validation_sentences), '\n',y_validation_sentences[0])
-
-
+            #print('x_train_edge: ', type(x_train_edge), '\n',x_train_edge[0])
+            #print('x_train_features: ', type(x_train_features), '\n',x_train_features[0])
+            #print('y_train_sentences: ', type(y_train_sentences), '\n',y_train_sentences[0])
+            #print('x_validation_edge: ', type(x_validation_edge), '\n',x_validation_edge[0])
+            #print('x_validation_features: ', type(x_validation_features), '\n',x_validation_features[0])
+            #print('y_validation_sentences: ', type(y_validation_sentences), '\n',y_validation_sentences[0])
 
 
-            print('Shape features: ', x_train_features.shape[0])
+
+
+            print('Shape features \t => ', x_train_features.shape[0])
 
 
             print("#######################################\n")

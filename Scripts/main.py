@@ -197,13 +197,12 @@ class Graph2SequenceTool():
             #print('y_validation_sentences: ', type(y_validation_sentences), '\n',y_validation_sentences[0])
 
 
-
-
             print('Shape features \t => ', x_train_features.shape[0])
 
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")
+        
         
 
             print("#######################################\n")

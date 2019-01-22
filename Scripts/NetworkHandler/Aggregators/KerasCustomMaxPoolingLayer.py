@@ -117,7 +117,7 @@ class KerasCustomMaxPoolingAggregator(Layer):
         from_self = K.dot(self_node_vecs, self.self_node_weights)
 
         """ [4] """
-        output = (from_self + from_neighs) if (not self.concat) else K.concat([from_self, from_neighs], axis=1)
+        output = (from_self + from_neighs) if (not self.concat) else K.concatenate([from_self, from_neighs], axis=1)
 
         """ [5] """
         if self.bias: output += self.bias_weights

@@ -19,6 +19,7 @@ class KerasCustomDense(Layer):
     """
     This class implements a simple custom dense layer.
     Its abstracted from the IBM Tensorflow example.
+    ATTENTION: The sparse input option and the featureless option were removed caused by currently missing necessity.
         :param Layer: keras layer definition
     """
     def __init__(self, 

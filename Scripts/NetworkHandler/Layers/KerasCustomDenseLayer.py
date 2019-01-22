@@ -1,4 +1,3 @@
-import tensorflow as tf
 import keras
 from keras import backend as K
 from keras import initializations, activations, regularizers
@@ -16,12 +15,12 @@ from keras.layers import Layer
     Further resources: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Layer
 '''
 
-
-#TODO try catch and documentation
-#TODO next layer to work over for keras
-
 class KerasCustomDense(Layer):
-
+    """
+    This class implements a simple custom dense layer.
+    Its abstracted from the IBM Tensorflow example.
+        :param Layer: keras layer definition
+    """
     def __init__(self, 
                  input_dim, 
                  output_dim, 
@@ -29,32 +28,22 @@ class KerasCustomDense(Layer):
                  weight_init='glorot_uniform',
                  dropout=0.,
                  activation=activations.relu, 
-                 placeholders=None, 
                  bias=True, 
                  bias_init='zeros',
-                 featureless=False,
-                 sparse_inputs=False, 
                  **kwargs):
         """
-        docstring here
-            :param self: 
-            :param input_dim: 
-            :param output_dim: 
-            :param name='kernel_weights': 
-            :param weight_init='glorot_uniform': 
-            :param dropout=0.: 
-            :param activation=activations.relu: 
-            :param placeholders=None: 
-            :param bias=True: 
-            :param bias_init='zeros': 
-            :param featureless=False: 
-            :param sparse_inputs=False: 
-            :param **kwargs: 
+        This constructor collects all necessary information to build the layer in the  following steps.
+            :param input_dim: dimension of the input 
+            :param output_dim: dimension of the output
+            :param name: name of the layer
+            :param weight_init: init function to generate the layer weights
+            :param dropout: dropout rate
+            :param activation: activation function
+            :param bias: boolean to use bias
+            :param bias_init: function to generate bias weights
+            :param **kwargs: additional args
         """
-
-
         super(KerasCustomDense, self).__init__(**kwargs)
-
         
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -64,30 +53,19 @@ class KerasCustomDense(Layer):
         self.bias_initializers = initializations.get(bias_init)
         self.dropout = dropout
         self.activation = activation
-        self.featureless = featureless
-        
-        
 
-        # helper variable for sparse dropout
-        self.sparse_inputs = sparse_inputs
-        if sparse_inputs: self.num_features_nonzero = placeholders['num_features_nonzero']
-
-        ''' with tf.variable_scope(self.name + '_vars'):
-            self.vars['weights'] = tf.get_variable( 'weights', 
-                                                    shape=(input_dim, output_dim),
-                                                    dtype=tf.float32,
-                                                    initializer=tf.contrib.layers.xavier_initializer(),
-                                                    regularizer=tf.contrib.layers.l2_regularizer(conf.weight_decay))
-
-            if self.bias: self.vars['bias'] = zeros([output_dim], name='bias')
-        '''
-
-    # Here we build the weight matrix
     def build(self, input_shape):
+        """
+        This function provides all necessary weight matrices for the layer.
+        In this case the function generate the bias and layer kernel weights.
+        ATTENTION: The weight decay is fixed with = 0.000, Later a dynamic call via config is maybe possible.
+            :param input_shape: shape of the input tensor
+        """   
         self.kernel = self.add_weight(name=self.name+'_weights',
                                       shape=(self.input_dim, self.output_dim),
+                                      dtype='float32',
                                       initializer=keras.initializers.glorot_normal(seed=None),
-                                      regularizer=regularizers.l2(0.),
+                                      regularizer=regularizers.l2(0.000),
                                       trainable=True)
 
         self.bias_weights = self.add_weight(name=self.name+'_bias',
@@ -96,33 +74,23 @@ class KerasCustomDense(Layer):
 
         super(KerasCustomDense, self).build(input_shape)
 
-
-    # Here lives the layer logic part
-    def call(self, inputs):
-        outputs = K.dot(inputs, self.kernel)
-        if self.bias: output += self.vars['bias']
-
-        return 
-
-    # Here lives the output shape transformation logic
     def compute_output_shape(self, input_shape):
+        """
+        This function provides the layers output shape transformation logic.
+            :param input_shape: tensor input shape
+        """   
         return (input_shape[0], self.output_dim)
 
 
-
-
-
-
-
-    def _call(self, inputs):
-        x = inputs
-
-        # x = tf.nn.dropout(x, self.dropout)
-
-        # transform
-        output = tf.matmul(x, self.vars['weights'])
-
-        # bias
-        if self.bias: output += self.vars['bias']
-
+    
+    def call(self, inputs):
+        """
+        This function process the layer logic.
+        Here the dropout will calculated and the result will passed through activation after multiplication with the weights.
+        ATTENTION: The dropout was commented out in the origin version so just keep this in mind.
+            :param inputs: 
+        """   
+        inputs = K.dropout(inputs, self.dropout)
+        output = K.dot(inputs, self.kernel)
+        if self.bias: output += self.bias_weights
         return self.activation(output)

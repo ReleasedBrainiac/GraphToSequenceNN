@@ -1,6 +1,6 @@
 from keras import backend as K
 from keras.layers import Layer
-from keras import initializations, activations
+from keras import activations
 from NetworkHandler.Layers import KerasCustomDenseLayer as Dense
 
 '''
@@ -62,8 +62,7 @@ class KerasCustomMaxPoolingAggregator(Layer):
         self.layers.append(Dense(   input_dim=self.neigh_input_dim, 
                                     output_dim=self.hidden_dim, 
                                     activation=self.activation,
-                                    dropout=self.dropout, 
-                                    sparse_inputs=False))        
+                                    dropout=self.dropout))        
 
 
 

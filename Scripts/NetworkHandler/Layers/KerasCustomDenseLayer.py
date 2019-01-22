@@ -1,6 +1,6 @@
 import keras
 from keras import backend as K
-from keras import initializations, activations, regularizers
+from keras import activations, regularizers
 from keras.layers import Layer
 
 '''
@@ -49,9 +49,9 @@ class KerasCustomDense(Layer):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.name = name
-        self.kernel_initializers = initializations.get(weight_init)
+        self.kernel_initializers = weight_init
         self.bias = bias
-        self.bias_initializers = initializations.get(bias_init)
+        self.bias_initializers = bias_init
         self.dropout = dropout
         self.activation = activation
 
@@ -65,13 +65,13 @@ class KerasCustomDense(Layer):
         self.kernel = self.add_weight(name=self.name+'_weights',
                                       shape=(self.input_dim, self.output_dim),
                                       dtype='float32',
-                                      initializer=keras.initializers.glorot_normal(seed=None),
+                                      initializer=self.kernel_initializers,
                                       regularizer=regularizers.l2(0.000),
                                       trainable=True)
 
         self.bias_weights = self.add_weight(name=self.name+'_bias',
                                             shape=self.output_dim,
-                                            initializer='zeros')
+                                            initializer=self.bias_initializers)
 
         super(KerasCustomDense, self).build(input_shape)
 

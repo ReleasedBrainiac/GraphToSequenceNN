@@ -213,13 +213,15 @@ class CustomAggregationLayerMaxPool(Layer):
 
         assert isinstance(inputs, list)
         features, embedding_look_up = inputs
+        neigh_h = embedding_look_up
         dims = embedding_look_up.shape
         batch_size = dims[0]
         max_neighbours = dims[1]
         AGGREGATOR = NAGG(features, embedding_look_up, aggregator='max')
 
         """ [1] """
-        neigh_h = self.PerformMLPLayersCall(batch_size, max_neighbours)
+        #TODO ist neigh_h tatsächlich eine vector liste von features oder nur das embedding?
+        neigh_h = self.PerformMLPLayersCall(neigh_h, batch_size, max_neighbours)
         aggregated_features = AGGREGATOR.MaxPoolAggregator(neigh_h, axis=1)
         AGGREGATOR.OverwriteNewFeatures(new_features=aggregated_features)
 
@@ -247,8 +249,8 @@ class CustomAggregationLayerMaxPool(Layer):
         shape_feats, shape_edges = input_shape
         return (shape_feats[0], self.output_dim)
 
-    def PerformMaxPoolLayersCall(self, batch_size, max_neighbours):
-        h_reshaped = K.reshape(neigh_h, (batch_size * max_neighbours, self.neigh_input_dim))
+    def PerformMaxPoolLayersCall(self, neigh_h, batch_size, max_neighbours):
+        h_reshaped = K.reshape(embedding_look_up, (batch_size * max_neighbours, self.neigh_input_dim))
         for l in self.mp_layers: h_reshaped = l(h_reshaped)
 
         neigh_h = K.reshape(h_reshaped, (batch_size, max_neighbours, self.hidden_dim))

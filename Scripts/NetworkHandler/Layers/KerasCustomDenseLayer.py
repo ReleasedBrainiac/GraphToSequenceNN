@@ -15,6 +15,8 @@ from keras.layers import Layer
     Further resources: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Layer
 '''
 
+#TODO call function maybe false implemented
+
 class KerasCustomDense(Layer):
     """
     This class implements a simple custom dense layer.
@@ -61,7 +63,8 @@ class KerasCustomDense(Layer):
         In this case the function generate the bias and layer kernel weights.
         ATTENTION: The weight decay is fixed with = 0.000, Later a dynamic call via config is maybe possible.
             :param input_shape: shape of the input tensor
-        """   
+        """
+        assert isinstance(input_shape, list)
         self.kernel = self.add_weight(name=self.name+'_weights',
                                       shape=(self.input_dim, self.output_dim),
                                       dtype='float32',
@@ -79,10 +82,10 @@ class KerasCustomDense(Layer):
         """
         This function provides the layers output shape transformation logic.
             :param input_shape: tensor input shape
-        """   
-        return (input_shape[0], self.output_dim)
-
-
+        """
+        assert isinstance(input_shape, list)
+        shape_feats, shape_edges = input_shape
+        return (shape_feats[0], self.output_dim)
     
     def call(self, inputs):
         """
@@ -90,8 +93,9 @@ class KerasCustomDense(Layer):
         Here the dropout will calculated and the result will passed through activation after multiplication with the weights.
         ATTENTION: The dropout was commented out in the origin version so just keep this in mind.
             :param inputs: 
-        """   
-        inputs = K.dropout(inputs, self.dropout)
-        output = K.dot(inputs, self.kernel)
+        """ 
+        assert isinstance(inputs, list)
+        inputs[0] = K.dropout(inputs[0], self.dropout)
+        output = K.dot(inputs[0], self.kernel)
         if self.bias: output += self.bias_weights
         return self.activation(output)

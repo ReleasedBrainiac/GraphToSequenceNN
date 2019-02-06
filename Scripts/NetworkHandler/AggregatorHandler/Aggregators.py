@@ -13,8 +13,6 @@ from NetworkHandler.KerasSupportMethods import AssertIsTensor, AssertNotNone
         2. https://github.com/IBM/Graph2Seq/blob/master/main/pooling.py
 '''
 
-#TODO missing docu
-
 class Aggregators():
     """
     This class provide all aggregation functions 

@@ -70,10 +70,10 @@ class Aggregators():
         if (self.aggregator=='max'):
             return self.MaxAggregator()
         elif (self.aggregator=='max_pool'):
-            AssertNotNone(mp_layer)
-            AssertNotNone(batch_size)
-            AssertNotNone(neight_dim)
-            AssertNotNone(hidden_dim)
+            AssertNotNone(mp_layer, 'mp_layer')
+            AssertNotNone(batch_size, 'batch_size')
+            AssertNotNone(neight_dim, 'neight_dim')
+            AssertNotNone(hidden_dim, 'hidden_dim')
             return self.MaxPoolAggregator(mp_layer, batch_size, neight_dim, hidden_dim)
         else:
             return self.MeanAggregator()

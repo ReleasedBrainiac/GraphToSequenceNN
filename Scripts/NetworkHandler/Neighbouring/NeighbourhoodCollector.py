@@ -47,10 +47,10 @@ class Neighbourhood():
         self.hidden_dim = hidden_dim
 
         if (aggregator == 'max_pool'):
-            AssertNotNone(self.mp_layer)
-            AssertNotNone(self.batch_size)
-            AssertNotNone(self.neight_dim)
-            AssertNotNone(self.hidden_dim)
+            AssertNotNone(self.mp_layer, 'mp_layer')
+            AssertNotNone(self.batch_size, 'batch_size')
+            AssertNotNone(self.neight_dim, 'neight_dim')
+            AssertNotNone(self.hidden_dim, 'hidden_dim')
 
     def GetVectorNeighbours(self, features, neighbouring_look_up, index):
         """

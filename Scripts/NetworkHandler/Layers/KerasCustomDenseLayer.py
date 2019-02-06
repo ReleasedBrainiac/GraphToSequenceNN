@@ -16,6 +16,7 @@ from keras.layers import Layer
 '''
 
 #TODO call function maybe false implemented
+#TODO missing documentation and reference
 
 class KerasCustomDense(Layer):
     """

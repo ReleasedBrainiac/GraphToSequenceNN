@@ -15,7 +15,7 @@ from NetworkHandler.Layers import KerasCustomDenseLayer as Dense
 
 #TODO Das muss in die Arbeit =>  Varianz https://github.com/keras-team/keras/issues/9779
 #TODO ATTENTION:  The order of [3] and [4] is the other way around provide in the paper.
-#TODO missing documentation
+#TODO missing documentation and reference
 
 class CustomAggregationLayerSimple(Layer):
 
@@ -224,7 +224,7 @@ class CustomAggregationLayerMaxPool(Layer):
         AGGREGATOR = NAGG(features, embedding_look_up, aggregator='max')
 
         """ [1] """
-        #TODO ist neigh_h tatsächlich eine vector liste von features oder nur das embedding?
+        #TODO ändern weil schrott!
         neigh_h = self.PerformMLPLayersCall(neigh_h, batch_size, max_neighbours)
         aggregated_features = AGGREGATOR.MaxPoolAggregator(neigh_h, axis=1)
         AGGREGATOR.OverwriteNewFeatures(new_features=aggregated_features)

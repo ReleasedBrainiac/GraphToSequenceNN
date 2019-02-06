@@ -1,5 +1,5 @@
 from keras import backend as K
-from NetworkHandler.KerasSupportMethods import AssertIsTensor, AssertTensorDotDim, AssertAddTensorToTensor
+from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, AssertTensorDotDim, AssertAddTensorToTensor
 
 '''
     This class is based on https://keras.io/backend/#backend-functions.

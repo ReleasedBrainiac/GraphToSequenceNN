@@ -89,7 +89,7 @@ class Neighbourhood():
             else:
                 temp_feats = initial_aggregator.PerformAggregator()
 
-            AssertNotNone(temp_feats)
+            AssertNotNone(temp_feats, 'temp_features')
 
             if aggregated_features_vecs is None:
                 aggregated_features_vecs = temp_feats

@@ -171,8 +171,8 @@ class CustomAggregationLayerMaxPool(Layer):
         """ Care these are ternary if cases """
         self.name = '/' + name if (name is not None) else ''  
         self.neigh_input_dim = input_dim if (neigh_input_dim is None) else neigh_input_dim
-        self.output_dim = 2 * output_dim if (concat) else output_dim
-        self.hidden_dim = 50 if (model_size == 'small') else 50
+        self.output_dim = output_dim
+        self.hidden_dim = 50 if (model_size == 'small') else 100
 
         self.mp_layers = []
         self.mp_layers.append(Dense(input_dim=neigh_input_dim, 
@@ -192,10 +192,14 @@ class CustomAggregationLayerMaxPool(Layer):
                                         initializer='glorot_uniform',
                                         trainable=True)
 
-
-        self.bias_weights = self.add_weight(name=self.name+'_bias',
-                                            shape=self.output_dim,
-                                            initializer='zeros')
+        if self.concat:
+            self.bias_weights = self.add_weight(name=self.name+'_bias',
+                                                shape=(self.output_dim*2),
+                                                initializer='zeros')
+        else:
+            self.bias_weights = self.add_weight(name=self.name+'_bias',
+                                                shape=(self.output_dim),
+                                                initializer='zeros')
 
         super(CustomAggregationLayerMaxPool, self).build(input_shape)
 
@@ -249,8 +253,4 @@ class CustomAggregationLayerMaxPool(Layer):
         shape_feats, shape_edges = input_shape
         return (shape_feats[0], self.output_dim)
 
-    def PerformMaxPoolLayersCall(self, neigh_h, batch_size, max_neighbours):
-        h_reshaped = K.reshape(embedding_look_up, (batch_size * max_neighbours, self.neigh_input_dim))
-        for l in self.mp_layers: h_reshaped = l(h_reshaped)
-
-        neigh_h = K.reshape(h_reshaped, (batch_size, max_neighbours, self.hidden_dim))
+    

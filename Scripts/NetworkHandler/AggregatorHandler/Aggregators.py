@@ -1,5 +1,5 @@
 from keras import backend as K
-from NetworkHandler.KerasSupportMethods import AssertIsTensor, AssertNotNone
+from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, AssertNotNone
 
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  

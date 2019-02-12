@@ -3,7 +3,7 @@ from NetworkHandler.KerasSupportMethods import KerasEval as KE
 from NetworkHandler.KerasSupportMethods.ControledBasicOperations import ControledTensorOperations as CTO
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from keras import activations
-from keras.layers import Layer, Dense, Dropout, GlobalMaxPooling1D
+from keras.layers import Layer
 
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  

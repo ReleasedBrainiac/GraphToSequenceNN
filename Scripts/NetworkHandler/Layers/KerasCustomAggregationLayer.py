@@ -1,9 +1,9 @@
 from keras import backend as K
 from NetworkHandler.KerasSupportMethods import KerasEval as KE
-from NetworkHandler.Aggregators.NeighbourAggregator import NeighbourAggregator as NAGG
+from NetworkHandler.KerasSupportMethods.ControledBasicOperations import ControledTensorOperations as CTO
+from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from keras import activations
-from keras.layers import Layer
-from NetworkHandler.Layers import KerasCustomDenseLayer as Dense
+from keras.layers import Layer, Dense, Dropout
 
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  
@@ -13,8 +13,8 @@ from NetworkHandler.Layers import KerasCustomDenseLayer as Dense
     Some smaller changes may depend on the structure of my data or my initial network implementation strategy.
 '''
 
-#TODO Das muss in die Arbeit =>  Varianz https://github.com/keras-team/keras/issues/9779
-#TODO ATTENTION:  The order of [3] and [4] is the other way around provide in the paper.
+#TODO IN MA => Varianz https://github.com/keras-team/keras/issues/9779
+#TODO IN MA => Exakte paper implementation wie im paper im gegensatz zum beispiel code
 #TODO missing documentation and reference
 
 class CustomAggregationLayerSimple(Layer):
@@ -24,53 +24,46 @@ class CustomAggregationLayerSimple(Layer):
     def __init__(   self, 
                     input_dim, 
                     output_dim, 
-                    neigh_input_dim=None,
                     dropout=0., 
                     bias=True, 
                     activation=activations.relu, 
                     name=None, 
-                    concat=False, 
                     mode='train',
                     aggregator='mean',
                     **kwargs):
         """
         This constructor initializes all necessary variables. Except input_dim and output_dim, all parameters have preset values.
-            :param input_dim: 
-            :param output_dim: 
-            :param neigh_input_dim: 
-            :param dropout: 
-            :param bias: 
-            :param activation: 
-            :param name: 
-            :param concat:
-            :param mode: 
-            :param aggregator: 
-            :param **kwargs: 
+            :param input_dim: describes the maximal possible size of a input
+            :param output_dim: desired amount of neurons
+            :param dropout: ratio of values which should be randomly set to zero to prevent overfitting (default = 0.)
+            :param bias: switch allow to use bias on the weighted result befor activation (default = True)
+            :param activation: neuron activation function (default = relu)
+            :param name: name of the layer (default = None)
+            :param mode: mode the layer is running on (default = train)
+            :param aggregator: neighbourhood aggregation function (default = mean)
         """
 
         super(CustomAggregationLayerSimple, self).__init__(**kwargs)
 
+        self.input_dim = input_dim
+        self.output_dim = output_dim
         self.dropout = dropout
         self.bias = bias
         self.activation = activation
-        self.concat = concat
-        self.input_dim = input_dim
+        self.name = '/' + name if (name is not None) else ''  
         self.mode = mode
         self.aggregator = aggregator
-
-
-        """ Care these are ternary if cases """
-        self.name = '/' + name if (name is not None) else ''  
-        self.neigh_input_dim = input_dim if (neigh_input_dim is None) else neigh_input_dim
-        self.output_dim = 2 * output_dim if (concat) else output_dim
+        
+        
 
     def build(self, input_shape):
         """
         This function provides all necessary weight matrices for the layer.
         This includes the matrices for the current and neighbourhood node(s) and also the bias weight matrix. 
-            :param input_shape: shape of the input tensor
+            :param input_shape: list of shapes of the input tensors
         """
         assert isinstance(input_shape, list)
+        feats_shape, neighs_shape = input_shape
         self.kernel = self.add_weight(  name=self.name+'_weights', 
                                         shape=(self.input_dim, self.output_dim),
                                         initializer='glorot_uniform',
@@ -81,43 +74,51 @@ class CustomAggregationLayerSimple(Layer):
                                             shape=self.output_dim,
                                             initializer='zeros')
 
+        self.zero_extender = self.add_weight(name=self.name+'_zeros',
+                                             shape=input_shape[0][0],
+                                             initializer='zeros')
+
         super(CustomAggregationLayerSimple, self).build(input_shape)
 
     def call(self, inputs):
         """
         This function keeps the CustomAggregationLayer layer logic.
+        [0] Drop out on train state
         [1] Calculate aggregation
         [2] Calculate concatenation
-        [3] Caclulate weight matrix multiplication
-        [4] Optional: Add bias
-        [5] Process Activation
-        
+        [3] Add zeros if the gradient has higher dimension
+        [4] Caclulate weight matrix multiplication
+        [5] Optional: Add bias
+        [6] Process Activation
             :param inputs: layer input tensors
         """   
 
         assert isinstance(inputs, list)
         features, embedding_look_up = inputs
 
-        if self.mode: embedding_look_up = K.dropout(embedding_look_up, 1-self.dropout)
-
-        AGGREGATOR = NAGG(features, embedding_look_up, aggregator=self.aggregator)
+        if self.mode == 'train': 
+            embedding_look_up = K.dropout(embedding_look_up, 1-self.dropout)
 
         """ [1] """
-        aggregated_features = AGGREGATOR.Execute()
+        agg_neigh_vecs = Nhood(features, embedding_look_up, aggregator=self.aggregator).Execute()
 
         """ [2] """
-        if self.concat:
-            output = AGGREGATOR.ControledConcatenation()
-        else:
-            output = AGGREGATOR.ControledAdd()
+        output = CTO.ControledConcatenation(features, agg_neigh_vecs)
 
         """ [3] """
-        output = AGGREGATOR.ControledWeightMult(output, self.kernel)
+        difference = CTO.ControledShapeDifference(self.kernel, output)
+
+        if difference > 0:
+            output = CTO.ControlledMatrixExtension(output, self.zero_extender, difference)
 
         """ [4] """
-        if self.bias: output += self.bias_weights
-        
+        output = CTO.ControledWeightDotProduct(output, self.kernel)
+
         """ [5] """
+        if self.bias:
+            output = CTO.ControledBiased(output, self.bias_weights)
+
+        """ [6] """
         return self.activation(output)
 
     def compute_output_shape(self, input_shape):
@@ -127,7 +128,7 @@ class CustomAggregationLayerSimple(Layer):
         """   
         assert isinstance(input_shape, list)
         shape_feats, shape_edges = input_shape
-        return (shape_feats[0], self.output_dim)
+        return [(shape_feats[0], self.output_dim), shape_edges]
 
 class CustomAggregationLayerMaxPool(Layer):
 
@@ -175,10 +176,9 @@ class CustomAggregationLayerMaxPool(Layer):
         self.hidden_dim = 50 if (model_size == 'small') else 100
 
         self.mp_layers = []
-        self.mp_layers.append(Dense(input_dim=neigh_input_dim, 
-                                    output_dim=self.hidden_dim, 
-                                    activation=activation,
-                                    dropout=dropout))
+
+        self.mp_layers.append(Dropout(rate=dropout))
+        self.mp_layers.append(Dense(self.hidden_dim, input_shap=(neigh_input_dim,), activation=activation)
 
     def build(self, input_shape):
         """

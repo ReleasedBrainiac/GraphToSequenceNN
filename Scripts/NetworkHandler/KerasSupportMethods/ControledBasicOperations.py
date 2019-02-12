@@ -22,17 +22,23 @@ class ControledTensorOperations():
         AssertIsTensor(concat_tensor)
         return K.concatenate([initial_tensor, concat_tensor], axis)
 
-    def ControlledMatrixExtension(tensor, concat_zeros, times):
+    def ControlledMatrixExtension(tensor, vector, times):
+        """
+        This function extends a tensor with tensor along axis 1.
+            :param tensor: extendable tensor
+            :param vector: a vector matching tensor on shape[0]
+            :param times: number of times the zeros should be concatenated to the tensor
+        """   
         AssertNotNone(tensor, 'Extendable tensor')
-        AssertNotNone(concat_zeros, 'Concatenating zeros')
+        AssertNotNone(vector, 'Concatenating vector')
         AssertNotNegative(times)
 
         if times != 0:
-            concat_zeros = K.reshape(concat_zeros, (concat_zeros.shape[0],1))
-            assert (tensor.shape[0] == concat_zeros.shape[0]), ('Zeros dim',concat_zeros.shape[0],'mismatch Zeros mismatch tensor dim',tensor.shape[0],'on concatenation axis')
+            vector = K.reshape(vector, (vector.shape[0],1))
+            assert (tensor.shape[0] == vector.shape[0]), ('Vector dim',vector.shape[0],'mismatch tensor dim',tensor.shape[0],'on concatenation axis')
         
             for i in range(times):
-                tensor = ControledTensorOperations.ControledConcatenation(tensor, concat_zeros)
+                tensor = ControledTensorOperations.ControledConcatenation(tensor, vector)
         
         AssertNotNone(tensor, 'Extension result')
         return tensor

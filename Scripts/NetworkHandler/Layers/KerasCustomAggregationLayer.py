@@ -11,13 +11,18 @@ from keras.layers import Layer, Dense, Dropout, GlobalMaxPooling1D
 
     This implementation is refined for Keras usage.
     All changes depend on the structure of my input data, the API of Keras or my initial network implementation strategy.
+
+    Attention: 
+        1. The mean calc is implemented like the Keras GlobalAveragePooling1D (without masked sum masking)!
+        2. The max pooling is implemented like the Keras GlobalMaxPooling1D 
+        => https://github.com/keras-team/keras/blob/master/keras/layers/pooling.py#L557
+        => https://keras.io/layers/pooling/
 '''
 
 #TODO IN MA => Varianz https://github.com/keras-team/keras/issues/9779
 #TODO IN MA => Exakte paper implementation wie im paper im gegensatz zum beispiel code
-#TODO missing documentation and reference
 
-class CustomAggregationLayerSimple(Layer):
+class CustomAggregationLayer(Layer):
 
     """ This class aggregates via mean and max calculation and also concatenation over a graph neighbourhood."""
 
@@ -43,7 +48,7 @@ class CustomAggregationLayerSimple(Layer):
             :param aggregator: neighbourhood aggregation function (default = mean)
         """
 
-        super(CustomAggregationLayerSimple, self).__init__(**kwargs)
+        super(CustomAggregationLayer, self).__init__(**kwargs)
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -78,7 +83,7 @@ class CustomAggregationLayerSimple(Layer):
                                              shape=input_shape[0][0],
                                              initializer='zeros')
 
-        super(CustomAggregationLayerSimple, self).build(input_shape)
+        super(CustomAggregationLayer, self).build(input_shape)
 
     def call(self, inputs):
         """

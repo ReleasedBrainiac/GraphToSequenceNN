@@ -66,6 +66,13 @@ class ControledTensorOperations():
         return tensor + bias
 
     def ControledShapeDifference(kernel_tensor, tensor, index_kernel=0, index_other=1):
+        """
+        This function allow to calculate the difference between 2 tensors desired shape values.
+            :param kernel_tensor: first tensor for shape diff calculation
+            :param tensor: second tensor for shape diff calculation
+            :param index_kernel: index for kernel tensor shape value selection (Default = 0)
+            :param index_other: index for second tensor shape value selection (Default = 1)
+        """   
         AssertIsTensor(kernel_tensor)
         AssertIsTensor(tensor)
         assert (kernel_tensor.shape[index_kernel] >= tensor.shape[index_other]), ('Kernel',index_kernel,'-dimension is lower then concatenation',index_other,'-dimension!')

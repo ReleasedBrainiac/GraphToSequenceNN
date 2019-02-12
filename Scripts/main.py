@@ -213,6 +213,8 @@ class Graph2SequenceTool():
             print("########## Construct Network ##########")
 
 
+            #TODO remind the input must be calculated since we concatenate the neighbourhood aggregation into it.
+
             print("#######################################\n")
             print("########### Starts Training ###########")
 

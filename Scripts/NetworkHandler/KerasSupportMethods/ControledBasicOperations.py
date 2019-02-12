@@ -64,3 +64,9 @@ class ControledTensorOperations():
         AssertIsTensor(bias)
         AssertAddTensorToTensor(tensor, bias) 
         return tensor + bias
+
+    def ControledShapeDifference(kernel_tensor, tensor, index_kernel=0, index_other=1):
+        AssertIsTensor(kernel_tensor)
+        AssertIsTensor(tensor)
+        assert (kernel_tensor.shape[index_kernel] >= tensor.shape[index_other]), ('Kernel',index_kernel,'-dimension is lower then concatenation',index_other,'-dimension!')
+        return kernel_tensor.shape[index_kernel] - tensor.shape[index_other]

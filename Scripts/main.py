@@ -12,6 +12,10 @@ from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
 
+#TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
+#TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
+
+
 class Graph2SequenceTool():
 
     TF_CPP_MIN_LOG_LEVEL="2"

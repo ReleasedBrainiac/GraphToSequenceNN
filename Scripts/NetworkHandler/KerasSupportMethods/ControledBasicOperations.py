@@ -40,7 +40,7 @@ class ControledTensorOperations():
             for i in range(times):
                 tensor = ControledTensorOperations.ControledConcatenation(tensor, vector)
         
-        AssertNotNone(tensor, 'Extension result')
+            AssertNotNone(tensor, 'Extension result')
         return tensor
 
     def ControledWeightDotProduct(matrix_left, matrix_top):

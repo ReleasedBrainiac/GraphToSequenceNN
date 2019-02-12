@@ -11,11 +11,17 @@ from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, As
     The original implementation snippeds from the IBM research team implemented in tensorflow can be found at:
         1. https://github.com/IBM/Graph2Seq/blob/master/main/aggregators.py
         2. https://github.com/IBM/Graph2Seq/blob/master/main/pooling.py
+
+    Attention: 
+        1. The mean calc is implemented like the Keras GlobalAveragePooling1D (without masked sum masking)!
+        2. The max pooling is implemented like the Keras GlobalMaxPooling1D 
+        => https://github.com/keras-team/keras/blob/master/keras/layers/pooling.py#L557
+        => https://keras.io/layers/pooling/
 '''
 
 class Aggregators():
     """
-    This class provide all aggregation functions 
+    This class provide the mean and max_pool aggregation functions.
     """
     
     def __init__(self, vectors, axis=0, aggregator='mean'):
@@ -35,45 +41,21 @@ class Aggregators():
 
     def MaxAggregator(self):
         """
-        This function return  the element-wise max of the given vectors depending on the selected axis.
+        This function return  the element-wise max of the given vectors depending on the selected axis (=> step_axis).
         """   
         return K.max(self.vectors, self.axis)
 
-    def MaxPoolAggregator(self, mp_layers, batch_size, neight_dim, hidden_dim):
-        """
-        This function calculates the max pooling of the given vectors by using pooling layers.
-        This function is completely collected from the referenced resources!
-        If this won't work issue at the referenced resource.
-            :param mp_layers: the prepared pooling layers
-            :param batch_size: batch size
-            :param neight_dim: dimension of neighbourhood vectors
-            :param hidden_dim: dimension of the hidden layer
-        """   
-        max_neighbours = self.vectors.shape[0]
-        h_reshaped = K.reshape(self.vectors, (batch_size * max_neighbours, neight_dim))
-
-        for l in self.mp_layers: 
-            h_reshaped = l(h_reshaped)
-
-        return K.reshape(h_reshaped, (batch_size, max_neighbours, hidden_dim))
-
     def MeanAggregator(self):
         """
-        This function return  the element-wise mean of the given vectors depending on the selected axis.
+        This function return  the element-wise mean of the given vectors depending on the selected axis (=> step_axis).
         """
         return K.mean(self.vectors, self.axis)
 
-    def PerformAggregator(self, mp_layer=None, batch_size=None, neight_dim=None, hidden_dim=None):
+    def PerformAggregator(self):
         """
         This funtion perform the selected aggregation.
         """   
-        if (self.aggregator=='max'):
+        if (self.aggregator=='max_pool'):
             return self.MaxAggregator()
-        elif (self.aggregator=='max_pool'):
-            AssertNotNone(mp_layer, 'mp_layer')
-            AssertNotNone(batch_size, 'batch_size')
-            AssertNotNone(neight_dim, 'neight_dim')
-            AssertNotNone(hidden_dim, 'hidden_dim')
-            return self.MaxPoolAggregator(mp_layer, batch_size, neight_dim, hidden_dim)
         else:
             return self.MeanAggregator()

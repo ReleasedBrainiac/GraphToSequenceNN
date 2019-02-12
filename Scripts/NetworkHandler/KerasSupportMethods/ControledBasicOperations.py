@@ -1,5 +1,5 @@
 from keras import backend as K
-from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, AssertTensorDotDim, AssertAddTensorToTensor
+from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, AssertTensorDotDim, AssertNotNegative, AssertAddTensorToTensor, AssertNotNone
 
 '''
     This class is based on https://keras.io/backend/#backend-functions.
@@ -21,6 +21,21 @@ class ControledTensorOperations():
         AssertIsTensor(initial_tensor)
         AssertIsTensor(concat_tensor)
         return K.concatenate([initial_tensor, concat_tensor], axis)
+
+    def ControlledMatrixExtension(self, tensor, concat_zeros, times):
+        AssertNotNone(tensor, 'Extendable tensor')
+        AssertNotNone(concat_zeros, 'Concatenating zeros')
+        AssertNotNegative(times)
+
+        if times != 0:
+            concat_zeros = K.reshape(concat_zeros, (concat_zeros.shape[0],1))
+            assert (tensor.shape[0] == concat_zeros.shape[0]), ('Zeros dim',concat_zeros.shape[0],'mismatch Zeros mismatch tensor dim',tensor.shape[0],'on concatenation axis')
+        
+            for i in range(times):
+                tensor = self.ControledConcatenation(tensor, concat_zeros)
+        
+        AssertNotNone(tensor, 'Extension result')
+        return tensor
 
     def ControledWeightDotProduct(matrix_left, matrix_top):
         """

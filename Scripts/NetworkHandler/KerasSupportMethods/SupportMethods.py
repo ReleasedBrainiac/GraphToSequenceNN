@@ -31,7 +31,6 @@ def AssertAddTensorToTensor(tensor, add_tensor):
     if tensor.shape != add_tensor.shape:
         assert (tensor.shape[1] == add_tensor.shape[0]),("Weighted tensor can't be savely biased. This is caused by shape missmatch!")
     
-    
 def AssertIsTensor(tensor_x):
     assert (K.is_tensor(tensor_x)),('Given input is no tensor! =>', tensor_x)
 

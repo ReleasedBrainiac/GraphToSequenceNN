@@ -22,7 +22,7 @@ class ControledTensorOperations():
         AssertIsTensor(concat_tensor)
         return K.concatenate([initial_tensor, concat_tensor], axis)
 
-    def ControlledMatrixExtension(self, tensor, concat_zeros, times):
+    def ControlledMatrixExtension(tensor, concat_zeros, times):
         AssertNotNone(tensor, 'Extendable tensor')
         AssertNotNone(concat_zeros, 'Concatenating zeros')
         AssertNotNegative(times)
@@ -32,7 +32,7 @@ class ControledTensorOperations():
             assert (tensor.shape[0] == concat_zeros.shape[0]), ('Zeros dim',concat_zeros.shape[0],'mismatch Zeros mismatch tensor dim',tensor.shape[0],'on concatenation axis')
         
             for i in range(times):
-                tensor = self.ControledConcatenation(tensor, concat_zeros)
+                tensor = ControledTensorOperations.ControledConcatenation(tensor, concat_zeros)
         
         AssertNotNone(tensor, 'Extension result')
         return tensor

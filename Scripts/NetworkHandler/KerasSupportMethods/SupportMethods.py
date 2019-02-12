@@ -14,7 +14,7 @@ def AssertNotNone(tensor, name):
     assert (tensor is not None),('The given input',name,'was None!')
     
 def AssertNotNegative(value):
-    assert (value > -1), ('Input value was negative')
+    assert (value >= 0), ('Input value was negative')
 
 def AssertTensorDotDim(tensor_x, tensor_y):
     AssertIsTensor(tensor_x)

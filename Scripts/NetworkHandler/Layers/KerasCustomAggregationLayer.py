@@ -1,5 +1,5 @@
 from keras import backend as K
-from NetworkHandler.KerasSupportMethods import KerasEval as KE
+from NetworkHandler.KerasSupportMethods.SupportMethods import KerasEval as KE
 from NetworkHandler.KerasSupportMethods.ControledBasicOperations import ControledTensorOperations as CTO
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from keras import activations
@@ -28,23 +28,15 @@ class CustomAggregationLayer(Layer):
 
     def __init__(   self, 
                     input_dim, 
-                    output_dim, 
-                    dropout=0., 
-                    bias=True, 
+                    output_dim,
                     activation=activations.relu, 
-                    name=None, 
-                    mode='train',
                     aggregator='mean',
                     **kwargs):
         """
         This constructor initializes all necessary variables. Except input_dim and output_dim, all parameters have preset values.
             :param input_dim: describes the maximal possible size of a input
             :param output_dim: desired amount of neurons
-            :param dropout: ratio of values which should be randomly set to zero to prevent overfitting (default = 0.)
-            :param bias: switch allow to use bias on the weighted result befor activation (default = True)
             :param activation: neuron activation function (default = relu)
-            :param name: name of the layer (default = None)
-            :param mode: mode the layer is running on (default = train)
             :param aggregator: neighbourhood aggregation function (default = mean)
         """
 
@@ -52,11 +44,7 @@ class CustomAggregationLayer(Layer):
 
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.dropout = dropout
-        self.bias = bias
         self.activation = activation
-        self.name = '/' + name if (name is not None) else ''  
-        self.mode = mode
         self.aggregator = aggregator
         
         
@@ -68,20 +56,10 @@ class CustomAggregationLayer(Layer):
             :param input_shape: list of shapes of the input tensors
         """
         assert isinstance(input_shape, list)
-        feats_shape, neighs_shape = input_shape
-        self.kernel = self.add_weight(  name=self.name+'_weights', 
+        self.kernel = self.add_weight(  name='kernel',
                                         shape=(self.input_dim, self.output_dim),
                                         initializer='glorot_uniform',
                                         trainable=True)
-
-
-        self.bias_weights = self.add_weight(name=self.name+'_bias',
-                                            shape=self.output_dim,
-                                            initializer='zeros')
-
-        self.zero_extender = self.add_weight(name=self.name+'_zeros',
-                                             shape=input_shape[0][0],
-                                             initializer='zeros')
 
         super(CustomAggregationLayer, self).build(input_shape)
 
@@ -93,37 +71,27 @@ class CustomAggregationLayer(Layer):
         [2] Calculate concatenation
         [3] Add zeros if the gradient has higher dimension
         [4] Caclulate weight matrix multiplication
-        [5] Optional: Add bias
-        [6] Process Activation
+        [5] Process Activation
             :param inputs: layer input tensors
         """   
 
         assert isinstance(inputs, list)
-        features, embedding_look_up = inputs
-
-        if self.mode == 'train': 
-            embedding_look_up = K.dropout(embedding_look_up, 1-self.dropout)
+        features, edge_look_up = inputs
 
         """ [1] """
-        agg_neigh_vecs = Nhood(features, embedding_look_up, aggregator=self.aggregator).Execute()
+        agg_neigh_vecs = Nhood(features, edge_look_up, aggregator=self.aggregator).Execute()
 
         """ [2] """
         output = CTO.ControledConcatenation(features, agg_neigh_vecs)
 
         """ [3] """
         difference = CTO.ControledShapeDifference(self.kernel, output)
-
-        if difference > 0:
-            output = CTO.ControlledMatrixExtension(output, self.zero_extender, difference)
+        assert (difference == 0) , ("Concatenation can't be weighted since it's shape is incompatible for K.dot operation => Shapes [Kernel",self.kernel.shape," | Concatenation",output)
 
         """ [4] """
         output = CTO.ControledWeightDotProduct(output, self.kernel)
 
         """ [5] """
-        if self.bias:
-            output = CTO.ControledBiased(output, self.bias_weights)
-
-        """ [6] """
         return self.activation(output)
 
     def compute_output_shape(self, input_shape):

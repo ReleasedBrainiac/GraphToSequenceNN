@@ -29,6 +29,10 @@ class DatasetPipeline:
     t_parser = None
     g_parser = None
     dataset_drop_outs = 0
+    max_observed_nodes_cardinality = 0
+    set_unique_graph_node_cardinalities = set()
+    list_graph_node_cardinalities = []
+    count_graph_node_cardinalities_occourences = dict()
 
     # Path content
     in_path = None
@@ -41,7 +45,7 @@ class DatasetPipeline:
     is_showing_feedback = False
     as_amr = False
 
-    def __init__(self, in_path=None, output_path_extender=None, max_length=-1, saving=False,show_feedback=False, keep_edges=False):
+    def __init__(self, in_path=None, output_path_extender=None, max_length=-1, saving=False,show_feedback=False, keep_edges=False, min_cardinality=1, max_cardinality=100):
         """
         This class constructor allow to set all path definbition for the dataset and the output. 
         Further its possible to define a maximal lengt for the used dataset. 
@@ -61,6 +65,13 @@ class DatasetPipeline:
         try:
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
             self.dataset_drop_outs = 0
+            self.max_observed_nodes_cardinality = 0
+            self.set_unique_graph_node_cardinalities = set()
+            self.list_graph_node_cardinalities = []
+            self.count_graph_node_cardinalities_occourences = dict()
+
+            self.max_cardinality = max_cardinality if (max_cardinality is not None and max_cardinality > 0) else 100
+            self.min_cardinality = min_cardinality if (max_cardinality is not None and max_cardinality > 0) else 1
 
             if isStr(output_path_extender): self.out_path_extender = output_path_extender
 
@@ -161,7 +172,18 @@ class DatasetPipeline:
         """
         try:
             dataset_pairs_sent_sem = []
-            for pair in data_pairs: dataset_pairs_sent_sem.append(self.CollectDatasetPair(pair))
+            for pair in data_pairs: 
+                data_pair = self.CollectDatasetPair(pair)
+                if(not self.as_amr):
+                    edges_dim = data_pair[1][0][0].shape[0]
+
+                    if (self.min_cardinality <= edges_dim and edges_dim <= self.max_cardinality):
+                        self.list_graph_node_cardinalities.append(edges_dim)
+                        self.set_unique_graph_node_cardinalities.add(edges_dim)
+                        self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edges_dim)
+                        dataset_pairs_sent_sem.append(data_pair)
+                else:
+                    dataset_pairs_sent_sem.append(data_pair)
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -184,6 +206,10 @@ class DatasetPipeline:
             mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     
 
             data_pairs = self.CollectAllDatasetPairs(pairs)
+
+            if (not self.as_amr):
+                for key in self.set_unique_graph_node_cardinalities:
+                    self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
             if self.is_showing_feedback:
                 print('Max restriction: ', self.context_max_length)
@@ -230,3 +256,8 @@ class DatasetPipeline:
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def ShowNodeCardinalityOccurences(self):
+        for key in self.count_graph_node_cardinalities_occourences.keys():
+            print("[", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
+        

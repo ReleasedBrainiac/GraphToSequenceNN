@@ -11,6 +11,7 @@ from anytree import AnyNode
 from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex
 import random as rnd
+import numpy as np
 
 def isComplex(input):
     """
@@ -317,5 +318,27 @@ def ReorderListByIndices(reorder_list, ordering_indices):
         return [y for x,y in sorted(zip(ordering_indices,reorder_list))] 
     except Exception as ex:
             template = "An exception of type {0} occurred in [ContentSupport.ReorderListByIndices]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+def MatrixExpansionWithZeros(np_2D_array, up_to_dim):
+    """
+    This function allow to expand a matrix and fill the empty space with zeros.
+    Attention:
+    This is only allowed on matrices where the input matrix dimensions are equal and less_equal than the extension value.
+        :param np_2D_array: an numpy array
+        :param up_to_dim: the dim you desired for x=y
+    """
+    try:
+            assert (np_2D_array.shape[0] == np_2D_array.shape[1]), ("The input matrix dimension aren't equal")
+            assert (np_2D_array.shape[0] <= up_to_dim), ("The dimension value isn't less or equal then the arrays dimensions")
+            zeros = np.zeros((up_to_dim,up_to_dim))
+            difference = up_to_dim - np_2D_array.shape[0]
+            assert (difference > -1), ('Difference was negative!')
+            result = np.lib.pad(np_2D_array, (0,difference),'constant', constant_values=(0))
+            assert (result.shape[0] == result.shape[1] and result.shape[0] == up_to_dim), ("Result has wrong dimensions!")
+            return result
+    except Exception as ex:
+            template = "An exception of type {0} occurred in [ContentSupport.MatrixExpansionWithZeros]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

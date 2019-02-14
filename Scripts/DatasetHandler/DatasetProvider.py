@@ -258,6 +258,7 @@ class DatasetPipeline:
             print(message)
 
     def ShowNodeCardinalityOccurences(self):
+        print('Graph Node Cardinality Occourences:')
         for key in self.count_graph_node_cardinalities_occourences.keys():
-            print("[", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
+            print("\t=> [", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
         

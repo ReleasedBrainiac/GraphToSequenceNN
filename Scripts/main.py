@@ -11,10 +11,12 @@ from DatasetHandler.ContentSupport import ReorderListByIndices
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
+from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
-
+#TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
+#TODO IN MA => Code => Why min and max cardinality
 
 class Graph2SequenceTool():
 
@@ -34,6 +36,8 @@ class Graph2SequenceTool():
     GLOVE_OUTPUT_DIM = 100
     GLOVE_VOCAB_SIZE = 20000
     VALIDATION_SPLIT = 0.2
+    MIN_NODE_CARDINALITY = 3
+    MAX_NODE_CARDINALITY = 20
 
     def RunTool(self):
         """
@@ -56,6 +60,7 @@ class Graph2SequenceTool():
             print("Tensorflow version: \t=> ", tf.__version__)
             print("Keras version: \t\t=> ", keras.__version__, '\n')
 
+            '''
             print("Parsing CMD Attributes!")
             ap = argparse.ArgumentParser()
             ap.add_argument("-dp"   , "--dataset_path"      , type=str      , required=False, default=self.DATASET                , help="Path for the root folder of the dataset!")
@@ -94,6 +99,8 @@ class Graph2SequenceTool():
             self.SHOW_FEEDBACK = args["show_feedback"]
             self.SAVING_CLEANED_AMR = args["save_cleaned_data"]
             self.KEEP_EDGES = args["keep_edges"]
+            '''
+
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.TF_CPP_MIN_LOG_LEVEL
 
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -142,11 +149,20 @@ class Graph2SequenceTool():
                                 max_length=in_max_length, 
                                 show_feedback=is_show, 
                                 saving=False, 
-                                keep_edges=is_keeping_edges
+                                keep_edges=is_keeping_edges,
+                                min_cardinality=self.MIN_NODE_CARDINALITY, 
+                                max_cardinality=self.MAX_NODE_CARDINALITY
                                 )
             datapairs = pipe.ProvideData()
+            max_cardinality = pipe.max_observed_nodes_cardinality
 
-            print('Found Datapairs:\n\t=> ', len(datapairs))
+            print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
+            pipe.ShowNodeCardinalityOccurences()
+            
+            assert (max_cardinality > 0), ("Max graph nodes cardinality was 0!")
+            for datapair in datapairs:
+                datapair[1][0] = self.EdgeLookUpEqualization(datapair, max_cardinality)
+
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
@@ -256,13 +272,34 @@ class Graph2SequenceTool():
                             max_length=in_max_length, 
                             show_feedback=is_show, 
                             saving=True, 
-                            keep_edges=is_keeping_edges
+                            keep_edges=is_keeping_edges,
+                            min_cardinality=self.MIN_NODE_CARDINALITY, 
+                            max_cardinality=self.MAX_NODE_CARDINALITY
                             )
 
             pipe.SaveData(as_amr=is_amr_saving)
             print('Finished storing process!')
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.RunStoringCleanedAMR]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            sys.exit(1)
+
+
+    def EdgeLookUpEqualization(self, datapair, max_card):
+        """
+        This function wraps the MatrixExpansionWithZeros function for the foward and backward edge look up for a datapair.
+            :param datapair: single elemt of the DatasetPipeline result 
+            :param max_card: desired max cardinality 
+        """
+        try:
+            assert (datapair[1][0] is not None), ('Wrong input for dataset edge look up size equalization!')
+            elem1 = MatrixExpansionWithZeros(datapair[1][0][0], max_card)
+            elem2 = MatrixExpansionWithZeros(datapair[1][0][1], max_card)
+            assert (elem1.shape == elem2.shape and elem1.shape == (max_card,max_card)), ("Results have wrong shape!")
+            return [elem1,elem2]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.EdgeLookUpEqualization]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)

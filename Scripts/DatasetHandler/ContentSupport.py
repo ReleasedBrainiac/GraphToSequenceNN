@@ -332,7 +332,6 @@ def MatrixExpansionWithZeros(np_2D_array, up_to_dim):
     try:
             assert (np_2D_array.shape[0] == np_2D_array.shape[1]), ("The input matrix dimension aren't equal")
             assert (np_2D_array.shape[0] <= up_to_dim), ("The dimension value isn't less or equal then the arrays dimensions")
-            zeros = np.zeros((up_to_dim,up_to_dim))
             difference = up_to_dim - np_2D_array.shape[0]
             assert (difference > -1), ('Difference was negative!')
             result = np.lib.pad(np_2D_array, (0,difference),'constant', constant_values=(0))

@@ -11,6 +11,7 @@ def AssertTensorShapeEqual(tensor_x, tensor_y):
     assert (tensor_x.shape == tensor_y.shape), ('Assertion failed shapes dont match! [',tensor_x.shape,'] dont match " [',tensor_y.shape,']')  
     
 def AssertNotNone(tensor, name):
+    if name is None: name = ''
     assert (tensor is not None),('The given input',name,'was None!')
     
 def AssertNotNegative(value):
@@ -32,10 +33,10 @@ def AssertAddTensorToTensor(tensor, add_tensor):
         assert (tensor.shape[1] == add_tensor.shape[0]),("Weighted tensor can't be savely biased. This is caused by shape missmatch!")
     
 def AssertIsTensor(tensor_x):
-    assert (K.is_tensor(tensor_x)),('Given input is no tensor! =>', tensor_x)
+    assert (IsTensor(tensor_x, None)),('Given input is no tensor! =>', tensor_x)
 
 def AssertIsKerasTensor(tensor_x):
-    assert (K.is_keras_tensor(tensor_x)),('Given input is no KERAS tensor! =>', tensor_x)
+    assert (IsKerasTensor(tensor_x), None),('Given input is no KERAS tensor! =>', tensor_x)
 
 def KerasShape(tensor_x):
     AssertIsTensor(tensor_x)
@@ -44,3 +45,11 @@ def KerasShape(tensor_x):
 def KerasEval(tensor_x):
     AssertIsTensor(tensor_x)
     return K.eval(tensor_x)
+
+def IsTensor(tensor_x, name):
+        AssertNotNone(tensor_x, name)
+        return K.is_tensor(tensor_x)
+
+def IsKerasTensor(tensor_x, name):
+        AssertNotNone(tensor_x, name)
+        return K.is_keras_tensor(tensor_x)

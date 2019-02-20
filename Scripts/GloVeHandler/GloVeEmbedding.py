@@ -88,24 +88,18 @@ class GloVeEmbedding:
             datasets_nodes_initial_features = []
             for dataset in datasets_nodes_values:
                 dataset_nodes_initial_features = []
-                for word in dataset: 
-                    word_embedding = self.embedding_indices.get(word)
+                for word in dataset:
+                    word_embedding = self.embedding_indices.get(word) 
 
-                    if word_embedding is not None: 
-                        dataset_nodes_initial_features.append(word_embedding)
-                    else:
-                        dataset_nodes_initial_features.append(np.random.randn(self.EMBEDDING_DIM))
-                
-                datasets_nodes_initial_features.append(np.vstack(dataset_nodes_initial_features))
-                if len(dataset) != len(dataset_nodes_initial_features): 
-                    print('ERROR: [Current_Size_Match FAILED]')
-                    sys.exit(0)
-                
-            if len(datasets_nodes_values) != len(datasets_nodes_initial_features): 
-                print('ERROR: [Size_Match FAILED]')
-                sys.exit(0)
+                    if (word_embedding is None):  
+                        word_embedding = np.random.randn(self.EMBEDDING_DIM)
+                    
+                    dataset_nodes_initial_features.append(word_embedding)
 
-            return np.vstack(datasets_nodes_initial_features)
+                assert (len(dataset) == len(dataset_nodes_initial_features)), "ERROR: [Current_Size_Match FAILED]"
+                datasets_nodes_initial_features.append(np.array(dataset_nodes_initial_features))
+
+            return np.array(datasets_nodes_initial_features)
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.ReplaceDatasetsNodeValuesByEmbedding]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

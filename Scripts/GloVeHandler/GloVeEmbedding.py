@@ -32,13 +32,14 @@ class GloVeEmbedding:
     embedding_indices = None
 
 
-    def __init__(self, tokenizer, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
+    def __init__(self, tokenizer, max_cardinality=None, vocab_size=20000, max_sequence_length=1000, glove_file_path = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', output_dim=100, show_feedback=False):
         """
         This class constructor stores all given parameters. 
         Further it execute the word collecting process from the datasets node dictionairies.
         The output_dim values should be adapted from the correpsonding pre-trained word vectors.
         For further informations take a look at => https://nlp.stanford.edu/projects/glove/ => [Download pre-trained word vectors]
             :param tokenizer: tokenizer from GloVe dataset preprocessing.
+            :param max_cardinality: the max graph node cardinality in the dataset
             :param vocab_size: maximum number of words to keep, based on word frequency
             :param max_sequence_length: max length length over all sequences (padding)
             :param glove_file_path: path of the desired GloVe word vector file
@@ -63,6 +64,10 @@ class GloVeEmbedding:
                 self.MAX_NUM_WORDS = vocab_size
                 print('Vocab size:\t\t=> ', self.MAX_NUM_WORDS)
 
+            if isNotNone(max_cardinality):
+                self.max_cardinality = max_cardinality
+                print('Max nodes cardinality:\t\t=> ', self.max_cardinality)
+
             if isNotNone(tokenizer): 
                 self.final_tokenizer = tokenizer
                 print('Tokenizer: \t\t=>  reloaded')
@@ -82,21 +87,29 @@ class GloVeEmbedding:
         """
         This function returns  embedding numpy arrays each dataset with stringified node values.
         The word embedding is directly collected from embedding_indices dictionairy.
+        Remind, unknown words will be set to a vector of given embedding length with random values.
+        Additionally, if you have different graph node cardinalities in your dataset, this tool gonna extend them to an equal size depending on the given max_cardinality.
             :param datasets_nodes_values: all datasets nodes vaulues defined by the raw word NOT the vectorized definition
         """   
         try:
             datasets_nodes_initial_features = []
+            max_dim = -1
             for dataset in datasets_nodes_values:
                 dataset_nodes_initial_features = []
                 for word in dataset:
-                    word_embedding = self.embedding_indices.get(word) 
+                    word_embedding = self.embedding_indices.get(word)
 
                     if (word_embedding is None):  
                         word_embedding = np.random.randn(self.EMBEDDING_DIM)
                     
                     dataset_nodes_initial_features.append(word_embedding)
 
-                assert (len(dataset) == len(dataset_nodes_initial_features)), "ERROR: [Current_Size_Match FAILED]"
+                assert (self.max_cardinality >= len(dataset_nodes_initial_features)), "ERROR: [Features Expansion FAILED], the given max cardinality was lower then the dataset max_cardinality!"
+                if self.max_cardinality > len(dataset_nodes_initial_features):
+                    diff = self.max_cardinality - len(dataset_nodes_initial_features)
+                    for _ in range(diff): dataset_nodes_initial_features.append(np.zeros(self.EMBEDDING_DIM))
+
+                assert (self.max_cardinality == len(dataset_nodes_initial_features)), "ERROR: [Current_Size_Match FAILED]"
                 datasets_nodes_initial_features.append(np.array(dataset_nodes_initial_features))
 
             return np.array(datasets_nodes_initial_features)

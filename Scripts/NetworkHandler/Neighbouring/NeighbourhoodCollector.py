@@ -52,9 +52,6 @@ class Neighbourhood():
         This function collect and aggregates all verticies next hop neighbourhood feature vectors.
         """   
         aggregated_features_vecs = None
-        
-        print('Neighbouring:', self.neighbouring)
-
         vecs = 0
         if IsKerasTensor(self.neighbouring, 'Neighbouring'):
             vecs = self.neighbouring.shape[1]
@@ -62,12 +59,8 @@ class Neighbourhood():
             AssertIsTensor(self.neighbouring)
             vecs = self.neighbouring.shape[0]
 
-        print('Vectors:', vecs)
-
         for i in range(vecs):        
-            found_neighbour_vectors = self.GetVectorNeighbours(i)
-
-            print(found_neighbour_vectors)            
+            found_neighbour_vectors = self.GetVectorNeighbours(i)       
             aggregator_result = Aggregators(found_neighbour_vectors, self.axis, self.aggregator).PerformAggregator()
             AssertNotNone(aggregator_result, 'aggregator_result')
 

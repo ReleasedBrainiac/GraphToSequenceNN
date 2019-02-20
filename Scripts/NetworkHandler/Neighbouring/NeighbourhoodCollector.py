@@ -22,9 +22,6 @@ class Neighbourhood():
     """
     This class calculates the neighborhood feature aggregation.
     """
-
-    
-
     def __init__(self, features, neighbouring, axis=1, aggregator='mean'):
         """
         This constructor collect all necessary variables for the setup.

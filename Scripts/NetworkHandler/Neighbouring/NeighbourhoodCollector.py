@@ -52,12 +52,7 @@ class Neighbourhood():
         This function collect and aggregates all verticies next hop neighbourhood feature vectors.
         """   
         aggregated_features_vecs = None
-        vecs = 0
-        if IsKerasTensor(self.neighbouring, 'Neighbouring'):
-            vecs = self.neighbouring.shape[1]
-        else:
-            AssertIsTensor(self.neighbouring)
-            vecs = self.neighbouring.shape[0]
+        vecs = self.neighbouring.shape[1]
 
         for i in range(vecs):        
             found_neighbour_vectors = self.GetVectorNeighbours(i)       
@@ -69,7 +64,8 @@ class Neighbourhood():
             else: 
                 aggregated_features_vecs = K.concatenate([aggregated_features_vecs, aggregator_result])
                 
-        return K.transpose(K.reshape(aggregated_features_vecs, (self.features.shape[0],-1)))
+        transpose = K.transpose(K.reshape(aggregated_features_vecs, (vecs,-1)))
+        return K.concatenate([self.features,transpose])
 
     def Execute(self):
         """
@@ -78,6 +74,3 @@ class Neighbourhood():
         AssertIsTensor(self.features)
         AssertIsTensor(self.neighbouring)
         return self.GetAllVectorsFeatures()
-    
-    def get_shape(self):
-        return self.features.shape

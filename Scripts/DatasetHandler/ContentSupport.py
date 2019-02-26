@@ -12,6 +12,7 @@ from collections import OrderedDict
 from numbers import Number, Real, Rational, Complex
 import random as rnd
 import numpy as np
+import types
 
 def isComplex(input):
     """
@@ -149,6 +150,14 @@ def isIterable(input):
         return True
     except TypeError:
         return False
+
+def isLambda(input):
+    """
+    This function check input is a lambda type.
+        :param input: unknown type object
+    """
+    return isinstance(input, types.LambdaType)
+
 
 def getType(input):
     """

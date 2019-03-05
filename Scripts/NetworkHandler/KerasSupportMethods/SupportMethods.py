@@ -36,7 +36,7 @@ def AssertIsTensor(tensor_x):
     assert (IsTensor(tensor_x, None)),('Given input is no tensor! =>', tensor_x)
 
 def AssertIsKerasTensor(tensor_x):
-    assert (IsKerasTensor(tensor_x), None),('Given input is no KERAS tensor! =>', tensor_x)
+    assert (IsKerasTensor(tensor_x, None)),('Given input is no KERAS tensor! =>', tensor_x)
 
 def KerasShape(tensor_x):
     AssertIsTensor(tensor_x)

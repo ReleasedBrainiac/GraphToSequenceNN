@@ -1,10 +1,9 @@
 from keras import backend as K
+from keras import activations
+from keras import layers
 from NetworkHandler.KerasSupportMethods.SupportMethods import KerasEval as KE
 from NetworkHandler.KerasSupportMethods.ControledBasicOperations import ControledTensorOperations as CTO
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
-from keras import activations
-from keras.layers import Layer
-
 '''
     This class is based on "Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks" by Kun Xu et al.  
     The paper can be found at: https://arxiv.org/abs/1804.00823
@@ -22,14 +21,13 @@ from keras.layers import Layer
 #TODO IN MA => Varianz https://github.com/keras-team/keras/issues/9779
 #TODO IN MA => Exakte paper implementation wie im paper im gegensatz zum beispiel code
 
-class CustomAggregationLayer(Layer):
+class CustomAggregationLayer(layers.Layer):
 
     """ This class aggregates via mean and max calculation and also concatenation over a graph neighbourhood."""
 
     def __init__(   self, 
                     input_dim, 
                     output_dim,
-                    activation=activations.relu, 
                     aggregator='mean',
                     **kwargs):
         """
@@ -39,14 +37,10 @@ class CustomAggregationLayer(Layer):
             :param activation: neuron activation function (default = relu)
             :param aggregator: neighbourhood aggregation function (default = mean)
         """
-
-        super(CustomAggregationLayer, self).__init__(**kwargs)
-
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.activation = activation
         self.aggregator = aggregator
-        
+        super(CustomAggregationLayer, self).__init__(**kwargs)
         
 
     def build(self, input_shape):
@@ -71,7 +65,6 @@ class CustomAggregationLayer(Layer):
         [2] Calculate concatenation
         [3] Add zeros if the gradient has higher dimension
         [4] Caclulate weight matrix multiplication
-        [5] Process Activation
             :param inputs: layer input tensors
         """   
 
@@ -89,10 +82,7 @@ class CustomAggregationLayer(Layer):
         assert (difference == 0) , ("Concatenation can't be weighted since it's shape is incompatible for K.dot operation => Shapes [Kernel",self.kernel.shape," | Concatenation",output)
 
         """ [4] """
-        output = CTO.ControledWeightDotProduct(output, self.kernel)
-
-        """ [5] """
-        return self.activation(output)
+        return CTO.ControledWeightDotProduct(output, self.kernel)
 
     def compute_output_shape(self, input_shape):
         """

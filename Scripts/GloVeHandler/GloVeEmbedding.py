@@ -66,7 +66,7 @@ class GloVeEmbedding:
 
             if isNotNone(max_cardinality):
                 self.max_cardinality = max_cardinality
-                print('Max nodes cardinality:\t\t=> ', self.max_cardinality)
+                print('Max nodes cardinality:\t=> ', self.max_cardinality)
 
             if isNotNone(tokenizer): 
                 self.final_tokenizer = tokenizer

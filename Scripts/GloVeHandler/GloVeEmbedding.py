@@ -166,8 +166,8 @@ class GloVeEmbedding:
             :param embedding_matrix: the vocab embedding matrix
         """   
         try:
-            return Embedding(self.number_words,
-                             self.EMBEDDING_DIM,
+            return Embedding(input_dim=self.number_words,
+                             output_dim=self.EMBEDDING_DIM,
                              embeddings_initializer=Constant(embedding_matrix),
                              input_length=self.MAX_SEQUENCE_LENGTH,
                              trainable=False)

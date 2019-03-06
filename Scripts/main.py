@@ -26,6 +26,7 @@ class Graph2SequenceTool():
     BUILDTYPE = 1
     DATASET = './Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
     GLOVE = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
+    GLOVE_VEC_SIZE = 100
     MODEL = "graph2seq_model"
     PLOT = "plot.png"
     EXTENDER = "dc.ouput"
@@ -163,21 +164,26 @@ class Graph2SequenceTool():
             for datapair in datapairs:
                 datapair[1][0] = self.EdgeLookUpEqualization(datapair, max_cardinality)
 
-
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
             glove_dataset_processor = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True)
             datasets_sentences, directed_edge_matrices, vectorized_sequences, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
-
-            glove_embedding = GloVeEmbedding(vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
+            glove_embedding = GloVeEmbedding(max_cardinality=max_cardinality, vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+            print('EMB: ', glove_embedding_layer.get_config())
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
 
+            print('DS_Sentence:\n', datasets_sentences[0])            
+            print('DS_Nodes_Emb:\n', datasets_nodes_embedding.shape)
+            print('DS_Sten_vec:\n', vectorized_sequences.shape)
+
+
+            sys.exit(0)
 
             print("#######################################\n")
             print("######### Random Order Dataset ########")
@@ -228,8 +234,6 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("########## Construct Network ##########")
 
-
-            #TODO remind the input must be calculated since we concatenate the neighbourhood aggregation into it.
 
             print("#######################################\n")
             print("########### Starts Training ###########")
@@ -284,7 +288,6 @@ class Graph2SequenceTool():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
-
 
     def EdgeLookUpEqualization(self, datapair, max_card):
         """

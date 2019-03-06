@@ -133,7 +133,6 @@ class GloVeDatasetPreprocessor:
             if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
 
             self.tokenizer_words = self.tokenizer.word_index.items()
-            node_words_list = None
 
             print('Result structure! \n\t=> [Sentences, EdgeArrays, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')

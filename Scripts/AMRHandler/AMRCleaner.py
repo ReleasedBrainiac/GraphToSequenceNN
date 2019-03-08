@@ -1,11 +1,15 @@
-# - *- coding: utf-8*-
 import re
 from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, isStr, isInt, toInt, isNumber, isDict, isBool, isList
+from DatasetHandler.ContentSupport import AssertEquality, AssertNotNone
 from DatasetHandler.ContentSupport import hasContent, GetRandomInt
 from Configurable.ProjectConstants import Constants
 
+
 class Cleaner:
-    # Variables inits
+    """
+    This class preprocess an AMR object for the usage in the DatasetHandler.
+    This means collecting only the cleaned sentences and semantics.
+    """
     node_parenthesis = ['(',')']
     edge_parenthesis = ['[',']']
     extension_dict = {}
@@ -15,47 +19,41 @@ class Cleaner:
     isCleaned = False
     hasContext = False
     hasExtentsionsDict = False
-    keep_edge_encoding = False
 
-    # Class inits
-    constants = None
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def __init__(self, node_parenthesis=['(',')'], input_context=None, input_extension_dict={}, keep_edges=False):
+    def __init__(self, node_parenthesis:list =['(',')'], input_context:str =None, input_extension_dict:dict ={}, keep_edges:bool =False):
         """
-        Class constructor 
-            :param node_parenthesis: define node parenthesis
-            :param input_context: input amr string
-            :param input_extension_dict: look up dictionairy
-            :param keep_edges: switch allow to keep edges or not
+        Class constructor collect all necessary parameters for the cleaning process.
+            :param node_parenthesis:list: define node parenthesis
+            :param input_context:str: input amr string
+            :param input_extension_dict:dict: look up dictionairy
+            :param keep_edges:bool: switch allow to keep edges or not
         """   
         try:
             self.constants = Constants()
+            self.keep_edge_encoding = keep_edges 
 
-            if isStr(input_context): 
+            if isNotNone(input_context): 
                 self.hasContext = True
                 self.context = input_context
 
-            if isDict(input_extension_dict):
+            if bool(input_extension_dict):
                 self.hasExtentsionsDict = True
                 self.extension_dict = input_extension_dict
                 self.extension_keys_dict = self.extension_dict.keys()
 
-            if isList(node_parenthesis):
-                self.node_parenthesis = node_parenthesis
-
-            if isBool(keep_edges): self.keep_edge_encoding = keep_edges
+            if len(node_parenthesis) >= 2: self.node_parenthesis = node_parenthesis
+                
             if(self.hasContext): self.GenerateCleanAMR()
-
         except Exception as ex:
             template = "An exception of type {0} occurred in [AMRCleaner.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def HasColon(self, in_context=''):
+    def HasColon(self, in_context:str =''):
+        """
+        This function checks a string contains colon characters.
+            :param in_context:str: given string
+        """   
         if isStr(in_context) and len(in_context) > 0:
             return self.constants.COLON in in_context
         elif self.hasContext:
@@ -63,7 +61,11 @@ class Cleaner:
         else:
             return False
 
-    def HasQuotation(self, in_context=''):
+    def HasQuotation(self, in_context:str =''):
+        """
+        This function checks a string contains quotation characters.
+            :param in_context:str: given string
+        """   
         if isStr(in_context) and len(in_context) > 0:
             return self.constants.QUOTATION_MARK in in_context
         elif self.hasContext:
@@ -71,7 +73,11 @@ class Cleaner:
         else:
             return False
     
-    def HasParenthesis(self, in_context=''):
+    def HasParenthesis(self, in_context:str =''):
+        """
+        This function checks a string contains parenthesis characters.
+            :param in_context:str: given string
+        """
         if isStr(in_context) and len(in_context) > 0:
             return self.node_parenthesis[0] in in_context and self.node_parenthesis[1] in in_context
         elif self.hasContext:
@@ -79,7 +85,11 @@ class Cleaner:
         else:
             return False
 
-    def HasWhitspaces(self, in_context=''):
+    def HasWhitspaces(self, in_context:str =''):
+        """
+        This function checks a string contains whitespace characters.
+            :param in_context:str: given string
+        """   
         if isStr(in_context) and len(in_context) > 0:
             return self.constants.WHITESPACE in in_context
         elif self.hasContext:
@@ -87,7 +97,13 @@ class Cleaner:
         else:
             return False
 
-    def MatchSignsOccurences(self, in_context='', in_signs=['(',')']):
+    def MatchSignsOccurences(self, in_context:str ='', in_signs:list =['(',')']):
+        """
+        This function control the equal amount of 2 signs occurences in a string.
+            :param in_context:str: given string
+            :param in_signs:list: list of 2 signs with the same 
+        """
+        assert len(in_signs)>=2, 'Given signs list was to short!'
         if isStr(in_context) and len(in_context) > 0:
             count_sign_x = self.CountSignOccurence(in_context, in_signs[0])
             count_sign_y = self.CountSignOccurence(in_context, in_signs[1])
@@ -98,13 +114,11 @@ class Cleaner:
             return count_sign_x == count_sign_y
         else:
             return False
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
  
-    def NewEdge(self , in_context=None):
+    def NewEdge(self , in_context:str =None):
         """
         This function defines a new AMR converted node edge.
-            :param in_context: the corresponding content
+            :param in_context:str: the corresponding content
         """
         try:
             return self.node_parenthesis[0] + self.edge_parenthesis[0] + in_context + self.edge_parenthesis[1] + self.node_parenthesis[1]
@@ -115,10 +129,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)        
         
-    def CountLeadingWhiteSpaces(self, in_context):
+    def CountLeadingWhiteSpaces(self, in_context:str):
         """
         This function count leading whitespaces in raw line of a raw or indentation cleaned AMR string.
-            :param in_context: a raw or indentation cleaned AMR string.
+            :param in_context:str: a raw or indentation cleaned AMR string.
         """
         try:
             count = 0
@@ -132,11 +146,11 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CountSignOccurence(self, in_context, in_search_element):
+    def CountSignOccurence(self, in_context:str, in_search_element:str):
         """
         This function count occourences of a string inside another string.
-            :param in_context: the string were want to discover occourences inside
-            :param in_search_element: the string we are searching for
+            :param in_context:str: the string were want to discover occourences inside
+            :param in_search_element:str: the string we are searching for
         """
         try:
             occurence = 0
@@ -150,10 +164,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GetNestedContent(self, in_context):
+    def GetNestedContent(self, in_context:str):
         """
         This function return the most outer nested content in a string by given desired node_parenthesis strings.
-            :param in_context: string nested in desired node_parenthesis.
+            :param in_context:str: string nested in desired node_parenthesis.
         """
         try:
             if self.HasParenthesis(in_context):
@@ -169,10 +183,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def RemoveSpacingFormat(self, in_context):
+    def RemoveSpacingFormat(self, in_context:str):
         """
         This function replace all line and space formatting in raw AMR (graph-) string with a single whitespace.
-            :param in_context: a raw string from AMR Dataset
+            :param in_context:str: a raw string from AMR Dataset
         """
         try:
             return (' '.join(in_context.split()))
@@ -181,13 +195,11 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def CollectAllMatches(self, in_regex_pattern, in_context):
+    def CollectAllMatches(self, in_regex_pattern:str, in_context:str):
         """
         This function collect all occurences of a regex pattern match.
-            :param in_regex_pattern: matcher regex
-            :param in_context: input string
+            :param in_regex_pattern:str: matcher regex
+            :param in_context:str: input string
         """   
         try:
             return re.findall(in_regex_pattern, in_context)
@@ -198,12 +210,12 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplaceAllMatches(self, in_pattern_search, in_replace, in_context):
+    def ReplaceAllMatches(self, in_pattern_search:str, in_replace:str, in_context:str):
         """
         This function replace a found regex pattern match with a desired replacement value.
-            :param in_pattern_search: matcher regex
-            :param in_replace: replacement value
-            :param in_context: input string
+            :param in_pattern_search:str: matcher regex
+            :param in_replace:str: replacement value
+            :param in_context:str: input string
         """   
         try:
             return re.sub(in_pattern_search, in_replace, in_context) 
@@ -214,13 +226,11 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def AddLeadingSpace(self, depth, in_context):
+    def AddLeadingSpace(self, depth:int, in_context:str):
         """
         This function add a desired amount of whitespaces to a cleaned AMR line fragment.
-            :param in_context: the cleaned AMR semantic line fragment
-            :param depth: the desired depth rather intended position in the string
+            :param depth:int: the desired depth rather intended position in the string
+            :param in_context:str: the cleaned AMR semantic line fragment
         """
         try:
             for _ in range((depth * self.constants.INDENTATION)):
@@ -231,10 +241,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncapsulateEdge(self, in_match):
+    def EncapsulateEdge(self, in_match:str):
         """
             Encapsulate edge inputs with defined edge parenthesis.
-            :param in_match: a edge string component
+            :param in_match:str: a edge string component
         """   
         try:
             flag = in_match[0]
@@ -247,10 +257,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncapsulateUnenclosedValues(self, in_context):
+    def EncapsulateUnenclosedValues(self, in_context:str):
         """
         This function create new AMR nodes on argument flags following unenclosed values.
-            :param in_context: a string containing argument flags following unenclosed values
+            :param in_context:str: a string containing argument flags following unenclosed values
         """
         try:
             if self.HasColon(in_context):
@@ -276,10 +286,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncapsulateStringifiedValues(self, in_context):
+    def EncapsulateStringifiedValues(self, in_context:str):
         """
         This function creates new edge with defined edge_parenthesis for qualified nested values in quotation marks in the input.
-            :param in_context: a string with at least one qualified name
+            :param in_context:str: a string with at least one qualified name
         """
         try:
             if self.HasQuotation(in_context):
@@ -302,12 +312,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def ReplaceKnownExtensions(self, in_context):
+    def ReplaceKnownExtensions(self, in_context:str):
         """
         Replace flags or content with a known entry in the extension dict.
-            :param in_context: input string
+            :param in_context:str: input string
         """   
         try:
             if ('-' in in_context):
@@ -323,10 +331,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplacePolaritySign(self, in_context):
+    def ReplacePolaritySign(self, in_context:str):
         """
         This function replace negative polarity (-) with a new edge.
-            :param in_context: string containing at least on AMR polarity sign
+            :param in_context:str: string containing at least on AMR polarity sign
         """
         try:
             replace = ''
@@ -342,10 +350,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplacePoliteSign(self, in_context):
+    def ReplacePoliteSign(self, in_context:str):
         """
         This function replace positive polite (+) signs with a new edge.
-            :param in_context: string containing at least on AMR polite sign
+            :param in_context:str: string containing at least on AMR polite sign
         """
         try:
             replace = ''
@@ -361,10 +369,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DeleteFlags(self, in_context):
+    def DeleteFlags(self, in_context:str):
         """
         This function delete AMR flags and only keep the informations they were flagged.
-            :param in_context: string with at least on AMR flag
+            :param in_context:str: string with at least on AMR flag
         """
         try:
             if isInStr(self.constants.COLON, in_context):
@@ -375,10 +383,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DeleteUnusedSigns(self, in_context):
+    def DeleteUnusedSigns(self, in_context:str):
         """
         This function delete all remaining signs we don't want to keep in the string.
-            :param in_context: a semantic line fragment
+            :param in_context:str: a semantic line fragment
         """
         try:
             return re.sub(self.constants.SIGNS_REMOVE_UNUSED_REGEX, '', in_context)
@@ -389,10 +397,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DeleteWordExtension(self, in_context):
+    def DeleteWordExtension(self, in_context:str):
         """
         This function delete word extensions from node content in a AMR semantic line fragment.
-            :param in_context: a semantic line fragment
+            :param in_context:str: a semantic line fragment
         """
         try:
             if isInStr('-', in_context):
@@ -405,12 +413,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def HandleAdditionalContent(self, in_context):
+    def HandleAdditionalContent(self, in_context:str):
         """
         This function search in a AMR line fragment about additional context for the AMR node and replace or remove problematic content.
-            :param in_context: a AMR line fragment with a node and maybe additional context 
+            :param in_context:str: a AMR line fragment with a node and maybe additional context 
         """
         try:
             if isInStr(self.constants.COLON, in_context): in_context = self.DeleteFlags(in_context)
@@ -429,10 +435,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def FinalFormatter(self, in_context):
+    def FinalFormatter(self, in_context:str):
         """
         This function clean up a raw spacing format removed AMR semantic string.
-            :param in_context: a raw spacing format removed AMR semantic string
+            :param in_context:str: a raw spacing format removed AMR semantic string
         """
         try:
             depth = -1
@@ -457,8 +463,6 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
     def GenerateCleanAMR(self):
         """
         This function preprocess a raw AMR semantic string.
@@ -481,12 +485,10 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    def AllowedCharacterOccurenceCheck(self, in_context):
+    def AllowedCharacterOccurenceCheck(self, in_context:str):
         """
         This function check a string being AMR conform and additionally allows new defined type of edge informations.
-            :param in_context: a string
+            :param in_context:str: a string
         """   
         try:
             only_allowed_chars = all(x.isalnum() or x.isspace() or (x is '[') or (x is ']') or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)

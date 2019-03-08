@@ -171,8 +171,7 @@ class Graph2SequenceTool():
             datasets_sentences, directed_edge_matrices, vectorized_sequences, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
             glove_embedding = GloVeEmbedding(max_cardinality=max_cardinality, vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
-            print('EMB: ', glove_embedding_layer.get_config())
+            #glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
@@ -180,8 +179,8 @@ class Graph2SequenceTool():
 
             print('DS_Sentence:\n', datasets_sentences[0])            
             print('DS_Nodes_Emb:\n', datasets_nodes_embedding.shape)
-            print('DS_Sten_vec:\n', vectorized_sequences.shape)
-
+            print('DS_Sen_vec:\n', vectorized_sequences.shape)
+            print('Sent_Vec_Exa.:\n', vectorized_sequences[0].shape)
 
             sys.exit(0)
 
@@ -228,7 +227,6 @@ class Graph2SequenceTool():
 
             print("#######################################\n")
             print("######## Nodes Embedding Layer ########")
-        
         
 
             print("#######################################\n")

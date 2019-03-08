@@ -156,35 +156,8 @@ class ModelBuilder():
             => https://machinelearningmastery.com/define-encoder-decoder-sequence-sequence-model-neural-machine-translation-keras/ 
             => https://www.liip.ch/en/blog/sentiment-detection-with-keras-word-embeddings-and-lstm-deep-learning-networks
             => https://medium.com/tensorflow/predicting-the-price-of-wine-with-the-keras-functional-api-and-tensorflow-a95d1c2c1b03
-
-            :param inputs:Layer: 
-            :param prev_memory_state: 
-            :param prev_carry_state: 
-            :param name:str:
-            :param training:bool=True:
-            :param units=0: 
-            :param act:str='tanh': 
-            :param rec_act:str='hard_sigmoid': 
-            :param use_bias:bool=True: 
-            :param kernel_initializer:str='glorot_uniform': 
-            :param recurrent_initializer:str='orthogonal': 
-            :param bias_initializer:str='zeros': 
-            :param unit_forget_bias:bool=True: 
-            :param kernel_regularizer=None: 
-            :param recurrent_regularizer=None: 
-            :param bias_regularizer=None: 
-            :param activity_regularizer=None: 
-            :param kernel_constraint=None: 
-            :param recurrent_constraint=None: 
-            :param bias_constraint=None: 
-            :param dropout:float=0.0: 
-            :param rec_dropout:float=0.0: 
-            :param implementation:int=1: 
-            :param return_sequences:bool=False: 
-            :param return_state:bool=True: 
-            :param go_backwards:bool=False: 
-            :param stateful:bool=False: 
-            :param unroll:bool=False: 
+        
+        Params are the Keras params!
         """
         AssertNotNone(inputs, 'lstm_inputs')
         AssertNotNone(prev_memory_state, 'prev_memory_state')
@@ -236,11 +209,24 @@ class ModelBuilder():
                             kernel_regularizer=kernel_regularizer,
                             activity_regularizer=activity_regularizer,
                             name="concatenation_act")(concat)
-        concat_pool = K.max(concat_act,axis=0)
+
+
 
         #TODO the following 2 lines are according to the implementation idea in https://github.com/IBM/Graph2Seq/blob/master/main/model.py line 204
-        concat_pool = K.reshape(concat_pool, [-1, hidden_dim])
-        graph_embedding_encoder_states = (concat_pool, concat_pool)
+        concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]))(concat_act)
+        print('concat_pool', concat_pool)
+        print('concat_pool', type(concat_pool))
+
+
+        #pool_act = Dense( hidden_dim, name="pool_act")(concat_pool)
+        #print('pool_act', pool_act)
+        #print('pool_act', type(pool_act))
+
+        #graph_embedding_encoder_states = [concat_pool, concat_pool]
+        graph_embedding_encoder_states = [concat_pool, concat_pool]
+
+        print('graph_embedding_encoder_states', graph_embedding_encoder_states)
+        print('graph_embedding_encoder_states', type(graph_embedding_encoder_states))
 
         #TODO [encoder_out, embedding: [hidden state, cell state]]
         return [concat_act, graph_embedding_encoder_states]
@@ -304,7 +290,7 @@ class ModelBuilder():
 
 
         lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=units)
-        return Dense(units=num_dec_tokens, activation=act)(lstm_decoder_outs)
+        return Dense(units=100, activation=act)(lstm_decoder_outs)
 
     def MakeModel(self, layers: Layer):
         """
@@ -312,14 +298,10 @@ class ModelBuilder():
             :param inputs:list=None: list of inputs
             :param layers:Layer=None: layer structure
         """
-        AssertNotNone(self.encoder_inputs, 'encoder inputs')
-        AssertNotNone(self.decoder_inputs, 'decoder inputs')
-        enc_dec_ins = [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]
-        assert isinstance(enc_dec_ins, list) , 'The given inputs is no list!'
-
+        inputs = self.get_inputs()
+        assert isinstance(inputs, list) , 'The given inputs is no list!'
         AssertNotNone(layers, 'layers')
-        print('Ins: ',enc_dec_ins)
-        return Model(inputs=enc_dec_ins, outputs=layers)
+        return Model(inputs=inputs, outputs=layers)
 
     #def CompileModel(self, )
 
@@ -353,3 +335,11 @@ class ModelBuilder():
         This getter returns the decoder inputs.
         """   
         return self.decoder_inputs
+
+    def get_inputs(self):
+        """
+        This getter returns the encoder and decoder inputs in exactly this order [encoder, decoder].
+        """   
+        AssertNotNone(self.encoder_inputs, 'encoder inputs')
+        AssertNotNone(self.decoder_inputs, 'decoder inputs')
+        return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]

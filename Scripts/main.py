@@ -159,7 +159,7 @@ class Graph2SequenceTool():
 
             print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
             pipe.ShowNodeCardinalityOccurences()
-            
+
             assert (max_cardinality > 0), ("Max graph nodes cardinality was 0!")
             for datapair in datapairs:
                 datapair[1][0] = self.EdgeLookUpEqualization(datapair, max_cardinality)
@@ -171,6 +171,8 @@ class Graph2SequenceTool():
                                                                 vocab_size=in_vocab_size, 
                                                                 show_feedback=True)
             datasets_sentences, directed_edge_matrices, vectorized_sequences, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
+
+            sys.exit(0)
 
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 

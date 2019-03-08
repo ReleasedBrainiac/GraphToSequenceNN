@@ -83,13 +83,13 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values):
+    def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values:list):
         """
         This function returns  embedding numpy arrays each dataset with stringified node values.
         The word embedding is directly collected from embedding_indices dictionairy.
         Remind, unknown words will be set to a vector of given embedding length with random values.
         Additionally, if you have different graph node cardinalities in your dataset, this tool gonna extend them to an equal size depending on the given max_cardinality.
-            :param datasets_nodes_values: all datasets nodes vaulues defined by the raw word NOT the vectorized definition
+            :param datasets_nodes_values:list: all datasets nodes vaulues defined by the raw word NOT the vectorized definition
         """   
         try:
             datasets_nodes_initial_features = []

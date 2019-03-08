@@ -118,14 +118,13 @@ def isSet(input):
     """
     return isinstance(input, set)
 
-def isNotEmptyString(input):
+def isNotEmptyString(input:str):
     """
     this function check a string is not empty.
-        :param input: string
+        :param input:str: given string
     """
     tmp = input.lstrip(' ')
     return isStr(input) and (len(tmp) > 0)
-
 
 def hasContent(input):
     """
@@ -157,7 +156,6 @@ def isLambda(input):
     """
     return isinstance(input, types.LambdaType)
 
-
 def getType(input):
     """
     This funtion return the type input
@@ -165,16 +163,17 @@ def getType(input):
     """
     return type(input)
 
-def GetRandomInt(min, max):
+def GetRandomInt(min:int, max:int):
     """
     This function return a int between min and max
     If min and max no integer it return an integer between 0 and 100
-        :param min: number 
-        :param max: number > min
+        :param min:int: minimum 
+        :param max:int: maximum
     """
-    if isInt(min) and isInt(max) and (min < max):
+    if (min < max):
         return rnd.randint(min, max)
     else:
+        print('WRONG INPUT FOR [GetRandomInt] so range [0,100] was used for generation!')
         return rnd.randint(0,100)
 
 def isNotInStr(search , content):
@@ -184,7 +183,7 @@ def isNotInStr(search , content):
         :param search: string search element 
         :param content: string content element
     """
-    if(isStr(content)) and (isNotNone(search)):
+    if isNotNone(search) and isStr(content):
         if (len(content) >= len(search)):
             return (search not in content)
         else:
@@ -200,14 +199,12 @@ def isInStr(search , content):
         :param search: string search element
         :param content: string content element
     """
-    if(isStr(content)) and (isNotNone(search)):
+    if isNotNone(search) and isStr(content):
         if (len(content) >= len(search)):
             return (search in content)
         else:
             return False
     else:
-        print(content, len(content))
-        print(search, len(search))
         print('WRONG INPUT FOR [isInStr]')
         return False
 
@@ -215,9 +212,9 @@ def singleHasKey(key, input):
     """
     This function check a dictionary contain a specified key.
         :param key: unknown type object
-        :param input: a set
+        :param input: a set OR dict
     """
-    if((isDict(input)) or (isSet(input))) and (isNotNone(key)):
+    if(isNotNone(key) and (isDict(input) or isSet(input))):
         return(key in input)
     else:
         print('WRONG INPUT FOR [singleHasKey]')
@@ -227,7 +224,7 @@ def multiHasKey(key, input):
     """
     This function check a input is a list where each dictionary contain a spezified key.
         :param key: unknown type object
-        :param input: a set
+        :param input: a list of dictionaries
     """
     if(isList(input)) and (isNotNone(key)):
         for element in input:
@@ -242,7 +239,7 @@ def multiHasKey(key, input):
 def multiIsDict(inputs):
     """
     This function check a input is a list of dictionaries.
-        :param inputs: a set of objects
+        :param inputs: a list of dictionaries
     """
     if(isList(inputs)):
         for input in inputs:
@@ -254,14 +251,14 @@ def multiIsDict(inputs):
         print('WRONG INPUT FOR [multiIsDict]')
         return False
 
-def setOrDefault(input, default, wantSet):
+def setOrDefault(input, default, wantSet:bool):
     """
     This function allow to set an input or default by a switch value.
         :param input: old value of unknown type object
         :param default: default value unknown type object
-        :param wantSet: desired value unknown type object
+        :param wantSet:bool: desired value unknown type object
     """
-    if(isXTypeEqualY(input, default)) and (isBool(wantSet)):
+    if isXTypeEqualY(input, default):
         if(wantSet):
             return input
         else:
@@ -273,9 +270,9 @@ def setOrDefault(input, default, wantSet):
 def toInt(input):
     """
     This function converts a float or integer to an integer value.
-        :param input: a number string 
+        :param input: a string with only numbers OR int OR float 
     """
-    if(isFloat(input)) or (isInt(input)):
+    if( isFloat(input) or isInt(input) or (isStr(input) and input.isdigit()) ):
         return int(input)
     else:
         print('WRONG INPUT FOR [toInt]')
@@ -295,8 +292,8 @@ def isXTypeEqualY(object_x, object_y):
 
 def getFileLength(path):
     """
-    This function return the size of a files content.
-        :param path: path as string
+    This function returns the size of a files content.
+        :param path:str: path string
     """
     if isStr(path):
         with open(path, 'r', encoding="utf8") as f:
@@ -307,45 +304,68 @@ def getFileLength(path):
         print('WRONG INPUT FOR [getFileLength]')
         return 0
 
-def getIndexedODictLookUp(dictionary):
+def getIndexedODictLookUp(dictionary:OrderedDict):
+    """
+    This getter returns a OrderedDict's key value look up.
+        :param dictionary:OrderedDict: given ordered dictionairy
+    """
     try:
         ind= {k:i for i,k in enumerate(dictionary.keys())}
         return ind
     except Exception as ex:
-            template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
+        template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
 
-def ReorderListByIndices(reorder_list, ordering_indices):
+def ReorderListByIndices(reorder_list:list, ordering_indices:list):
     """
     This function reorder a list by a given list of ordering indices.
-        :param reorder_list: list you want to reorder
-        :param ordering_indices: list of indices with desired value order
+        :param reorder_list:list: list you want to reorder
+        :param ordering_indices:list: list of indices with desired value order
     """
     try:
         return [y for x,y in sorted(zip(ordering_indices,reorder_list))] 
     except Exception as ex:
-            template = "An exception of type {0} occurred in [ContentSupport.ReorderListByIndices]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
+        template = "An exception of type {0} occurred in [ContentSupport.ReorderListByIndices]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
 
-def MatrixExpansionWithZeros(np_2D_array, up_to_dim):
+def MatrixExpansionWithZeros(np_2D_array:np.ndarray, up_to_dim:int):
     """
-    This function allow to expand a matrix and fill the empty space with zeros.
+    This function allow to expand a 2D matrix in both directions and fill the empty space with zeros.
     Attention:
     This is only allowed on matrices where the input matrix dimensions are equal and less_equal than the extension value.
-        :param np_2D_array: an numpy array
-        :param up_to_dim: the dim you desired for x=y
+        :param np_2D_array:np.ndarray: an numpy array
+        :param up_to_dim:int: the dim extension value you desired for x=y
     """
     try:
-            assert (np_2D_array.shape[0] == np_2D_array.shape[1]), ("The input matrix dimension aren't equal")
-            assert (np_2D_array.shape[0] <= up_to_dim), ("The dimension value isn't less or equal then the arrays dimensions")
-            difference = up_to_dim - np_2D_array.shape[0]
-            assert (difference > -1), ('Difference was negative!')
-            result = np.lib.pad(np_2D_array, (0,difference),'constant', constant_values=(0))
-            assert (result.shape[0] == result.shape[1] and result.shape[0] == up_to_dim), ("Result has wrong dimensions!")
-            return result
+        AssertEquality(np_2D_array.shape[0], np_2D_array.shape[1], msg="The input matrix dimension aren't equal")
+        assert (np_2D_array.shape[0] <= up_to_dim), ("The dimension value isn't less or equal then the arrays dimensions")
+        difference = up_to_dim - np_2D_array.shape[0]
+        assert (difference > -1), ('Difference was negative!')
+        result = np.lib.pad(np_2D_array, (0,difference),'constant', constant_values=(0))
+        assert (result.shape[0] == result.shape[1] and result.shape[0] == up_to_dim), ("Result has wrong dimensions!")
+        return result
     except Exception as ex:
-            template = "An exception of type {0} occurred in [ContentSupport.MatrixExpansionWithZeros]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
+        template = "An exception of type {0} occurred in [ContentSupport.MatrixExpansionWithZeros]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
+def AssertNotNone(value, msg:str = ''):
+    """
+    This assertion alerts on None values.
+        :param value: given object
+        :param msg:str: [optional] given msg
+    """
+    warning = msg if (msg != '') else "Given value was None!"
+    assert (value is not None), warning
+
+def AssertEquality(first_object, second_object, msg:str = ''):
+    """
+    This assertion alerts on unequality.
+        :param first_object: first given object
+        :param second_object: second given object
+        :param msg:str: [optional] given msg
+    """
+    warning = msg if (msg != '') else "Given objects weren't equal!"
+    assert (first_object == second_object), warning

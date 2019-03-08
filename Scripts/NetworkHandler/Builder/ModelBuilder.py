@@ -277,20 +277,18 @@ class ModelBuilder():
 
     def GraphEmbeddingDecoderBuild( self,
                                     embedding_layer: Embedding,
-                                    prev_memory_state,  
-                                    prev_carry_state, 
-                                    num_dec_tokens:int, 
-                                    units:int =200,
+                                    prev_memory_state: Layer,  
+                                    prev_carry_state: Layer,
                                     act:activations = activations.softmax):
-        AssertNotNegative(units)
-        AssertNotNone(embedding_layer, 'embedding_layer')
-        AssertNotNegative(num_dec_tokens)
-        AssertNotNone(prev_memory_state, 'encoder_memory_states')
-        AssertNotNone(prev_carry_state, 'encoder_carry_states')
 
+        AssertIsKerasTensor(embedding_layer)
+        AssertIsKerasTensor(prev_memory_state)
+        AssertIsKerasTensor(prev_carry_state)
 
-        lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=units)
-        return Dense(units=100, activation=act)(lstm_decoder_outs)
+        out_vecs_lenghts = int(embedding_layer.shape[len(embedding_layer.shape)-1])
+        states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+        lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim)
+        return Dense(units=out_vecs_lenghts, activation=act)(lstm_decoder_outs)
 
     def MakeModel(self, layers: Layer):
         """

@@ -170,7 +170,8 @@ class GloVeEmbedding:
                              output_dim=self.EMBEDDING_DIM,
                              embeddings_initializer=Constant(embedding_matrix),
                              input_length=self.MAX_SEQUENCE_LENGTH,
-                             trainable=False)
+                             trainable=False,
+                             name=('glove_'+str(self.EMBEDDING_DIM)+'d_embedding'))
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeEmbeddingLayer.BuildVocabEmbeddingLayer]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

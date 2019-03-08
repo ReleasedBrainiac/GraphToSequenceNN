@@ -167,11 +167,19 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             #TODO check switches!
-            glove_dataset_processor = GloVeDatasetPreprocessor(nodes_context=datapairs, vocab_size=in_vocab_size, show_feedback=True)
+            glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
+                                                                vocab_size=in_vocab_size, 
+                                                                show_feedback=True)
             datasets_sentences, directed_edge_matrices, vectorized_sequences, dataset_nodes_values, dataset_indices = glove_dataset_processor.GetPreparedDataSamples()
-            glove_embedding = GloVeEmbedding(max_cardinality=max_cardinality, vocab_size=in_vocab_size, tokenizer=glove_dataset_processor, glove_file_path=self.GLOVE, output_dim=out_dim_emb, show_feedback=True)
+
+            glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
+                                                vocab_size=in_vocab_size, 
+                                                tokenizer=glove_dataset_processor, 
+                                                glove_file_path=self.GLOVE, 
+                                                output_dim=out_dim_emb, 
+                                                show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-            #glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()

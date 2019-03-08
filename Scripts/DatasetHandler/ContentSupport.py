@@ -1,4 +1,3 @@
-# - *- coding: utf-8*-
 '''
     Used Resources:
         => https://www.geeksforgeeks.org/type-isinstance-python/

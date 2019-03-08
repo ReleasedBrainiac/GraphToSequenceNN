@@ -122,7 +122,7 @@ class ModelBuilder():
                             inputs:Layer,
                             prev_memory_state, 
                             prev_carry_state,
-                            name:str = 'LSTMDecoder',
+                            name:str = 'sequence_decoder',
                             training:bool = True,
                             units=0, 
                             act:str ='tanh', 
@@ -164,7 +164,8 @@ class ModelBuilder():
         AssertNotNone(prev_carry_state, 'prev_carry_state')
         AssertNotNegative(units)
 
-        outputs, state_h, state_c = LSTM(   units=units, 
+        outputs, state_h, state_c = LSTM(   name=name,
+                                            units=units, 
                                             activation=act, 
                                             recurrent_activation=rec_act, 
                                             use_bias=use_bias, 
@@ -210,25 +211,8 @@ class ModelBuilder():
                             activity_regularizer=activity_regularizer,
                             name="concatenation_act")(concat)
 
-
-
-        #TODO the following 2 lines are according to the implementation idea in https://github.com/IBM/Graph2Seq/blob/master/main/model.py line 204
-        concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]))(concat_act)
-        print('concat_pool', concat_pool)
-        print('concat_pool', type(concat_pool))
-
-
-        #pool_act = Dense( hidden_dim, name="pool_act")(concat_pool)
-        #print('pool_act', pool_act)
-        #print('pool_act', type(pool_act))
-
-        #graph_embedding_encoder_states = [concat_pool, concat_pool]
+        concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]), name='concat_pool')(concat_act)
         graph_embedding_encoder_states = [concat_pool, concat_pool]
-
-        print('graph_embedding_encoder_states', graph_embedding_encoder_states)
-        print('graph_embedding_encoder_states', type(graph_embedding_encoder_states))
-
-        #TODO [encoder_out, embedding: [hidden state, cell state]]
         return [concat_act, graph_embedding_encoder_states]
 
     def GraphEmbeddingEncoderBuild(
@@ -256,7 +240,6 @@ class ModelBuilder():
         """ 
         
         out_shape_lambda = (self.input_enc_dim+self.edge_dim,)
-        print('lambda_shape: ', out_shape_lambda)
         features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
         neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator).Execute()
         
@@ -293,17 +276,26 @@ class ModelBuilder():
     def MakeModel(self, layers: Layer):
         """
         This function creates the model by given inputs.
-            :param inputs:list=None: list of inputs
-            :param layers:Layer=None: layer structure
+            :param layers:Layer: layer structure that define your model
         """
         inputs = self.get_inputs()
-        assert isinstance(inputs, list) , 'The given inputs is no list!'
+        assert (isinstance(inputs, list) and  input is not None), 'The given inputs is no list!'
         AssertNotNone(layers, 'layers')
         return Model(inputs=inputs, outputs=layers)
 
-    #def CompileModel(self, )
+    def CompileModel(self, model:training.Model, loss:str ='mean_squared_error', optimizer:str ='rmsprop', metrics:list =['mae', 'acc']):
+        """
+        This function compile the training model.
+            :param model:training.Model: the training model
+            :param loss:str: name of a loss function [Keras definition]
+            :param optimizer:str: name of an optimizer
+            :param metrics:list: list of strings of possible metrics [Keras definition]
+        """   
+        model.compile(  loss=loss,
+                        optimizer=optimizer,
+                        metrics=metrics)
 
-    def Summary(self, model: training.Model):
+    def Summary(self, model:training.Model):
         """
         This function prints the summary of a model.
             :param model:training.Model: a build model
@@ -311,7 +303,7 @@ class ModelBuilder():
         AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
         print(model.summary())
 
-    def Plot(self, model: training.Model, file_name: str, show_shapes:bool =True):
+    def Plot(self, model:training.Model, file_name:str, show_shapes:bool =True):
         """
         This function plot and store a given model to desired file.
             :param model:Model: keras model

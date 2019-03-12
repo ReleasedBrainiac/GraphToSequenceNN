@@ -252,8 +252,12 @@ class DatasetPipeline():
     def ShowNodeCardinalityOccurences(self):
         """
         This function provides an overview about the type and amount of found cardinalities in th Dataset.
-        """   
-        print('Graph Node Cardinality Occourences:')
-        for key in self.count_graph_node_cardinalities_occourences.keys():
-            print("\t=> [", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
-        
+        """
+        try:
+            print('Graph Node Cardinality Occourences:')
+            for key in self.count_graph_node_cardinalities_occourences.keys():
+                print("\t=> [", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.ShowNodeCardinalityOccurences]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

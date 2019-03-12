@@ -252,7 +252,7 @@ def multiIsDict(inputs):
 # Conversion return casted type value or None
 def toInt(input):
     """
-    This function converts a float or integer to an integer value.
+    This function converts a float, integer or a number string to an integer value.
         :param input: a string with only numbers OR int OR float 
     """
     if( isFloat(input) or isInt(input) or (isStr(input) and input.isdigit()) ):

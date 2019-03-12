@@ -1,19 +1,21 @@
 from DatasetHandler.ContentSupport import isStr, isNotNone
 
-class Reader:
-
+class Reader():
+    """
+    This class provides a FileReader for text containing files with an [otpional] delimiter.
+    """
     path = None
-    delimiter = None
+    delimiter = '#'
 
-    def __init__(self, input_path, delimiter='#'):
+    def __init__(self, input_path:str =None, delimiter:str ='#'):
         """
-        The class constructor check for valid input. 
+        The class constructor check for valid input and store it for local usage. 
             :param input_path: path of file with string content
             :param delimiter: an optional sign that allow to split an amr dataset at each occurence
         """   
         try:
-            if isNotNone(input_path) and isStr(input_path): self.path = input_path
-            if isNotNone(delimiter) and isStr(delimiter): self.delimiter = delimiter
+            if isNotNone(input_path): self.path = input_path
+            if isNotNone(delimiter): self.delimiter = delimiter
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -21,8 +23,7 @@ class Reader:
 
     def LineReadContent(self):
         """
-        This function provide a file reader for the AMR look up table.
-            :param path: path string to dataset text file
+        This function provides a file reader for the AMR look up table.
         """
         try:
             look_up_elements = {}
@@ -34,14 +35,13 @@ class Reader:
 
             return look_up_elements
         except Exception as ex:
-            template = "An exception of type {0} occurred in [FileReader.DatasetAsList]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [FileReader.LineReadContent]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
     def GroupReadAMR(self):
         """
-        This function provide a file reader for the AMR dataset.
-            :param path: path string to dataset text file
+        This function provides a file reader for the AMR dataset.
         """
         try:
             with open(self.path, 'r', encoding="utf8") as fileIn:

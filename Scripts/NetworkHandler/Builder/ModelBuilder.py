@@ -16,7 +16,9 @@ from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, Ass
 #TODO ~> 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
 
 class ModelBuilder():
-
+    """
+    This class allows to easily build a Graph2Sequence neural network model.
+    """
     def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int):
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 

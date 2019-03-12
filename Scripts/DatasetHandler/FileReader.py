@@ -1,4 +1,4 @@
-from DatasetHandler.ContentSupport import isStr, isNotNone
+from DatasetHandler.ContentSupport import isNotNone
 
 class Reader():
     """

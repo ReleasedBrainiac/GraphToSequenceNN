@@ -1,9 +1,8 @@
 import re
-from DatasetHandler.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone, setOrDefault
+from DatasetHandler.ContentSupport import isStr, isInt, isNotNone, setOrDefault, CalculateMeanValue
 from DatasetHandler.FileReader import Reader
 from DatasetHandler.FileWriter import Writer
 from DatasetHandler.DatasetExtractor import Extractor
-from DatasetHandler.TextEvaluation import EvaluationHelpers
 from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
 from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
@@ -53,7 +52,6 @@ class DatasetPipeline():
         """   
         try:
             self.constants = Constants()
-            self.eval_helper = EvaluationHelpers()
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
             self.dataset_drop_outs = 0
             self.max_observed_nodes_cardinality = 0
@@ -196,8 +194,8 @@ class DatasetPipeline():
             sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
                                                                     sentence_restriction=self.restriction_sentence, 
                                                                     semantics_restriction=self.restriction_semantic).Extract()
-            mean_value_sentences = self.eval_helper.CalculateMeanValue(sentence_lengths)
-            mean_value_semantics = self.eval_helper.CalculateMeanValue(semantic_lengths)     
+            mean_value_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
+            mean_value_semantics = CalculateMeanValue(str_lengths=semantic_lengths)     
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
             if (not self.as_amr):

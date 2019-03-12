@@ -1,4 +1,7 @@
-class Constants:
+class Constants():
+    """
+    This class provides necessary constants for the whole Graph2Sequence Tool.
+    """
 
     # Dataset Provider Constants
     TYP_ERROR = 'Entered wrong type! Input is no String!'

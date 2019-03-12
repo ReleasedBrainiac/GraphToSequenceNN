@@ -353,6 +353,7 @@ def MatrixExpansionWithZeros(np_2D_array:np.ndarray, up_to_dim:int):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+
 def GetRandomInt(min:int, max:int):
     """
     This function return a int between min and max

@@ -18,6 +18,16 @@ from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 #TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
 #TODO IN MA => Code => Why min and max cardinality
 
+
+
+
+'''
+#TODO Packages missing reviews!
+#TODO NetworkHandler
+#TODO GloVeHandler
+
+'''
+
 class Graph2SequenceTool():
 
     TF_CPP_MIN_LOG_LEVEL="2"

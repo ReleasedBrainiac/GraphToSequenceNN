@@ -27,7 +27,6 @@ class DatasetPipeline():
                  in_path:str=None, 
                  output_path_extender:str='ouput', 
                  max_length:int=-1, 
-                 saving:bool=False, 
                  show_feedback:bool =False, 
                  keep_edges:bool =False, 
                  min_cardinality:int =1, 
@@ -47,7 +46,6 @@ class DatasetPipeline():
             :param in_path:str: dataset input path
             :param output_path_extender:str: result output path
             :param max_length:int: context length restriction
-            :param saving:bool: only saving the content not processing further processing
             :param show_feedback:bool: show process content as console feedback
             :param keep_edges:bool: include edges in the amr cleaner strategy
             :param min_cardinality:int: define min range for the node matrix representation [>2 (at least 3 nodes/words) depends on the SPO sentence definition in english]
@@ -63,7 +61,7 @@ class DatasetPipeline():
             self.list_graph_node_cardinalities = []
             self.count_graph_node_cardinalities_occourences = dict()
             self.is_showing_feedback = show_feedback
-            self.is_saving = saving
+            self.is_saving = False
             self.is_keeping_edges = keep_edges
             self.as_amr = False
             self.out_path_extender = output_path_extender
@@ -76,10 +74,10 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def RemoveEnclosingAngleBracket(self, in_sentence):
+    def RemoveEnclosingAngleBracket(self, in_sentence:str):
         """
-        This method clean up the a given amr extracted sentence from text formating markup.
-            :param in_sentence: raw sentence AMR split element 
+        This method cleans up the a given amr extracted sentence from text formatting markup.
+            :param in_sentence:str: raw sentence AMR split element 
         """
         try:
             in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
@@ -90,10 +88,10 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeAmrSemanticString(self, semantic):
+    def ForgeAmrSemanticString(self, semantic:str):
         """
-        This function allows to convert a raw AMR semantic into a cleaned and minimalized version of it.
-            :param semantic: raw semantic input
+        This function converts a raw AMR semantic into a cleaned and minimalized version of it.
+            :param semantic:str: raw semantic input
         """
         try:
             cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
@@ -108,11 +106,10 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeAmrTree(self, semantic):
+    def ForgeAmrTree(self, semantic:str):
         """
-        This function allows to convert a raw AMR semantic
-        into a cleaned and minimalized anytree reprenstation of it.
-            :param semantic: raw semantic input
+        This function converts a AMR semantic into a cleaned and minimalized anytree reprenstation.
+            :param semantic:str: semantic string
         """
         try:
             return TParser(semantic, self.is_showing_feedback, self.is_saving).Execute()
@@ -121,7 +118,11 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeMatrices(self, semantic):
+    def ForgeMatrices(self, semantic:str):
+        """
+        This function converts a given semantic into a cleaned metrix representation [Neigbouring and Nodes].
+            :param semantic:str: semantic string
+        """   
         try:
             return MParser(context=semantic, show_feedback=self.is_showing_feedback).Execute()
         except Exception as ex:
@@ -129,18 +130,17 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectDatasetPair(self, data_pair):
+    def CollectDatasetPair(self, data_pair:list):
         """
         This function collect a data pair from raw sentences and semantics.
         ATTENTION: [as_amr = true] does not support conversion with ConvertToTensorMatrices!
-            :param data_pair: amr data pair
+            :param data_pair:list: amr data pair
         """
         try:
             sentence = self.RemoveEnclosingAngleBracket(self.constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
-            if(self.as_amr):
-                semantic = self.ForgeAmrSemanticString(data_pair[1])
-            else: 
-                semantic = self.ForgeMatrices(self.ForgeAmrSemanticString(data_pair[1]))
+            semantic = self.ForgeAmrSemanticString(data_pair[1])
+
+            if(not self.as_amr): semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]
@@ -151,12 +151,12 @@ class DatasetPipeline():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectAllDatasetPairs(self, data_pairs):
+    def CollectAllDatasetPairs(self, data_pairs:list):
         """
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
-            :param data_pairs: array of amr data pairs
+            :param data_pairs:list: array of amr data pairs
         """
         try:
             dataset_pairs_sent_sem = []
@@ -180,11 +180,15 @@ class DatasetPipeline():
 
     def Pipeline(self):
         """
-        This function collect the cleaned sentence graphs as:
-        1. AMR string representation [as_amr_structure = True]
-        2. AnyTree [else]:
-            1. as JSON     [is_not_saving = true]
-            2. as AnyNode  [else]
+        This function collect the cleaned sentences and the cleaned semantics will hae the following structure: 
+
+            [For Saving]
+            => AMR string representation IF [as_amr = True] otherwise AnyTree as JSON
+
+            [For Processing]
+            => Numpy.ndarrays [[Neighbourings_fw, Neighbourings_bw], Nodes/Words/Features]
+
+            Return: List[sentence, semantics]
         """
         try:
             dataset = Reader(self.in_path).GroupReadAMR()
@@ -192,10 +196,8 @@ class DatasetPipeline():
             sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
                                                                     sentence_restriction=self.restriction_sentence, 
                                                                     semantics_restriction=self.restriction_semantic).Extract()
-
             mean_value_sentences = self.eval_helper.CalculateMeanValue(sentence_lengths)
             mean_value_semantics = self.eval_helper.CalculateMeanValue(semantic_lengths)     
-
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
             if (not self.as_amr):
@@ -207,8 +209,6 @@ class DatasetPipeline():
                 print('[Size Mean]: Sentences =', mean_value_sentences, '| Semantics = ', mean_value_semantics)
                 print('[Count]: Sentences = ', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
                 print('[Path]: ', self.in_path)
-                
-                
                 print('[Dropouts]:', self.dataset_drop_outs)
 
             return data_pairs
@@ -220,15 +220,15 @@ class DatasetPipeline():
     def SaveData(self, as_amr:bool):
         """
         This function calls the Pipeline and store the desired results.
-            :param as_amr: if True save as amr string otherwise as anytree json string
+            :param as_amr:bool: IF True => raw AMR string ELSE anytree json string
         """
         try:
             
             self.as_amr = as_amr
+            self.is_saving = True
             writer = Writer(self.in_path, 
                             self.out_path_extender, 
                             self.Pipeline())
-            
             return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.SaveData]. Arguments:\n{1!r}"
@@ -240,8 +240,9 @@ class DatasetPipeline():
         This function calls the Pipeline and return the cleaned dataset for ANN usage.
         """
         try:
+            self.is_saving = False
             datapairs = self.Pipeline()
-            print('Result structure:\n\t=> [Sentence (Raw), EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
+            print('Result structure:\n\t=> [Sentence, EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
             return datapairs
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"
@@ -249,6 +250,9 @@ class DatasetPipeline():
             print(message)
 
     def ShowNodeCardinalityOccurences(self):
+        """
+        This function provides an overview about the type and amount of found cardinalities in th Dataset.
+        """   
         print('Graph Node Cardinality Occourences:')
         for key in self.count_graph_node_cardinalities_occourences.keys():
             print("\t=> [", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")

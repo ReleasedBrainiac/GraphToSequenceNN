@@ -1,4 +1,6 @@
 '''
+This function library provides data typ controlling statments.
+
     Used Resources:
         => https://www.geeksforgeeks.org/type-isinstance-python/
         => https://anytree.readthedocs.io/en/latest/
@@ -13,6 +15,7 @@ import random as rnd
 import numpy as np
 import types
 
+# Basic data type checks must return bool
 def isComplex(input):
     """
     This function check input is a complex number value.
@@ -118,25 +121,6 @@ def isSet(input):
     """
     return isinstance(input, set)
 
-def isNotEmptyString(input:str):
-    """
-    this function check a string is not empty.
-        :param input:str: given string
-    """
-    tmp = input.lstrip(' ')
-    return isStr(input) and (len(tmp) > 0)
-
-def hasContent(input):
-    """
-    This function check sequences/collections containing at least min 1 value.
-        :param input: unknown type object
-    """
-    if isNotNone(input) and isIterable(input):
-        return (len(input) > 0)
-    else:
-        print('WRONG INPUT FOR [hasContent]')
-        return False
-
 def isIterable(input):
     """
     This function check a input is iterable,
@@ -156,25 +140,27 @@ def isLambda(input):
     """
     return isinstance(input, types.LambdaType)
 
-def getType(input):
-    """
-    This funtion return the type input
-        :param input: unknown type object
-    """
-    return type(input)
 
-def GetRandomInt(min:int, max:int):
+# Content control statements must return bool
+def isXTypeEqualY(object_x, object_y):
     """
-    This function return a int between min and max
-    If min and max no integer it return an integer between 0 and 100
-        :param min:int: minimum 
-        :param max:int: maximum
+    This function check input type x and input type y are equal.
+        :param object_x: unknown type object
+        :param object_y: unknown type object
     """
-    if (min < max):
-        return rnd.randint(min, max)
+    if(isNotNone(object_x)) and (isNotNone(object_y)):
+        return (type(object_x) == type(object_y))
     else:
-        print('WRONG INPUT FOR [GetRandomInt] so range [0,100] was used for generation!')
-        return rnd.randint(0,100)
+        print('WRONG INPUT FOR [isXTypeEqualY]')
+        return None
+
+def isNotEmptyString(input:str):
+    """
+    this function check a string is not empty.
+        :param input:str: given string
+    """
+    tmp = input.lstrip(' ')
+    return isStr(input) and (len(tmp) > 0)
 
 def isNotInStr(search , content):
     """
@@ -206,6 +192,17 @@ def isInStr(search , content):
             return False
     else:
         print('WRONG INPUT FOR [isInStr]')
+        return False
+
+def hasContent(input):
+    """
+    This function check sequences/collections containing at least min 1 value.
+        :param input: unknown type object
+    """
+    if isNotNone(input) and isIterable(input):
+        return (len(input) > 0)
+    else:
+        print('WRONG INPUT FOR [hasContent]')
         return False
 
 def singleHasKey(key, input):
@@ -251,6 +248,59 @@ def multiIsDict(inputs):
         print('WRONG INPUT FOR [multiIsDict]')
         return False
 
+
+# Conversion return casted type value or None
+def toInt(input):
+    """
+    This function converts a float or integer to an integer value.
+        :param input: a string with only numbers OR int OR float 
+    """
+    if( isFloat(input) or isInt(input) or (isStr(input) and input.isdigit()) ):
+        return int(input)
+    else:
+        print('WRONG INPUT FOR [toInt]')
+        return None
+
+
+# Getters 
+def getType(input):
+    """
+    This funtion return the type input
+        :param input: unknown type object
+    """
+    return type(input)
+
+def getFileLength(path:str):
+    """
+    This function returns the size of a files content.
+        :param path:str: path string
+    """
+    try:
+        with open(path, 'r', encoding="utf8") as f:
+            for i in enumerate(f):
+                pass
+        return i + 1
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.getFileLength]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+        return 0
+        
+def getIndexedODictLookUp(dictionary:OrderedDict):
+    """
+    This getter returns a OrderedDict's key value look up.
+        :param dictionary:OrderedDict: given ordered dictionairy
+    """
+    try:
+        ind= {k:i for i,k in enumerate(dictionary.keys())}
+        return ind
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
+
+# Setters
 def setOrDefault(input, default, wantSet:bool):
     """
     This function allow to set an input or default by a switch value.
@@ -267,56 +317,8 @@ def setOrDefault(input, default, wantSet:bool):
         print('WRONG INPUT FOR [setOrDefault]')
         return input
 
-def toInt(input):
-    """
-    This function converts a float or integer to an integer value.
-        :param input: a string with only numbers OR int OR float 
-    """
-    if( isFloat(input) or isInt(input) or (isStr(input) and input.isdigit()) ):
-        return int(input)
-    else:
-        print('WRONG INPUT FOR [toInt]')
-        return None
 
-def isXTypeEqualY(object_x, object_y):
-    """
-    This function check input type x and input type y are equal.
-        :param object_x: unknown type object
-        :param object_y: unknown type object
-    """
-    if(isNotNone(object_x)) and (isNotNone(object_y)):
-        return (type(object_x) == type(object_y))
-    else:
-        print('WRONG INPUT FOR [isXTypeEqualY]')
-        return None
-
-def getFileLength(path):
-    """
-    This function returns the size of a files content.
-        :param path:str: path string
-    """
-    if isStr(path):
-        with open(path, 'r', encoding="utf8") as f:
-            for i in enumerate(f):
-                pass
-        return i + 1
-    else:
-        print('WRONG INPUT FOR [getFileLength]')
-        return 0
-
-def getIndexedODictLookUp(dictionary:OrderedDict):
-    """
-    This getter returns a OrderedDict's key value look up.
-        :param dictionary:OrderedDict: given ordered dictionairy
-    """
-    try:
-        ind= {k:i for i,k in enumerate(dictionary.keys())}
-        return ind
-    except Exception as ex:
-        template = "An exception of type {0} occurred in [ContentSupport.getIndexedODictLookUp]. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
+# Basic list and matrix operations.
 def ReorderListByIndices(reorder_list:list, ordering_indices:list):
     """
     This function reorder a list by a given list of ordering indices.
@@ -351,6 +353,20 @@ def MatrixExpansionWithZeros(np_2D_array:np.ndarray, up_to_dim:int):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def GetRandomInt(min:int, max:int):
+    """
+    This function return a int between min and max
+    If min and max no integer it return an integer between 0 and 100
+        :param min:int: minimum 
+        :param max:int: maximum
+    """
+    if (min < max):
+        return rnd.randint(min, max)
+    else:
+        print('WRONG INPUT FOR [GetRandomInt] so range [0,100] was used for generation!')
+        return rnd.randint(0,100)
+
+# Asserts for cases where an exception is necessary.
 def AssertNotNone(value, msg:str = ''):
     """
     This assertion alerts on None values.

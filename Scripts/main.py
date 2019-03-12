@@ -148,8 +148,7 @@ class Graph2SequenceTool():
             pipe = DatasetPipeline(in_path=in_dataset, 
                                 output_path_extender=in_extender, 
                                 max_length=in_max_length, 
-                                show_feedback=is_show, 
-                                saving=False, 
+                                show_feedback=is_show,
                                 keep_edges=is_keeping_edges,
                                 min_cardinality=self.MIN_NODE_CARDINALITY, 
                                 max_cardinality=self.MAX_NODE_CARDINALITY
@@ -283,7 +282,6 @@ class Graph2SequenceTool():
                             output_path_extender=in_extender, 
                             max_length=in_max_length, 
                             show_feedback=is_show, 
-                            saving=True, 
                             keep_edges=is_keeping_edges,
                             min_cardinality=self.MIN_NODE_CARDINALITY, 
                             max_cardinality=self.MAX_NODE_CARDINALITY

@@ -1,10 +1,3 @@
-# - *- coding: utf-8*-
-'''
-    Used Resources:
-        => https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
-        => https://www.pythonsheets.com/notes/python-rexp.html
-'''
-
 import re
 from DatasetHandler.ContentSupport import isList, isStr, isInStr, isInt, isBool, isNone, isNotNone, setOrDefault
 from DatasetHandler.FileReader import Reader
@@ -17,72 +10,67 @@ from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
 from AMRHandler.AMRCleaner import Cleaner
 
 
-class DatasetPipeline:
+class DatasetPipeline():
+    """
+    This class prepare the AMR for further usage. 
+    It is possible to only clean and store the AMR dataset or it can be cleaned and passed to other processes.
 
-    # Variables inits
+    Used Resources:
+        => https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
+        => https://www.pythonsheets.com/notes/python-rexp.html
+    """
+
     look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
     extension_dict =  Reader(input_path=look_up_extension_replace_path).LineReadContent()
 
-    # Class inits
-    constants = Constants()
-    eval_Helper = EvaluationHelpers()
-    t_parser = None
-    g_parser = None
-    dataset_drop_outs = 0
-    max_observed_nodes_cardinality = 0
-    set_unique_graph_node_cardinalities = set()
-    list_graph_node_cardinalities = []
-    count_graph_node_cardinalities_occourences = dict()
-
-    # Path content
-    in_path = None
-    out_path_extender = 'ouput'
-    context_max_length = -1
-
-    # Switches
-    is_keeping_edges = False
-    is_saving = False
-    is_showing_feedback = False
-    as_amr = False
-
-    def __init__(self, in_path=None, output_path_extender=None, max_length=-1, saving=False,show_feedback=False, keep_edges=False, min_cardinality=1, max_cardinality=100):
+    def __init__(self, 
+                 in_path:str=None, 
+                 output_path_extender:str='ouput', 
+                 max_length:int=-1, 
+                 saving:bool=False, 
+                 show_feedback:bool =False, 
+                 keep_edges:bool =False, 
+                 min_cardinality:int =1, 
+                 max_cardinality:int =100):
         """
-        This class constructor allow to set all path definbition for the dataset and the output. 
-        Further its possible to define a maximal lengt for the used dataset. 
-        Therefore the max_length define the exact value for the string length and doubled it for the  semantic string length.
-        If it is negative the module gonna use all dataset elements.
-        Additionally switches allow to tell the system:
-            -> to save the content only
-            -> to show feedback on the processing stage
-            -> to include amr graph edge encoding
-            :param in_path: dataset input path
-            :param output_path_extender: result output path
-            :param max_length: context length restriction
-            :param saving: only saving flag
-            :param show_feedback: show process content
-            :param keep_edges: include edges in the amr cleaner strategy
+        This class constructor collect informations about the input and output files.
+        Further its possible to define a max_lengt for the used dataset. 
+        It defines the string length for sentences and doubled it for the semantics string length.
+        Ever missmatch will be dropped out!
+        If it is negative the module will use all dataset elements.
+
+        Attention:
+            With min_cardinality and max_cardinality you can define the used dataset after processing. 
+            This allows to handle hughe differnces in the dataset groups 
+                ~> depends on knowledge about "well defined datasets" rules
+
+            :param in_path:str: dataset input path
+            :param output_path_extender:str: result output path
+            :param max_length:int: context length restriction
+            :param saving:bool: only saving the content not processing further processing
+            :param show_feedback:bool: show process content as console feedback
+            :param keep_edges:bool: include edges in the amr cleaner strategy
+            :param min_cardinality:int: define min range for the node matrix representation [>2 (at least 3 nodes/words) depends on the SPO sentence definition in english]
+            :param max_cardinality:int: define max range for the node matrix representation 
         """   
         try:
+            self.constants = Constants()
+            self.eval_helper = EvaluationHelpers()
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
             self.dataset_drop_outs = 0
             self.max_observed_nodes_cardinality = 0
             self.set_unique_graph_node_cardinalities = set()
             self.list_graph_node_cardinalities = []
             self.count_graph_node_cardinalities_occourences = dict()
-
-            self.max_cardinality = max_cardinality if (max_cardinality is not None and max_cardinality > 0) else 100
-            self.min_cardinality = min_cardinality if (max_cardinality is not None and max_cardinality > 0) else 1
-
-            if isStr(output_path_extender): self.out_path_extender = output_path_extender
-
-            self.context_max_length = setOrDefault(max_length, -1, isInt(max_length))
-
-            if isBool(show_feedback): self.is_showing_feedback = show_feedback
-
-            if isBool(saving): self.is_saving = saving
-
-            if isBool(keep_edges): self.is_keeping_edges = keep_edges
-
+            self.is_showing_feedback = show_feedback
+            self.is_saving = saving
+            self.is_keeping_edges = keep_edges
+            self.as_amr = False
+            self.out_path_extender = output_path_extender
+            self.restriction_sentence = setOrDefault(max_length, -1, isInt(max_length))
+            self.restriction_semantic = -1 if (max_length < 0)  else (2 * self.restriction_sentence)
+            self.min_cardinality = min_cardinality if (min_cardinality > 2) else 3
+            self.max_cardinality = max_cardinality if (max_cardinality >= min_cardinality) else 100
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -201,9 +189,12 @@ class DatasetPipeline:
         try:
             dataset = Reader(self.in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
-            sentence_lengths, semantic_lengths, pairs = Extractor(in_content=dataset, in_size_restriction=self.context_max_length).Extract()
-            mean_value_sentences = self.eval_Helper.CalculateMeanValue(sentence_lengths)
-            mean_value_semantics = self.eval_Helper.CalculateMeanValue(semantic_lengths)     
+            sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
+                                                                    sentence_restriction=self.restriction_sentence, 
+                                                                    semantics_restriction=self.restriction_semantic).Extract()
+
+            mean_value_sentences = self.eval_helper.CalculateMeanValue(sentence_lengths)
+            mean_value_semantics = self.eval_helper.CalculateMeanValue(semantic_lengths)     
 
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
@@ -212,13 +203,13 @@ class DatasetPipeline:
                     self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
             if self.is_showing_feedback:
-                print('Max restriction: ', self.context_max_length)
-                print('Path input: ', self.in_path)
-                print('Count sentences: ', len(sentence_lengths))
-                print('Count semantics: ', len(semantic_lengths))
-                print('Mean sentences: ', mean_value_sentences)
-                print('Mean semantics: ', mean_value_semantics)
-                print('Data dropouts:', self.dataset_drop_outs)
+                print('[Size Restriction]: Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
+                print('[Size Mean]: Sentences =', mean_value_sentences, '| Semantics = ', mean_value_semantics)
+                print('[Count]: Sentences = ', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
+                print('[Path]: ', self.in_path)
+                
+                
+                print('[Dropouts]:', self.dataset_drop_outs)
 
             return data_pairs
         except Exception as ex:
@@ -226,14 +217,14 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def SaveData(self, as_amr):
+    def SaveData(self, as_amr:bool):
         """
         This function calls the Pipeline and store the desired results.
             :param as_amr: if True save as amr string otherwise as anytree json string
         """
         try:
             
-            if isBool(as_amr): self.as_amr = as_amr
+            self.as_amr = as_amr
             writer = Writer(self.in_path, 
                             self.out_path_extender, 
                             self.Pipeline())

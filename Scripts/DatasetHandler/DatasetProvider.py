@@ -202,12 +202,13 @@ class DatasetPipeline():
                 for key in self.set_unique_graph_node_cardinalities:
                     self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
-            if self.is_showing_feedback:
-                print('[Size Restriction]: Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
-                print('[Size Mean]: Sentences =', mean_value_sentences, '| Semantics = ', mean_value_semantics)
-                print('[Count]: Sentences = ', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
-                print('[Path]: ', self.in_path)
-                print('[Dropouts]:', self.dataset_drop_outs)
+            print('\n~~~~~~~~~~~~~ Cleaning AMR ~~~~~~~~~~~~')
+            print('[Size Restriction]:\t Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
+            print('[Size Mean]:\t\t Sentences =', mean_value_sentences, '| Semantics = ', mean_value_semantics)
+            print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
+            print('[Path]:\t\t\t', self.in_path)
+            print('[Dropouts]:\t\t', self.dataset_drop_outs)
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return data_pairs
         except Exception as ex:

@@ -3,8 +3,10 @@ from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
 import numpy as np
 
-class MatrixBuilder:
-
+class MatrixBuilder():
+    """
+    This class provide amr context to graph matrices builder.
+    """
     def __init__(self, context:str =None, show_feedback:bool =False):
         """
         This class constructor stores the given context and allow to activation of showing the process results on the console.

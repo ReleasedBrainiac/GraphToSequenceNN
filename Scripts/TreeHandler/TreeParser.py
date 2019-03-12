@@ -1,42 +1,31 @@
-# - *- coding: utf-8*-
-'''
-    Used Resources:
-        => http://anytree.readthedocs.io/en/latest/
-'''
-
 import re
 from anytree import AnyNode, RenderTree, find, findall, PreOrderIter
 from collections import OrderedDict
-from DatasetHandler.ContentSupport import isDict, isAnyNode, isStr, isInt, isODict, isList, isBool, isNone, isNotEmptyString
-from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone, toInt
+from DatasetHandler.ContentSupport import isODict, isList, isNone, isNotEmptyString
+from DatasetHandler.ContentSupport import isInStr, isNotInStr, isNotNone
 from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 from Configurable.ProjectConstants import Constants
 
-'''
+class TParser():
+    """
     This class library allow to extract content from AMR String representation.
     The result will provide as AnyNode or Json-AnyNode representation.
-'''
-class TParser:
 
-    #TODO add/edit documentation remove unclean comments
+    Used Resources:
+        => http://anytree.readthedocs.io/en/latest/
+    """
 
-    constants = None
-    amr_input = None
-    show = False
-    saving = False
-
-
-    def __init__(self, in_amr_string, show_process, is_saving):
+    def __init__(self, amr_str:str =None, show_process:bool =False, is_saving:bool =False):
         """
-        This class constructor only collect necessary inputs and initialize the constants.
-            :param in_amr_string: amr input as string
-            :param show_process: switch allow to print some processing steps
-            :param is_saving: switch allow to show further passing strategy after processing data
+        This class constructor collects necessary inputs and initialize the constants only.
+            :param amr_str:str: amr input as string
+            :param show_process:bool: show processing steps
+            :param is_saving:bool: result saving data or further processing
         """   
         try:
             self.constants = Constants()
-            self.amr_input = in_amr_string
+            self.amr_input = amr_str
             self.show = show_process
             self.saving = is_saving
         except Exception as ex:
@@ -44,37 +33,35 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ExportToJson(self, anytree_root):
+    def ExportToJson(self, anytree_root:AnyNode):
         """
-        This function allow to convert a AnyNode Tree to a AnyNode-JsonString representation containing the initial '#::smt' flag.
-            :param anytree_root: root of an anytree object
+        This function converts a AnyNode tree to a AnyNode Json representation containing the initial '#::smt' flag.
+            :param anytree_root:AnyNode: root of an anytree object
         """   
         try:
-            exporter = JsonExporter(indent=2, sort_keys=True)
-            return '#::smt\n' + exporter.export(anytree_root) + '\n'
+            return '#::smt\n' + JsonExporter(indent=2, sort_keys=True).export(anytree_root) + '\n'
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.ExportToJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ImportAsJson(self, json):
+    def ImportAsJson(self, json:str):
         """
-        This function allow to convert a AnyNode-JsonString representation to a AnyNode Tree.
-            :param json: json string defining a anytree
+        This function converts a AnyNode Json representation to a AnyNode tree.
+            :param json:str: anytree json 
         """   
         try:
-            importer = JsonImporter()
-            return importer.import_(json.replace('#::smt\n', ''))
+            return JsonImporter().import_(json.replace('#::smt\n', ''))
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.ImportAsJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ExtractRawNodeSequence(self, sequence):
+    def ExtractRawNodeSequence(self, sequence:str):
         """
-        This function allow to collect the raw node sequence containing the label 
+        This function collects the raw node sequence containing the label 
         and existing features like flags and descriptional content.
-            :param sequence: node sequence string
+            :param sequence:str: node sequence
         """   
         try:
             node_sentence = sequence.lstrip(' ')+')'
@@ -84,11 +71,11 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectNodeDefinition(self, input_node):
+    def CollectNodeDefinition(self, input_node:str):
         """
-        This function allow to collect the full node definition from amr substring variable.
+        This function collects the full node definition from amr substring variable.
         Depending on the node it will contain at least the label and maybe additional features.
-            :param input_node: amr substring containing at least just 1 node.
+            :param input_node:str: amr substring containing at least just 1 node.
         """   
         try:
             parts = input_node.lstrip(' ').split('/')
@@ -101,33 +88,15 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    '''
-    def AddLeadingWhitespaces(self, amr_str, amount):
+    def RemoveExtensionsAndFlags(self, node_elements:list):
         """
-        This function clean up the white-spacing in the AMR string by a given value. 
-            :param amr_str: input containing whitespaces amr string
-            :param amount: amount of whitespaces we need to add at the beginning of the string
-        """ 
-        #TODO this can be solved smarter if we first store the input and calc difference over the iteration result instead of stripping later.
-        try:
-            for _ in range(amount): amr_str = self.constants.WHITESPACE + amr_str
-
-            return [amr_str, len(amr_str) - len(amr_str.lstrip(self.constants.WHITESPACE))]
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [TParser.AddLeadingWhitespaces]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-    '''
-
-    def RemoveExtensionsAndFlags(self, node_elements):
-        """
-        This function remove all word extensions and flag elements in a given node_sequence
-            :param node_elements: a list of split elements defining the node sequence
+        This function removes all word extensions and flag elements in a given node_sequence
+            :param node_elements:list: split elements defining the node sequence
         """   
         try:
             results = []
 
-            if isNotNone(node_elements) and isList(node_elements):
+            if isNotNone(node_elements):
                 for node_element in node_elements:
                     if isInStr("-", node_element) or  isInStr(":", node_element):
                         if isInStr("-", node_element) and isNotInStr(":", node_element):
@@ -144,13 +113,14 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==          Cleaning nodes sequence from garbage         ==#
-    # This function allow to clean the node sequence from all staff so it return label and content only.
-    # It will also cut of word extensions so we just get the basis word of a nodes content!
-    def CleanNodeSequence(self, sequence):
+    def CleanNodeSequence(self, sequence:str):
+        """
+        This function cleans the node sequence and returns label and content only.
+        It will also cuts of word extensions so it just get the basis word of a nodes content!
+            :param sequence:str: node sequence
+        """   
         try:
             node_seq = self.ExtractRawNodeSequence(sequence)
-            # If we have more then just a label
             if(isInStr(' ', node_seq)):
                 elements = node_seq.split(' ')
                 results = self.RemoveExtensionsAndFlags(elements)
@@ -162,9 +132,11 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==             Show RLDAG tree representation            ==#
-    # This function show a rendered representation of a AnyNode tree on console!
-    def ShowRLDAGTree(self, root):
+    def ShowRLDAGTree(self, root:AnyNode):
+        """
+        This function shows a rendered representation of a AnyNode tree on console!
+            :param root:AnyNode: root of a anytree
+        """   
         try:
             print(RenderTree(root))
         except Exception as ex:
@@ -172,14 +144,17 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==               Search for depending parent             ==#
-    # This function allow to get the parent node of the given node depending on a given depth.
-    # The depth is needed to find the correct node during navigation through a graph construction.
-    # We search with the previous node and define the steps we have to step up in the tree. 
-    def GetParentWithPrev(self, node, cur_depth):
+    def GetParentWithPrev(self, node:AnyNode, at_depth:int):
+        """
+        This function collects the parent node of the given node depending on a given depth.
+        The depth is needed to find the correct node during navigation through a graph construction.
+        We search with the previous node and define the steps we have to step up in the tree. 
+            :param node:AnyNode: current node
+            :param at_depth:int: depth of the parent
+        """   
         try:
             cur_parent = node.parent
-            while((cur_parent.depth + 1) > cur_depth):
+            while((cur_parent.depth + 1) > at_depth):
                 cur_parent = cur_parent.parent
 
             return cur_parent
@@ -188,22 +163,19 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #==               Search for new node parent              ==#
-    # This function allow to get the parent for a new node depending on:
-    # 1. depth of the new node
-    # 2. depth of the previous inserted node in the tree
-    # 3. previous AnyNode element at insertion in the tree
-    # This method is used in the BuildNextNode function only because its a part of the workaround!
-    def GetParentOfNewNode(self, depth, p_depth, prev_node):
+    def GetParentOfNewNode(self, depth:int, p_depth:int, prev_node:AnyNode):
+        """
+        This function collects the parent for a new node.
+            :param depth:int: depth of the new node
+            :param p_depth:int: depth of the previous inserted node in the tree
+            :param prev_node:AnyNode: previous node 
+        """   
         try:
-            #Next step down in the Rooted Label DAG (RLDAG)
             if(depth > p_depth):
                 return prev_node
             else:
-                #Next same layer Node in the RLDAG
                 if(depth == p_depth):
                     return prev_node.parent
-                #Next rising layer Node in the RLDAG
                 else:
                     return self.GetParentWithPrev(prev_node, depth)
         except Exception as ex:
@@ -211,111 +183,107 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildTreeGraph(self, orderedNodesDepth, orderedNodesContent):
+    def BuildTreeGraph(self, nodes_depths:OrderedDict, nodes_contents:OrderedDict):
         """
         This function build a graph like tree from (R)outed (L)abeled (D)irected (A)cyclic (G)raph [RLDAG].
-            :param orderedNodesDepth: list of nodes depths in order of occurrence
-            :param orderedNodesContent: list of nodes labels and featues in order of occurrence
+            :param nodes_depths:OrderedDict: list of nodes depths in order of occurrence
+            :param nodes_contents:OrderedDict: list of nodes labels and featues in order of occurrence
         """   
         try:
-            if (isODict(orderedNodesDepth)) and (isODict(orderedNodesContent)):
-                if(len(orderedNodesDepth) != len(orderedNodesContent)): return None
-                else:
-                    root = None
-                    prev_index = -1
-                    prev_node = None
-                    depth = None
-                    label = None
-                    content = None
+            if(len(nodes_depths) != len(nodes_contents)): return None
+            else:
+                root = None
+                prev_index = -1
+                prev_node = None
+                depth = None
+                label = None
+                content = None
 
-                    for index in range(len(orderedNodesDepth)):
-                        depth = orderedNodesDepth[index]
-                        label, content = self.CollectNodeDefinition(orderedNodesContent[index])
+                for index in range(len(nodes_depths)):
+                    depth = nodes_depths[index]
+                    label, content = self.CollectNodeDefinition(nodes_contents[index])
 
-                        if(index == 0):
-                            root = self.NewAnyNode( index, 'root', depth, False, [], True, [], label, content)
-                            prev_node = root
-                        else:
-                            parent_depth = orderedNodesDepth[prev_index]
-                            prev_node = self.BuildNextNode( prev_node, index, parent_depth, None, depth, True, [], False, [], label, content)
+                    if(index == 0):
+                        root = self.NewAnyNode( index, 
+                                                'root', 
+                                                depth, 
+                                                False, 
+                                                [], 
+                                                True, 
+                                                [], 
+                                                label, 
+                                                content)
+                        prev_node = root
+                    else:
+                        parent_depth = nodes_depths[prev_index]
+                        prev_node = self.BuildNextNode( prev_node, index, parent_depth, None, depth, True, [], False, [], label, content)
 
-                        prev_index = index
-                return root
+                    prev_index = index
+            return root
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.BuildTreeGraph]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def NewAnyNode(self, node_id, node_State, node_Depth, node_HasInputNode, node_InputNode, node_HasFollowerNodes, node_FollowerNodes, node_Label, node_Content):
+    def NewAnyNode(self, n_id:int, n_state:str, n_depth:int, n_has_input:bool, n_inputs:list, n_has_followers:bool, n_followers:list, n_label:str, n_content:str):
         """
-        This function create a new node containing the given params.
-            :param node_id: node id
-            :param node_State: node type
-            :param node_Depth: node position in depth
-            :param node_HasInputNode: parent check for at least 1
-            :param node_InputNode: list of parents
-            :param node_HasFollowerNodes: children check for at least 1
-            :param node_FollowerNodes: list of children
-            :param node_Label: obviously the node label
-            :param node_Content: the features stored in the node
+        This function creates a new node containing the given params.
+            :param n_id:int: node id
+            :param n_state:str: node type
+            :param n_depth:int: node depth
+            :param n_has_input:bool: has at least 1 parent
+            :param n_inputs:list: parents
+            :param n_has_followers:bool: has at least 1 children
+            :param n_followers:list: childrens
+            :param n_label:str: node label
+            :param n_content:str: features stored in the node
         """   
         try:
-            if(node_HasInputNode == False): node_InputNode = None
+            if(n_has_input == False): n_inputs = None
 
-            return AnyNode( id=node_id,
-                            name=node_State,
-                            state=node_State,
-                            depth=node_Depth,
-                            hasInputNode=node_HasInputNode,
-                            parent=node_InputNode,
-                            hasFollowerNodes=node_HasFollowerNodes,
-                            followerNodes=node_FollowerNodes,
-                            label=node_Label,
-                            content=node_Content)
+            return AnyNode( id=n_id,
+                            name=n_state,
+                            state=n_state,
+                            depth=n_depth,
+                            hasInputNode=n_has_input,
+                            parent=n_inputs,
+                            hasFollowerNodes=n_has_followers,
+                            followerNodes=n_followers,
+                            label=n_label,
+                            content=n_content)
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.NewAnyNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildNextNode(self, prev_node, index, p_depth, state, depth, hasInputs, input, hasFollowers, followers, label, content):
+    def BuildNextNode(self, prev_node:AnyNode, index:int, p_depth:int, state:str, depth:int, hasInputs:bool, input:list, hasFollowers:bool, followers:list, label:str, content:str):
         """
         This function create a new node depending on a given node or tree.
         Here the node gets its position inside the tree depending on the given prev node which is the root or a tree structure.
-            :param prev_node: 
-            :param index: 
-            :param p_depth: 
-            :param state: 
-            :param depth: 
-            :param hasInputs: 
-            :param input: 
-            :param hasFollowers: 
-            :param followers: 
-            :param label: 
-            :param content: 
+
+            PARAMS @see ~> NewAnyNode 
         """   
         try:
             if(index > 0):
-                input = self.GetParentOfNewNode(depth, p_depth, prev_node)
-                prev_node = self.NewAnyNode(index,
-                                            state,
-                                            depth,
-                                            hasInputs,
-                                            input,
-                                            hasFollowers,
-                                            followers,
-                                            label,
-                                            content)
-
-            return prev_node
+                inputs = self.GetParentOfNewNode(depth, p_depth, prev_node)
+                return self.NewAnyNode( n_id=index,
+                                        n_state=state,
+                                        n_depth=depth,
+                                        n_has_input=hasInputs,
+                                        n_inputs=inputs,
+                                        n_has_followers=hasFollowers,
+                                        n_followers=followers,
+                                        n_label=label,
+                                        n_content=content)
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.BuildNextNode]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def NormalState(self, node):
+    def NormalState(self, node:AnyNode):
         """
-        This funtion set the state of a node in the GraphTree.
-            :param node: 
+        This function sets the state of a node in the GraphTree.
+            :param node:AnyNode: a node
         """   
         try:
             if (node.is_leaf) and not (node.is_root):
@@ -333,14 +301,11 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def NavigateState(self, graph_root, node):
+    def NavigateState(self, graph_root:AnyNode, node:AnyNode):
         """
-        This function chech notes if they are root, subnode or child (-> DAG review as Tree)
-        If this check is true it calls NormalState function.
-        Otherwise it sets state to 'navigator'.
-        Graph of Rank 1 is a sigle root node!
-            :param graph_root: 
-            :param node: 
+        This function sets the state of a node depending on its (position in the) corresponding tree (-> DAG review as Tree)
+            :param graph_root:AnyNode: tree root
+            :param node:AnyNode: node from tree you want to update
         """   
         try:
             if isNotNone(node.label) and isNone(node.content):
@@ -348,17 +313,15 @@ class TParser:
                 regex = str('\\b'+label+'\\b')
                 desired = []
 
-                tmp_desired =findall(graph_root, lambda node: node.label in label)
+                tmp_desired = findall(graph_root, lambda node: node.label in label)
 
                 for i in tmp_desired:
                     match = re.findall(regex, i.label)
                     if len(match) > 0:
                         desired.append(i)
 
-                if(len(desired) < 1):
-                    print( node.state )
-                elif(len(desired) == 1):
-                    self.NormalState(node)
+                if(len(desired) < 1):  print( node.state )
+                elif(len(desired) == 1): self.NormalState(node)
                 else:
                     node.followerNodes = desired[0].followerNodes
                     node.hasFollowerNodes = desired[0].hasFollowerNodes
@@ -372,10 +335,10 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GetSubnodes(self, node):
+    def SetSubnodes(self, node:AnyNode):
         """
-        This function place sub nodes to the current node if some exist.
-            :param node: 
+        This function places sub nodes to the current node if some exist.
+            :param node:AnyNode: given node
         """   
         try:
             followers = [node.label for node in node.children]
@@ -383,34 +346,33 @@ class TParser:
                 node.hasFollowerNodes = True
                 node.followerNodes = followers
         except Exception as ex:
-            template = "An exception of type {0} occurred in [TParser.GetSubnodes]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [TParser.SetSubnodes]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GraphReforge(self, root):
+    def GraphReforge(self, root:AnyNode):
         """
-        This function wrap the SingleNodeReforge for all GraphTree nodes.
-            :param root: 
+        This function wraps the SingleNodeReforge for all GraphTree nodes.
+            :param root:AnyNode: tree root
         """
         try:
             for node in PreOrderIter(root):
                 self.NavigateState(root, node)
-                self.GetSubnodes(node)
+                self.SetSubnodes(node)
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.GraphReforge]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ShowGathererInfo(self, amr_stringified, root):
+    def ShowGathererInfo(self, amr_str:str, root:AnyNode):
         """
-        This function print the input and result of the gatherer.
-        This allow to evaluate the gatherers work easily.
-            :param amr_stringified: 
-            :param root: 
+        This function prints the input and result of the gatherer.
+            :param amr_str:str: given amr
+            :param root:AnyNode: given tree
         """   
         try:
             print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
-            print(amr_stringified)
+            print(amr_str)
             self.ShowRLDAGTree(root)
             print('\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n')
         except Exception as ex:
@@ -418,12 +380,12 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def Preprocessor(self, graph_nodes, nodes_depth, nodes_content):
+    def Preprocessor(self, graph_nodes:list, nodes_depth:OrderedDict, nodes_content:OrderedDict):
         """
-        docstring here
-            :param graph_nodes: 
-            :param nodes_depth: 
-            :param nodes_content: 
+        This functions fills the depths and content dicts with informations about the amr.
+            :param graph_nodes:list: amr splitted by line
+            :param nodes_depth:OrderedDict: collecting depth dict
+            :param nodes_content:OrderedDict: collecting content dict
         """   
         try:
             depth = -1
@@ -441,20 +403,19 @@ class TParser:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def Pipeline(self, amr_stringified, semantic_flag, print_to_console):
+    def Pipeline(self, amr_str:str, print_to_console:bool):
         """
         This function gather a TreeGraph as AnyNode Tree from AMR-String-Representation.
-            :param amr_stringified: 
-            :param semantic_flag: 
-            :param print_to_console: 
+            :param amr_str:str: single amr definition
+            :param print_to_console:bool: show processing steps 
         """   
         try:
             nodes_depth = OrderedDict()
             nodes_content = OrderedDict()
-            self.Preprocessor(amr_stringified.split('\n'), nodes_depth, nodes_content)
+            self.Preprocessor(amr_str.split('\n'), nodes_depth, nodes_content)
             root = self.BuildTreeGraph(nodes_depth, nodes_content)
             self.GraphReforge(root)
-            if(print_to_console): self.ShowGathererInfo(amr_stringified, root)
+            if(print_to_console): self.ShowGathererInfo(amr_str, root)
             return root
         except Exception as ex:
             template = "An exception of type {0} occurred in [TParser.Pipeline]. Arguments:\n{1!r}"
@@ -464,11 +425,11 @@ class TParser:
     def Execute(self):
         """
         This function handle the execution of the gatherer.
-        The result is a importable json if you like to store [to_process = False] 
-        or a AnyNode Tree if you want to process it further [to_process = True]
+        The result is a importable json if you like to store [is_saving = True] 
+        or a AnyNode Tree if you want to process it further [is_saving = False]
         """   
         try:
-            root = self.Pipeline(self.amr_input, self.constants.SEMANTIC_DELIM, self.show)
+            root = self.Pipeline(self.amr_input, self.show)
             if(self.saving): return self.ExportToJson(root)
             else: return root
         except Exception as ex:

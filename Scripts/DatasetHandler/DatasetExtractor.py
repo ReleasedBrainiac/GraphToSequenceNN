@@ -4,18 +4,20 @@ from Configurable.ProjectConstants import Constants
 class Extractor():
     """
     This class allow to collect semantics and sentences from a given amr context.
-    Additionally a size restriction for the semantics an sentences can be passed.
+    Additionally a size restrictions for the semantics an sentences can be passed.
     """
 
-    def __init__(self, in_content:str =None, in_size_restriction:int =-1):
+    def __init__(self, in_content:str =None, sentence_restriction:int =-1, semantics_restriction:int=-1):
         """
         This constructor store the given context, optional a size restirction and load at least the projeczt constants.
             :param in_content:str: input context by default None
-            :param in_size_restriction:int: sentence and semantics restriction by default -1
+            :param sentence_restriction:int: sentence restriction by default -1
+            :param semantics_restriction:int: semantic restriction by default -1
         """   
         try:
             self.context = in_content
-            self.size_restriction = in_size_restriction
+            self.restriction_sentence = sentence_restriction
+            self.restriction_semantic = semantics_restriction
             self.constants = Constants()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetExtractor.Constructor]. Arguments:\n{1!r}"
@@ -29,7 +31,7 @@ class Extractor():
             :param semantic:str: the cleaned correspondign semantic for the sentence
         """
         try:
-            if (self.size_restriction < 1) or ((len(sentence) < (self.size_restriction+1)) and (len(semantic) < (self.size_restriction+1))):
+            if (self.restriction_sentence < 1) or ((len(sentence) < (self.restriction_sentence+1)) and (len(semantic) < (self.restriction_semantic+1))):
                 return [sentence, semantic]
             else:
                 return None

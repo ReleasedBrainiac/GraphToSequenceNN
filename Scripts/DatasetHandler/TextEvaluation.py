@@ -1,19 +1,20 @@
-from DatasetHandler.ContentSupport import isList
+class EvaluationHelpers():
+    """
+    This class provides arithmetic operations like mean calculation over a list of numerical informations.
+    """
 
-class EvaluationHelpers:
-
-    def CalculateMeanValue(self, sentences_length):
+    def CalculateMeanValue(self, sentences_lengths:list):
         """
         This function calculate the mean over all values in a list.
-            :param sentences_length: lengths of all sentences
+            :param sentences_lengths:list: lengths of all sentences
         """
         try:
             sent_summ = 0
 
-            for index, _ in enumerate(sentences_length):
-                sent_summ += sentences_length[index]
+            for index, _ in enumerate(sentences_lengths):
+                sent_summ += sentences_lengths[index]
 
-            mw = int(round(sent_summ / len(sentences_length)))
+            mw = int(round(sent_summ / len(sentences_lengths)))
             return mw
         except Exception as ex:
             template = "An exception of type {0} occurred in [TextEvaluation.CalculateMeanValue]. Arguments:\n{1!r}"

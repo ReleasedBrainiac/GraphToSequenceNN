@@ -1,4 +1,4 @@
-from DatasetHandler.ContentSupport import isStr, isInt, isNotNone
+from DatasetHandler.ContentSupport import isNotNone
 from Configurable.ProjectConstants import Constants
 
 class Extractor():

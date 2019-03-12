@@ -1,17 +1,17 @@
 from DatasetHandler.ContentSupport import isStr, isInt, isNotNone
 from Configurable.ProjectConstants import Constants
 
-class Extractor:
+class Extractor():
+    """
+    This class allow to collect semantics and sentences from a given amr context.
+    Additionally a size restriction for the semantics an sentences can be passed.
+    """
 
-    context = None
-    constants = None
-    size_restriction = -1
-
-    def __init__(self, in_content=None, in_size_restriction=-1):
+    def __init__(self, in_content:str =None, in_size_restriction:int =-1):
         """
-        This class constructor store all passed values to global placeholders.
-            :param in_content: input context by default None
-            :param in_size_restriction: sentence and semantics restriction by default -1
+        This constructor store the given context, optional a size restirction and load at least the projeczt constants.
+            :param in_content:str: input context by default None
+            :param in_size_restriction:int: sentence and semantics restriction by default -1
         """   
         try:
             self.context = in_content
@@ -22,11 +22,11 @@ class Extractor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def RestrictionCorpus(self, sentence, semantic):
+    def RestrictionCorpus(self, sentence:str, semantic:str):
         """
-        This funtion check a sentence and semantic pair satisfy the size restictions.
-            :param sentence: the cleaned sentence
-            :param semantic: the cleaned correspondign semantic for the sentence
+        This funtion check a sentence and semantic pair satisfy the size restiction.
+            :param sentence:str: the cleaned sentence
+            :param semantic:str: the cleaned correspondign semantic for the sentence
         """
         try:
             if (self.size_restriction < 1) or ((len(sentence) < (self.size_restriction+1)) and (len(semantic) < (self.size_restriction+1))):
@@ -38,11 +38,11 @@ class Extractor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ExtractSentence(self, in_content, index):
+    def ExtractSentence(self, in_content:str, index:int):
         """
-        This function extract the sentence element from AMR corpus element!
-            :param in_content: raw amr string fragment from split of full AMR dataset string
-            :param index: position where the sentence was found
+        This function extract the sentence element from AMR corpus element.
+            :param in_content:str: amr string fragment from AMR dataset string
+            :param index:int: position where the sentence was found
         """
         try:
             raw_start_index = in_content[index].find(self.constants.SENTENCE_DELIM)+6
@@ -53,11 +53,11 @@ class Extractor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ExtractSemantic(self, in_content, index):
+    def ExtractSemantic(self, in_content:str, index:int):
         """
-        This function extract the semantics element from AMR corpus element!
-            :param in_content: raw amr string fragment from split of full AMR dataset string
-            :param index: position where the semantic was found
+        This function extract the semantics element from AMR corpus element.
+            :param in_content:str: amr string fragment from AMR dataset string
+            :param index:int: position where the semantic was found
         """
         try:
             raw_content = in_content[index].split('.txt')
@@ -83,12 +83,10 @@ class Extractor:
 
             for index, elem in enumerate(self.context):
                 if (self.constants.SENTENCE_DELIM in elem):
-                    #//TODO geht das nicht direkt auf dem element => wäre schneller
                     sentence = self.ExtractSentence(self.context, index)
                     sentence_found = True
 
                 if (self.constants.FILE_DELIM in elem and sentence_found):
-                    #//TODO geht das nicht direkt auf dem element => wäre schneller
                     semantic = self.ExtractSemantic(self.context, index)
                     semantic_found = True
 

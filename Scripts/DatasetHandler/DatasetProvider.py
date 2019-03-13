@@ -159,6 +159,7 @@ class DatasetPipeline():
             :param data_pairs:list: array of amr data pairs
         """
         try:
+            self.max_sentences = 0
             dataset_pairs_sent_sem = []
             for pair in data_pairs: 
                 data_pair = self.CollectDatasetPair(pair)
@@ -166,9 +167,9 @@ class DatasetPipeline():
                     edges_dim = data_pair[1][0][0].shape[0]
 
                     if (self.min_cardinality <= edges_dim and edges_dim <= self.max_cardinality):
-                        self.list_graph_node_cardinalities.append(edges_dim)
-                        self.set_unique_graph_node_cardinalities.add(edges_dim)
-                        self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edges_dim)
+                        self.CollectCardinalities(edges_dim)
+
+                        if (self.max_sentences < len(data_pair[0])): self.max_sentences = len(data_pair[0])
                         dataset_pairs_sent_sem.append(data_pair)
                 else:
                     dataset_pairs_sent_sem.append(data_pair)
@@ -177,6 +178,22 @@ class DatasetPipeline():
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def CollectCardinalities(self, edge_dim:int):
+        """
+        This function adds informations about a node cardinality and check if this is a new max.
+            :param edge_dim:int: given cardinality
+        """   
+        self.list_graph_node_cardinalities.append(edge_dim)
+        self.set_unique_graph_node_cardinalities.add(edge_dim)
+        self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edge_dim)
+
+    def CollectCardinalityOccurences(self):
+        """
+        This function collects all node cardinality occurences.
+        """   
+        for key in self.set_unique_graph_node_cardinalities:
+            self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
     def Pipeline(self):
         """
@@ -198,17 +215,14 @@ class DatasetPipeline():
                                                                     semantics_restriction=self.restriction_semantic).Extract()
             mean_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
             mean_semantics = CalculateMeanValue(str_lengths=semantic_lengths)
-            self.max_sentences = max(sentence_lengths)
-            self.max_semantics = max(semantic_lengths)
-
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
-            if (not self.as_amr): self.CollectNodeCardinalityOccurences()
+            if (not self.as_amr): self.CollectCardinalityOccurences()
 
             print('\n~~~~~~~~~~~~~ Cleaning AMR ~~~~~~~~~~~~')
             print('[Size Restriction]:\t Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
             print('[Size Mean]:\t\t Sentences =', mean_sentences, '| Semantics = ', mean_semantics)
-            print('[Size Max]:\t\t Sentences =', self.max_sentences, '| Semantics = ', self.max_semantics)
+            print('[Size Max]:\t\t Sentences =', self.max_sentences)
             print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
             print('[Path]:\t\t\t', self.in_path)
             print('[Dropouts]:\t\t', self.dataset_drop_outs)
@@ -251,13 +265,6 @@ class DatasetPipeline():
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
-    def CollectNodeCardinalityOccurences(self):
-        """
-        This function collects all node cardinality occurences.
-        """   
-        for key in self.set_unique_graph_node_cardinalities:
-            self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
     def ShowNodeCardinalityOccurences(self):
         """

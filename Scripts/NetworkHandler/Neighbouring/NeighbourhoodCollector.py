@@ -17,7 +17,7 @@ class Neighbourhood():
         1. https://keras.io/layers/merge/#multiply_1
         2. https://keras.io/backend/#backend
     """
-    
+
     def __init__(self, features, neighbouring, axis:int=1, aggregator:str ='mean'):
         """
         This constructor stores all necessary variables for the setup.
@@ -53,20 +53,16 @@ class Neighbourhood():
         This function collects and aggregates all verticies next hop neighbourhood feature vectors.
         """
         try:
-            aggregated_features_vecs = None
+            agg_f_vecs = None
             vecs = self.neighbouring.shape[1]
 
             for i in range(vecs):        
                 found_neighbour_vectors = self.GetVectorNeighbours(i)       
                 aggregator_result = Aggregators(found_neighbour_vectors, self.axis, self.aggregator).Execute()
                 AssertNotNone(aggregator_result, 'aggregator_result')
+                agg_f_vecs = aggregator_result if (agg_f_vecs is None) else K.concatenate([agg_f_vecs, aggregator_result])
 
-                if aggregated_features_vecs is None:
-                    aggregated_features_vecs = aggregator_result
-                else: 
-                    aggregated_features_vecs = K.concatenate([aggregated_features_vecs, aggregator_result])
-                    
-            transpose = K.transpose(K.reshape(aggregated_features_vecs, (vecs,-1)))
+            transpose = K.transpose(K.reshape(agg_f_vecs, (vecs,-1)))
             return K.concatenate([self.features,transpose])
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetAllVectorsFeatures]. Arguments:\n{1!r}"

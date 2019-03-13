@@ -10,56 +10,57 @@
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from DatasetHandler.ContentSupport import isNotNone, isIterable, isStr, isInt, isBool
+from DatasetHandler.ContentSupport import isNotNone
 
-class GloVeDatasetPreprocessor:
+class GloVeDatasetPreprocessor():
+    """
+    This class preprocesses given Datapairs from DatasetHandler.
+    This includes:
+        1. creating a tokenizer
+        2. collecting datapair samples in lists for the usage in neutal networks
+        3. tokenizing and padding sentences
+        4. returning them additionally to word and paddding indices
+    """
 
-    MAX_SEQUENCE_LENGTH = -1
-
-    tokenizer = None
-    show_response = False
-
-    node_words_list = None
-    edge_matrices = None
-    sentences_list = None
-    word_index = None
-    tokenizer_words = None
-
-    def __init__(self, nodes_context, vocab_size=20000, max_sequence_length=1000, show_feedback=False):
+    def __init__(self, nodes_context:list, vocab_size:int =20000, max_sequence_length:int =1000, show_feedback:bool =False):
         """
         This class constructor stores all given parameters. 
         Further it execute the word collecting process from the datasets node dictionairies.
-        The output_dim values should be adapted from the correpsonding pre-trained word vectors.
         For further informations take a look at => https://nlp.stanford.edu/projects/glove/ => [Download pre-trained word vectors]
-            :param nodes_context: the nodes context values of the dataset 
-            :param vocab_size: maximum number of words to keep, based on word frequency
-            :param max_sequence_length: max length length over all sequences (padding)
-            :param show_feedback: switch allows to show process response on console or not
+            :param nodes_context:list: the nodes context values of the dataset 
+            :param vocab_size:int: maximum number of words to keep, based on word frequency
+            :param max_sequence_length:int: max length length over all sequences (padding)
+            :param show_feedback:bool: switch allows to show process response on console or not
         """   
         try:
             print('~~~~~~ GloVe Dataset Preprocessor ~~~~~')
-            if isBool(show_feedback): self.show_response = show_feedback
 
-            if isInt(max_sequence_length) and (max_sequence_length > 0): 
-                self.MAX_SEQUENCE_LENGTH = max_sequence_length
-                print('Input/padding:\t\t => ', self.MAX_SEQUENCE_LENGTH)
+            self.node_words_list = None
+            self.edge_matrices = None
+            self.sentences_list = None
+            self.word_index = None
+            self.tokenizer_words = None
+            self.show_response = show_feedback               
 
-            if isInt(vocab_size) and (vocab_size > 0): 
-                self.tokenizer = Tokenizer(num_words=vocab_size, split=' ', char_level=False)
-                print('Vocab size:\t\t => ', vocab_size)
+            self.MAX_SEQUENCE_LENGTH = max_sequence_length  if (max_sequence_length > 0) else 1000
+            self.tokenizer = None if (vocab_size < 1) else Tokenizer(num_words=vocab_size, split=' ', char_level=False)
+
+            print('Input/padding:\t\t => ', self.MAX_SEQUENCE_LENGTH)
+            print('Vocab size:\t\t => ', vocab_size)
             
-            if isNotNone(nodes_context) and isIterable(nodes_context): 
+            if isNotNone(nodes_context): 
                 self.CollectDatasamples(nodes_context)
+                if self.show_response: print('Collected samples:\t => ', len(self.sentences_list))
                 
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplaceSentenceFlagAndDialogElements(self, sentence):
+    def ReplaceSentenceFlagAndDialogElements(self, sentence:str):
         """
-        This function retrun a sentence without sentence flag and some direct speech elements.
-            :param sentence: input sentence
+        This function removes the sentence flag and some dialog elements.
+            :param sentence:str: input sentence
         """
         try:
             return sentence.replace('#::snt ', '').replace('" ', '').replace(' "', '').replace('- -','-')
@@ -68,10 +69,10 @@ class GloVeDatasetPreprocessor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectDatasamples(self, datasets):
+    def CollectDatasamples(self, datasets:list):
         """
-        This function collect all dataset word lists and edge matrices for further processing.
-            :param datasets: list of cleaned and parsed amr datasets
+        This function collects all dataset word lists and edge matrices for further processing.
+            :param datasets:list: pairs of cleaned amr datasets
         """   
         try:
             self.node_words_list = []
@@ -83,7 +84,6 @@ class GloVeDatasetPreprocessor:
                     self.node_words_list.append(dataset[1][1])
                     self.edge_matrices.append(dataset[1][0])
                     self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
-            if self.show_response: print('Collected samples:\t => ', len(self.sentences_list))
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -91,7 +91,7 @@ class GloVeDatasetPreprocessor:
 
     def TokenizeVocab(self):
         """
-        This function tokenize the collected vocab and set the global word index list.
+        This function tokenizes the collected vocab (sentences) and set the global word index list.
         """   
         try:
             if self.show_response: print('Tokenize vocab!')
@@ -104,10 +104,10 @@ class GloVeDatasetPreprocessor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def VectorizeVocab(self, tokenized_sequences):
+    def VectorizeVocab(self, tokenized_sequences:list):
         """
-        This function vectorize all tokenized vocab samples.
-            :param tokenized_sequences: tokenized vocab samples
+        This function vectorizes all tokenized vocab samples.
+            :param tokenized_sequences:list: tokenized vocab samples
         """   
         try:
             if self.show_response: print('Vectorize vocab!')
@@ -119,9 +119,9 @@ class GloVeDatasetPreprocessor:
             message = template.format(type(ex).__name__, ex.args)
             print(message)                
 
-    def GetPreparedDataSamples(self):
+    def Execute(self):
         """
-        This function return all given data samples with replaced GloVe word to vector mapping for there nodes context.
+        This function returns all given data samples with tokenized sequences mapping for there nodes context.
         Structure: [sentences, edges, vectorized_sequences, nodes, indices]
         """   
         try:
@@ -138,6 +138,6 @@ class GloVeDatasetPreprocessor:
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
             return [self.sentences_list, self.edge_matrices, vectorized_sequences, self.node_words_list, indices]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.GetPreparedDataSamples]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

@@ -54,6 +54,8 @@ class DatasetPipeline():
             self.constants = Constants()
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
             self.dataset_drop_outs = 0
+            self.max_sentences = 0
+            self.max_semantics = 0
             self.max_observed_nodes_cardinality = 0
             self.set_unique_graph_node_cardinalities = set()
             self.list_graph_node_cardinalities = []
@@ -194,17 +196,19 @@ class DatasetPipeline():
             sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
                                                                     sentence_restriction=self.restriction_sentence, 
                                                                     semantics_restriction=self.restriction_semantic).Extract()
-            mean_value_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
-            mean_value_semantics = CalculateMeanValue(str_lengths=semantic_lengths)     
+            mean_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
+            mean_semantics = CalculateMeanValue(str_lengths=semantic_lengths)
+            self.max_sentences = max(sentence_lengths)
+            self.max_semantics = max(semantic_lengths)
+
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
-            if (not self.as_amr):
-                for key in self.set_unique_graph_node_cardinalities:
-                    self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
+            if (not self.as_amr): self.CollectNodeCardinalityOccurences()
 
             print('\n~~~~~~~~~~~~~ Cleaning AMR ~~~~~~~~~~~~')
             print('[Size Restriction]:\t Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
-            print('[Size Mean]:\t\t Sentences =', mean_value_sentences, '| Semantics = ', mean_value_semantics)
+            print('[Size Mean]:\t\t Sentences =', mean_sentences, '| Semantics = ', mean_semantics)
+            print('[Size Max]:\t\t Sentences =', self.max_sentences, '| Semantics = ', self.max_semantics)
             print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
             print('[Path]:\t\t\t', self.in_path)
             print('[Dropouts]:\t\t', self.dataset_drop_outs)
@@ -247,6 +251,13 @@ class DatasetPipeline():
             template = "An exception of type {0} occurred in [DatasetProvider.ProvideData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def CollectNodeCardinalityOccurences(self):
+        """
+        This function collects all node cardinality occurences.
+        """   
+        for key in self.set_unique_graph_node_cardinalities:
+            self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
 
     def ShowNodeCardinalityOccurences(self):
         """

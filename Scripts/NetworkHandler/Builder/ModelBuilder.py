@@ -18,6 +18,10 @@ from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, Ass
 class ModelBuilder():
     """
     This class allows to easily build a Graph2Sequence neural network model.
+
+    Great resources:
+        => https://theailearner.com/2019/01/25/multi-input-and-multi-output-models-in-keras/
+        => https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
     def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int):
         """

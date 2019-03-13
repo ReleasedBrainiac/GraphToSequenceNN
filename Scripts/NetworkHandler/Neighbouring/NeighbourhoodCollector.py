@@ -1,4 +1,4 @@
-from NetworkHandler.KerasSupportMethods.SupportMethods import AssertTensorShapeEqual, AssertIsTensor, AssertNotNone, AssertNotNegative, IsKerasTensor
+from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor, AssertNotNone, AssertNotNegative
 from NetworkHandler.AggregatorHandler.Aggregators import Aggregators
 from keras import backend as K
 from keras.layers import multiply

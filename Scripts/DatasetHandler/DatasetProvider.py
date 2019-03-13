@@ -184,17 +184,27 @@ class DatasetPipeline():
         This function adds informations about a node cardinality and check if this is a new max.
             :param edge_dim:int: given cardinality
         """   
-        self.list_graph_node_cardinalities.append(edge_dim)
-        self.set_unique_graph_node_cardinalities.add(edge_dim)
-        self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edge_dim)
+        try:
+            self.list_graph_node_cardinalities.append(edge_dim)
+            self.set_unique_graph_node_cardinalities.add(edge_dim)
+            self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edge_dim)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.CollectCardinalities]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def CollectCardinalityOccurences(self):
         """
         This function collects all node cardinality occurences.
         """   
-        for key in self.set_unique_graph_node_cardinalities:
-            self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
-
+        try:
+            for key in self.set_unique_graph_node_cardinalities:
+                self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.CollectCardinalityOccurences]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            
     def Pipeline(self):
         """
         This function collect the cleaned sentences and the cleaned semantics will hae the following structure: 

@@ -1,12 +1,3 @@
-'''
-    This part of my work is inspired by the code of:
-    1. https://machinelearningmastery.com/use-word-embedding-layers-deep-learning-keras/ 
-    2. https://github.com/keras-team/keras/blob/master/examples/pretrained_word_embeddings.py
-    3. https://www.kaggle.com/hamishdickson/bidirectional-lstm-in-keras-with-glove-embeddings 
-    4. https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html 
-
-    The GloVe dataset was provided at https://nlp.stanford.edu/projects/glove/#Download%20pre-trained%20word%20vectors 
-'''
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -20,6 +11,12 @@ class GloVeDatasetPreprocessor():
         2. collecting datapair samples in lists for the usage in neutal networks
         3. tokenizing and padding sentences
         4. returning them additionally to word and paddding indices
+
+    This part of my work is partially inspired by the code of:
+        1. https://machinelearningmastery.com/use-word-embedding-layers-deep-learning-keras/ 
+        2. https://github.com/keras-team/keras/blob/master/examples/pretrained_word_embeddings.py
+        3. https://www.kaggle.com/hamishdickson/bidirectional-lstm-in-keras-with-glove-embeddings 
+        4. https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html 
     """
 
     def __init__(self, nodes_context:list, vocab_size:int =20000, max_sequence_length:int =1000, show_feedback:bool =False):

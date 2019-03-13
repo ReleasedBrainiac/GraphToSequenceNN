@@ -19,9 +19,17 @@ class ModelBuilder():
     """
     This class allows to easily build a Graph2Sequence neural network model.
 
-    Great resources:
-        => https://theailearner.com/2019/01/25/multi-input-and-multi-output-models-in-keras/
-        => https://machinelearningmastery.com/keras-functional-api-deep-learning/
+    Standard Resources: 
+        => 1. https://github.com/keras-team/keras/blob/master/keras/layers/recurrent.py#L1765
+        => 2. https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html
+        => 3. https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
+        => 4. https://machinelearningmastery.com/define-encoder-decoder-sequence-sequence-model-neural-machine-translation-keras/ 
+        => 5. https://www.liip.ch/en/blog/sentiment-detection-with-keras-word-embeddings-and-lstm-deep-learning-networks
+        => 6. https://medium.com/tensorflow/predicting-the-price-of-wine-with-the-keras-functional-api-and-tensorflow-a95d1c2c1b03
+
+    Recommended resources:
+        => 1. https://theailearner.com/2019/01/25/multi-input-and-multi-output-models-in-keras/
+        => 2. https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
     def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int):
         """
@@ -56,10 +64,16 @@ class ModelBuilder():
             This happens because you are generating NEW Input Tensors instead of getting the exsisting.
             Better use 'get_encoder_inputs()'.
         """   
-        features = Input(shape = self.input_enc_shape, name="features")
-        foward_look_up = Input(shape = self.edge_shape, name="fw_neighbourhood")
-        backward_look_up =  Input(shape = self.edge_shape, name="bw_neighbourhood")
-        return [features, foward_look_up, backward_look_up]
+        try:
+            features = Input(shape = self.input_enc_shape, name="features")
+            foward_look_up = Input(shape = self.edge_shape, name="fw_neighbourhood")
+            backward_look_up =  Input(shape = self.edge_shape, name="bw_neighbourhood")
+            return [features, foward_look_up, backward_look_up]            
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildEncoderInputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
 
     def BuildDecoderInputs(self):
         """
@@ -70,7 +84,13 @@ class ModelBuilder():
             This happens because you are generating NEW Input Tensors instead of getting the exsisting.
             Better use 'get_decoder_inputs()'.
         """   
-        return Input(shape = self.input_dec_shape, name="sentences")
+        try:
+            return Input(shape = self.input_dec_shape, name="sentences")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderInputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
 
     def BuildNeighbourhoodLayer(self, 
                                 features, 
@@ -88,18 +108,23 @@ class ModelBuilder():
             :param layer_name:str: 
             :param out_shape:list: 
         """
+        try:
+            name = layer_name if layer_name is not None else ''
+            name_ext = '_lambda_init' if hop == 0 else '_lambda_step'
 
-        name = layer_name if layer_name is not None else ''
-        name_ext = '_lambda_init' if hop == 0 else '_lambda_step'
+            AssertIsKerasTensor(features)
+            AssertIsKerasTensor(look_up)
+            AssertNotNone(features, 'features'), 'Input tensor for features was None!'
+            AssertNotNone(look_up, 'look_up'), 'Input tensor for look_up was None!'
+            AssertNotNone(out_shape, 'out_shape'), 'Input for out_shape was None!'
+            AssertNotNegative(hop), 'input dimension was negative or none!'
+            dataset = [features, look_up]
+            return Lambda(hood_func, output_shape=out_shape, name=name+name_ext)(dataset)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildNeighbourhoodLayer]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
-        AssertIsKerasTensor(features)
-        AssertIsKerasTensor(look_up)
-        AssertNotNone(features, 'features'), 'Input tensor for features was None!'
-        AssertNotNone(look_up, 'look_up'), 'Input tensor for look_up was None!'
-        AssertNotNone(out_shape, 'out_shape'), 'Input for out_shape was None!'
-        AssertNotNegative(hop), 'input dimension was negative or none!'
-        dataset = [features, look_up]
-        return Lambda(hood_func, output_shape=out_shape, name=name+name_ext)(dataset)
 
     def BuildSingleHopActivation( self,
                                   previous_layer: Layer,
@@ -112,17 +137,23 @@ class ModelBuilder():
                                   activity_regularizer: regularizers,
                                   use_bias: bool,
                                   drop_rate: float):
-    
-        x = Dense(  units=hidden_dim,
-                    kernel_initializer=kernel_init,
-                    bias_initializer=bias_init,
-                    activation=act,
-                    kernel_regularizer=kernel_regularizer,
-                    activity_regularizer=activity_regularizer,
-                    use_bias=use_bias,
-                    name=name+'_dense_act')(previous_layer)
-        
-        return Dropout(drop_rate, name=name+'_drop')(x)
+        try:
+            x = Dense(  units=hidden_dim,
+                        kernel_initializer=kernel_init,
+                        bias_initializer=bias_init,
+                        activation=act,
+                        kernel_regularizer=kernel_regularizer,
+                        activity_regularizer=activity_regularizer,
+                        use_bias=use_bias,
+                        name=name+'_dense_act')(previous_layer)
+            
+            return Dropout(drop_rate, name=name+'_drop')(x)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildSingleHopActivation]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+
 
     def BuildDecoderLSTM(   self,
                             inputs:Layer,
@@ -155,48 +186,44 @@ class ModelBuilder():
                             unroll:bool =False):
         """
         This function is as wrapper for the Keras LSTM with previous states. Its based on the definition in the keras-team gihub repository.
-        Resources: 
-            => https://github.com/keras-team/keras/blob/master/keras/layers/recurrent.py#L1765
-            => https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html
-            => https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
-            => https://machinelearningmastery.com/define-encoder-decoder-sequence-sequence-model-neural-machine-translation-keras/ 
-            => https://www.liip.ch/en/blog/sentiment-detection-with-keras-word-embeddings-and-lstm-deep-learning-networks
-            => https://medium.com/tensorflow/predicting-the-price-of-wine-with-the-keras-functional-api-and-tensorflow-a95d1c2c1b03
-        
-        Params are the Keras params!
+            :Params are the Keras params! [Class Docu -> Standard Resources -> 1.]
         """
-        AssertNotNone(inputs, 'lstm_inputs')
-        AssertNotNone(prev_memory_state, 'prev_memory_state')
-        AssertNotNone(prev_carry_state, 'prev_carry_state')
-        AssertNotNegative(units)
+        try:
+            AssertNotNone(inputs, 'lstm_inputs')
+            AssertNotNone(prev_memory_state, 'prev_memory_state')
+            AssertNotNone(prev_carry_state, 'prev_carry_state')
+            AssertNotNegative(units)
 
-        outputs, state_h, state_c = LSTM(   name=name,
-                                            units=units, 
-                                            activation=act, 
-                                            recurrent_activation=rec_act, 
-                                            use_bias=use_bias, 
-                                            kernel_initializer=kernel_initializer, 
-                                            recurrent_initializer=recurrent_initializer, 
-                                            bias_initializer=bias_initializer, 
-                                            unit_forget_bias=unit_forget_bias, 
-                                            kernel_regularizer=kernel_regularizer, 
-                                            recurrent_regularizer=recurrent_regularizer, 
-                                            bias_regularizer=bias_regularizer, 
-                                            activity_regularizer=activity_regularizer, 
-                                            kernel_constraint=kernel_constraint, 
-                                            recurrent_constraint=recurrent_constraint, 
-                                            bias_constraint=bias_constraint, 
-                                            dropout=dropout, 
-                                            recurrent_dropout=rec_dropout, 
-                                            implementation=implementation, 
-                                            return_sequences=return_sequences, 
-                                            return_state=return_state, 
-                                            go_backwards=go_backwards, 
-                                            stateful=stateful, 
-                                            unroll=unroll)(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            outputs, state_h, state_c = LSTM(   name=name,
+                                                units=units, 
+                                                activation=act, 
+                                                recurrent_activation=rec_act, 
+                                                use_bias=use_bias, 
+                                                kernel_initializer=kernel_initializer, 
+                                                recurrent_initializer=recurrent_initializer, 
+                                                bias_initializer=bias_initializer, 
+                                                unit_forget_bias=unit_forget_bias, 
+                                                kernel_regularizer=kernel_regularizer, 
+                                                recurrent_regularizer=recurrent_regularizer, 
+                                                bias_regularizer=bias_regularizer, 
+                                                activity_regularizer=activity_regularizer, 
+                                                kernel_constraint=kernel_constraint, 
+                                                recurrent_constraint=recurrent_constraint, 
+                                                bias_constraint=bias_constraint, 
+                                                dropout=dropout, 
+                                                recurrent_dropout=rec_dropout, 
+                                                implementation=implementation, 
+                                                return_sequences=return_sequences, 
+                                                return_state=return_state, 
+                                                go_backwards=go_backwards, 
+                                                stateful=stateful, 
+                                                unroll=unroll)(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            return [outputs, state_h, state_c]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
-        return [outputs, state_h, state_c]
-    
     def BuildGraphEmeddingConcatenation(self, 
                                         forward_layer: Layer =None, 
                                         backward_layer: Layer =None, 
@@ -205,21 +232,35 @@ class ModelBuilder():
                                         act: activations = activations.relu,
                                         kernel_regularizer: regularizers =regularizers.l2(0.01),
                                         activity_regularizer: regularizers =regularizers.l1(0.01),):
-        
-        AssertNotNone(forward_layer, 'forward_layer')
-        AssertNotNone(backward_layer, 'backward_layer')
-        concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
-        hidden_dim = 2* hidden_dim
-        concat_act = Dense( hidden_dim, 
-                            kernel_initializer=kernel_init,
-                            activation=act,
-                            kernel_regularizer=kernel_regularizer,
-                            activity_regularizer=activity_regularizer,
-                            name="concatenation_act")(concat)
+        """
+        This functions builds the node embedding to graph embedding sub model and is element of the encoder structure.
+            :param forward_layer:Layer: previous forward layer
+            :param backward_layer:Layer: previous backward layer
+            :param hidden_dim:int: hidden dimension depends on the embedding dimension e.g. GloVe vector length used. [Default 100]
+            :param kernel_init:str: kernel initializer [Default glorot_uniform]
+            :param act:activations: activation function [Default relu]
+            :param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
+            :param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)] 
+        """
+        try:
+            AssertNotNone(forward_layer, 'forward_layer')
+            AssertNotNone(backward_layer, 'backward_layer')
+            concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
+            hidden_dim = 2* hidden_dim
+            concat_act = Dense( hidden_dim, 
+                                kernel_initializer=kernel_init,
+                                activation=act,
+                                kernel_regularizer=kernel_regularizer,
+                                activity_regularizer=activity_regularizer,
+                                name="concatenation_act")(concat)
 
-        concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]), name='concat_pool')(concat_act)
-        graph_embedding_encoder_states = [concat_pool, concat_pool]
-        return [concat_act, graph_embedding_encoder_states]
+            concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]), name='concat_pool')(concat_act)
+            graph_embedding_encoder_states = [concat_pool, concat_pool]
+            return [concat_act, graph_embedding_encoder_states]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmeddingConcatenation]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def GraphEmbeddingEncoderBuild(
                             self, 
@@ -234,108 +275,164 @@ class ModelBuilder():
                             use_bias: bool =False,
                             drop_rate: float =0.2):
         """
-        docstring here
-            :param self: 
-            :param hops:int=1: 
-            :param aggregator:str='mean': 
-            :param hidden_dim:int=100: 
-            :param kernel_init:str='glorot_uniform': 
-            :param bias_init:str='zeros': 
-            :param act:activations=activations.relu: 
-            :param kernel_regularizer:regularizers=regularizers.l2(0.01: 
+        This function builds the 1st (encoder) part of the Graph2Sequence ANN
+            :param hops:int: size of neighbours cover sphere for each node (which neighbours you want to know from your current p.o.v.) [Default 1]
+            :param aggregator:str: aggretaor function [Default mean]
+            :param hidden_dim:int: hidden dimension depends on the embedding dimension e.g. GloVe vector length used. [Default 100]
+            :param kernel_init:str: kernel initializer [Default glorot_uniform]
+            :param bias_init:str: bias initializer [Defaul zeros]
+            :param act:activations: activation function [Default relu]
+            :param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
+            :param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)]
+            :param use_bias:bool: want result biased [Default False]
+            :param drop_rate:float: dropout percentage [Default 0.2]
         """ 
-        
-        out_shape_lambda = (self.input_enc_dim+self.edge_dim,)
-        features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-        neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator).Execute()
-        
-        forward = features_inputs 
-        backward = features_inputs 
-
-        for i in range(hops):
-            fw_name = ("fw_"+str(i))
-            bw_name = ("bw_"+str(i))
+        try:
+            out_shape_lambda = (self.input_enc_dim+self.edge_dim,)
+            features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
+            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator).Execute()
             
-            forward = self.BuildNeighbourhoodLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
-            forward = self.BuildSingleHopActivation(forward, fw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
+            forward = features_inputs 
+            backward = features_inputs 
 
-            backward = self.BuildNeighbourhoodLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
-            backward = self.BuildSingleHopActivation(backward, bw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
+            for i in range(hops):
+                fw_name = ("fw_"+str(i))
+                bw_name = ("bw_"+str(i))
+                
+                forward = self.BuildNeighbourhoodLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
+                forward = self.BuildSingleHopActivation(forward, fw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
 
-        return self.BuildGraphEmeddingConcatenation(forward,backward)
+                backward = self.BuildNeighbourhoodLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
+                backward = self.BuildSingleHopActivation(backward, bw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
+
+            return self.BuildGraphEmeddingConcatenation(forward,backward)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.GraphEmbeddingEncoderBuild]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def GraphEmbeddingDecoderBuild( self,
                                     embedding_layer: Embedding,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
                                     act:activations = activations.softmax):
+        """
+        This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
+            :param embedding_layer:Embedding: given embedding layer
+            :param prev_memory_state:Layer: previous layer mem state
+            :param prev_carry_state:Layer: previous layer carry state
+            :param act:activations: layers activation function [Default Softmax]
+        """
+        try:
+            AssertIsKerasTensor(embedding_layer)
+            AssertIsKerasTensor(prev_memory_state)
+            AssertIsKerasTensor(prev_carry_state)
 
-        AssertIsKerasTensor(embedding_layer)
-        AssertIsKerasTensor(prev_memory_state)
-        AssertIsKerasTensor(prev_carry_state)
-
-        out_vecs_lenghts = int(embedding_layer.shape[len(embedding_layer.shape)-1])
-        states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-        lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim)
-        return Dense(units=out_vecs_lenghts, activation=act)(lstm_decoder_outs)
+            out_vecs_lenghts = int(embedding_layer.shape[len(embedding_layer.shape)-1])
+            states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim)
+            return Dense(units=out_vecs_lenghts, activation=act)(lstm_decoder_outs)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.GraphEmbeddingDecoderBuild]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def MakeModel(self, layers: Layer):
         """
         This function creates the model by given inputs.
-            :param layers:Layer: layer structure that define your model
+            :param layers:Layer: structure that defines your model
         """
-        inputs = self.get_inputs()
-        assert (isinstance(inputs, list) and  input is not None), 'The given inputs is no list!'
-        AssertNotNone(layers, 'layers')
-        return Model(inputs=inputs, outputs=layers)
+        try:
+            inputs = self.get_inputs()
+            AssertNotNone(inputs, 'inputs')
+            AssertNotNone(layers, 'layers')
+            return Model(inputs=inputs, outputs=layers)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.MakeModel]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
-    def CompileModel(self, model:training.Model, loss:str ='mean_squared_error', optimizer:str ='rmsprop', metrics:list =['mae', 'acc']):
+    def CompileModel(self, 
+                     model:training.Model, 
+                     loss:str ='mean_squared_error', 
+                     optimizer:str ='rmsprop', 
+                     metrics:list =['mae', 'acc']):
         """
-        This function compile the training model.
+        This function compiles the training model.
             :param model:training.Model: the training model
             :param loss:str: name of a loss function [Keras definition]
             :param optimizer:str: name of an optimizer
             :param metrics:list: list of strings of possible metrics [Keras definition]
         """   
-        model.compile(  loss=loss,
-                        optimizer=optimizer,
-                        metrics=metrics)
+        try:
+            model.compile(  loss=loss,
+                            optimizer=optimizer,
+                            metrics=metrics)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.CompileModel]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def Summary(self, model:training.Model):
         """
         This function prints the summary of a model.
             :param model:training.Model: a build model
-        """   
-        AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
-        print(model.summary())
+        """
+        try:
+            AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
+            print(model.summary())
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.Summary]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def Plot(self, model:training.Model, file_name:str, show_shapes:bool =True):
         """
-        This function plot and store a given model to desired file.
+        This function plots and store a given model to desired file.
             :param model:Model: keras model
             :param file_name:str: name of the image file
             :param show_shapes:bool =True: show layer shape in the graph
-        """ 
-        AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
-        AssertNotNone(file_name, 'name_plot_file'), 'Plot file name was None!'
-        plot_model(model, to_file=file_name, show_shapes=show_shapes)
+        """
+        try:
+            AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
+            AssertNotNone(file_name, 'name_plot_file'), 'Plot file name was None!'
+            plot_model(model, to_file=file_name, show_shapes=show_shapes)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.Plot]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def get_encoder_inputs(self):
         """
         This getter returns the encoder inputs.
         """   
-        return self.encoder_inputs
+        try:
+            return self.encoder_inputs
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_encoder_inputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def get_decoder_inputs(self):
         """
         This getter returns the decoder inputs.
         """   
-        return self.decoder_inputs
+        try:
+            return self.decoder_inputs
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_decoder_inputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def get_inputs(self):
         """
         This getter returns the encoder and decoder inputs in exactly this order [encoder, decoder].
         """   
-        AssertNotNone(self.encoder_inputs, 'encoder inputs')
-        AssertNotNone(self.decoder_inputs, 'decoder inputs')
-        return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]
+        try:
+            AssertNotNone(self.encoder_inputs, 'encoder inputs')
+            AssertNotNone(self.decoder_inputs, 'decoder inputs')
+            return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_inputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 

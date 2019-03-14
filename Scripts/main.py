@@ -158,7 +158,10 @@ class Graph2SequenceTool():
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
-           
+
+            #TODO implement missing target processing for network
+            #TODO insert missing dimension for Encoder Model
+
             print('DS_Nodes_Emb:\n', datasets_nodes_embedding.shape)
             print('DS_Sen_vec:\n', vectorized_sequences.shape)
             print('Sent_Vec_Exa.:\n', vectorized_sequences[0].shape)

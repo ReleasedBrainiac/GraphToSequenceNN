@@ -33,7 +33,9 @@ class GloVeDatasetPreprocessor():
             print('~~~~~~ GloVe Dataset Preprocessor ~~~~~')
 
             self.node_words_list = None
-            self.edge_matrices = None
+            self.edge_matrices_fw = None
+            self.edge_matrices_bw = None
+
             self.sentences_list = None
             self.word_index = None
             self.tokenizer_words = None
@@ -73,13 +75,16 @@ class GloVeDatasetPreprocessor():
         """   
         try:
             self.node_words_list = []
-            self.edge_matrices = []
+            self.edge_matrices_fw = []
+            self.edge_matrices_bw = []
             self.sentences_list = []
 
             for dataset in datasets: 
                 if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
                     self.node_words_list.append(dataset[1][1])
-                    self.edge_matrices.append(dataset[1][0])
+                    self.edge_matrices_fw.append(dataset[1][0][0])
+                    self.edge_matrices_bw.append(dataset[1][0][1])
+
                     self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
@@ -131,9 +136,9 @@ class GloVeDatasetPreprocessor():
 
             self.tokenizer_words = self.tokenizer.word_index.items()
 
-            print('Result structure! \n\t=> [Sentences, EdgeArrays, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
+            print('Result structure! \n\t=> [Sentences, EdgesFw, EdgesBW, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-            return [self.sentences_list, self.edge_matrices, vectorized_sequences, self.node_words_list, indices]
+            return [self.sentences_list, self.edge_matrices_fw, self.edge_matrices_bw, vectorized_sequences, self.node_words_list, indices]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

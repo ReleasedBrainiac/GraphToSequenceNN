@@ -1,3 +1,4 @@
+import collections
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -36,7 +37,8 @@ class GloVeDatasetPreprocessor():
             self.edge_matrices_fw = None
             self.edge_matrices_bw = None
 
-            self.sentences_list = None
+            self.sentences_dec_in = None
+            self.sentences_tar_in = None
             self.word_index = None
             self.tokenizer_words = None
             self.show_response = show_feedback               
@@ -49,7 +51,10 @@ class GloVeDatasetPreprocessor():
             
             if isNotNone(nodes_context): 
                 self.CollectDatasamples(nodes_context)
-                if self.show_response: print('Collected samples:\t => ', len(self.sentences_list))
+                if self.show_response: 
+                    print('Collected decoder samples:\t => ', len(self.sentences_dec_in))
+                    print('Generated target samples:\t => ', len(self.sentences_tar_in)) 
+
                 
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Constructor]. Arguments:\n{1!r}"
@@ -71,13 +76,15 @@ class GloVeDatasetPreprocessor():
     def CollectDatasamples(self, datasets:list):
         """
         This function collects all dataset word lists and edge matrices for further processing.
+        Additionally it generates the lstm decoder targets from decoder inputs (depending on seq2seq encoder decoder)!
             :param datasets:list: pairs of cleaned amr datasets
         """   
         try:
             self.node_words_list = []
             self.edge_matrices_fw = []
             self.edge_matrices_bw = []
-            self.sentences_list = []
+            self.sentences_dec_in = []
+            self.sentences_tar_in = []
 
             for dataset in datasets: 
                 if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
@@ -85,7 +92,12 @@ class GloVeDatasetPreprocessor():
                     self.edge_matrices_fw.append(dataset[1][0][0])
                     self.edge_matrices_bw.append(dataset[1][0][1])
 
-                    self.sentences_list.append(self.ReplaceSentenceFlagAndDialogElements(dataset[0]))
+                    ph_dec_in = self.ReplaceSentenceFlagAndDialogElements(dataset[0])
+                    ph_tar_in = ph_dec_in.split(' ', 1)[1]
+                    
+                    self.sentences_dec_in.append(ph_dec_in)
+                    self.sentences_tar_in.append(ph_tar_in)
+            assert (len(self.sentences_dec_in) == len(self.sentences_tar_in)), "Dataset Error! Inputs counter doesn't match targets counter"
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -93,14 +105,15 @@ class GloVeDatasetPreprocessor():
 
     def TokenizeVocab(self):
         """
-        This function tokenizes the collected vocab (sentences) and set the global word index list.
+        This function tokenizes the collected vocab (sentences, targets) and set the global word index list.
         """   
         try:
             if self.show_response: print('Tokenize vocab!')
-            self.tokenizer.fit_on_texts(self.sentences_list)
-            sequences = self.tokenizer.texts_to_sequences(self.sentences_list)
+            self.tokenizer.fit_on_texts(self.sentences_dec_in)
+            sequences_in_dec = self.tokenizer.texts_to_sequences(self.sentences_dec_in)
+            sequences_in_tar = self.tokenizer.texts_to_sequences(self.sentences_tar_in)
             self.word_index = self.tokenizer.word_index
-            return sequences
+            return sequences_in_dec, sequences_in_tar
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.TokenizeVocab]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -124,22 +137,41 @@ class GloVeDatasetPreprocessor():
     def Execute(self):
         """
         This function returns all given data samples with tokenized sequences mapping for there nodes context.
-        Structure: [sentences, edges, vectorized_sequences, nodes, indices]
+        Structure: [sentences, edges, vectorized_dec_ins, nodes, indices]
         """   
         try:
             print('~~~~~~~~~~~~~ Prepare Data ~~~~~~~~~~~~')
-            tokenized_sequences = self.TokenizeVocab()
+            tokenized_dec_ins, tokenized_tar_ins = self.TokenizeVocab()
             if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
-            vectorized_sequences, indices = self.VectorizeVocab(tokenized_sequences)
-            if self.show_response: print('\t=> Fixed',vectorized_sequences.shape,'data tensor.')
+            vectorized_dec_ins, indices_dec = self.VectorizeVocab(tokenized_dec_ins)
+            vectorized_tar_ins, indices_tar = self.VectorizeVocab(tokenized_tar_ins)
+
+            assert (indices_dec.all() == indices_tar.all()), "Indices missmatch for vectorized decoder inputs and targets!"
+
+            if self.show_response: 
+                print('\t=> Fixed',vectorized_dec_ins.shape,'decoder input tensor.')
+                print('\t=> Fixed',vectorized_tar_ins.shape,'decoder target tensor.')
 
             self.tokenizer_words = self.tokenizer.word_index.items()
 
-            print('Result structure! \n\t=> [Sentences, EdgesFw, EdgesBW, VectorizedSequencesLists, GraphNodesValuesList, SequenceIndices]')
+            print('Result structure! \n\t=> [RawTextDecIn, RawTextTarIn, EdgesFw, EdgesBW, VectorizedDecIn, VectorizedTarIn, GraphNodesValuesList, VectorizedInputsIndices]')
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-            return [self.sentences_list, self.edge_matrices_fw, self.edge_matrices_bw, vectorized_sequences, self.node_words_list, indices]
+            return [self.sentences_dec_in, self.sentences_tar_in, self.edge_matrices_fw, self.edge_matrices_bw, vectorized_dec_ins, vectorized_tar_ins, self.node_words_list, indices_dec]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def FreeUnusedResources(self):
+        """
+        This function set sentences_dec_in and  sentences_tar_in to None.
+        """
+        try:
+            self.sentences_dec_in = None
+            self.sentences_tar_in = None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.FreeUnusedResources]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+        

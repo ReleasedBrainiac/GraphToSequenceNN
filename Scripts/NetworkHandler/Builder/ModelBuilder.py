@@ -5,8 +5,6 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer
-
-from DatasetHandler.ContentSupport import isLambda
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 

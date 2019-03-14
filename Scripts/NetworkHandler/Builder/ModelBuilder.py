@@ -4,16 +4,11 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, GlobalMaxPooling1D
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer
 
 from DatasetHandler.ContentSupport import isLambda
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
-
-#TODO finish docu
-#TODO ~> Resource for MA and Code ~> https://stackoverflow.com/questions/32771786/predictions-using-a-keras-recurrent-neural-network-accuracy-is-always-1-0/32788454#32788454 
-#TODO ~> Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
-#TODO ~> 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
 
 class ModelBuilder():
     """
@@ -31,6 +26,7 @@ class ModelBuilder():
         => 1. https://theailearner.com/2019/01/25/multi-input-and-multi-output-models-in-keras/
         => 2. https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
+
     def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int):
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
@@ -57,7 +53,7 @@ class ModelBuilder():
 
     def BuildEncoderInputs(self):
         """
-        This function build the encoder input tensors for the network.
+        This function builds the encoder input tensors for the network.
         ATTENTION: 
             Don't call it externally to use it as indirect input for model build!
             If you do so you going to get the 'Disconnected Graph' Error!
@@ -74,10 +70,9 @@ class ModelBuilder():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-
     def BuildDecoderInputs(self):
         """
-        This function build the decoder input tensors for the network.
+        This function builds the decoder input tensors for the network.
         ATTENTION: 
             Don't call it externally to use it as indirect input for model build!
             If you do so you going to get the 'Disconnected Graph' Error!
@@ -91,7 +86,6 @@ class ModelBuilder():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-
     def BuildNeighbourhoodLayer(self, 
                                 features, 
                                 look_up, 
@@ -100,13 +94,13 @@ class ModelBuilder():
                                 layer_name: str, 
                                 out_shape: list):
         """
-        This function build a neighbourhood collecting keras lambda layer.
-            :param features: 
-            :param look_up: 
-            :param hop:int: 
-            :param hood_func:types.LambdaType: 
-            :param layer_name:str: 
-            :param out_shape:list: 
+        This function builds a neighbourhood collecting keras lambda layer.
+            :param features: 2D tensor with rows of vectoriced words 
+            :param look_up: 2D tensor with neighbourhood description for foward,backward or both in one
+            :param hop:int: hop position in the network model structure
+            :param hood_func:types.LambdaType: a lambda neighbourhood function which matches the input structure
+            :param layer_name:str: name of the layer (remind an extension will be added)
+            :param out_shape:list: shape of the output
         """
         try:
             name = layer_name if layer_name is not None else ''
@@ -125,7 +119,6 @@ class ModelBuilder():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-
     def BuildSingleHopActivation( self,
                                   previous_layer: Layer,
                                   name:str,
@@ -137,6 +130,19 @@ class ModelBuilder():
                                   activity_regularizer: regularizers,
                                   use_bias: bool,
                                   drop_rate: float):
+        """
+        This function builds a layer structure for 1 Hop step in the encoder model part.
+            :param previous_layer:Layer: the previous layer
+            :param name:str: the layer name 
+            :param hidden_dim:int: hidden dimension
+            :param kernel_init:str: kernel initializer
+            :param bias_init:str: bias initializer
+            :param act:activations: activation function
+            :param kernel_regularizer:regularizers: kernel regularizers
+            :param activity_regularizer:regularizers: activity regularizers
+            :param use_bias:bool: want result biased
+            :param drop_rate:float: dropout percentage
+        """
         try:
             x = Dense(  units=hidden_dim,
                         kernel_initializer=kernel_init,
@@ -152,8 +158,6 @@ class ModelBuilder():
             template = "An exception of type {0} occurred in [ModelBuilder.BuildSingleHopActivation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
-
-
 
     def BuildDecoderLSTM(   self,
                             inputs:Layer,

@@ -104,6 +104,7 @@ class Graph2SequenceTool():
             sys.exit(1)
 
     #TODO maybe rename cause train, test and predict will be solved at once
+    
     def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, keep_edges=False):
         """
         This function execute the training pipeline for the graph2seq tool.
@@ -159,12 +160,12 @@ class Graph2SequenceTool():
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
 
-            #TODO implement missing target processing for network
             #TODO insert missing dimension for Encoder Model
 
             print('DS_Nodes_Emb:\n', datasets_nodes_embedding.shape)
-            print('DS_Sen_vec:\n', vectorized_sequences.shape)
-            print('Sent_Vec_Exa.:\n', vectorized_sequences[0].shape)
+            print('Inp_Vec:\n', vectorized_sequences.shape, ' | ', vectorized_sequences[0].shape )
+            print('Tar_Vec:\n', vectorized_targets.shape, ' | ', vectorized_targets[0].shape)
+                
 
 
             print("#######################################\n")
@@ -179,6 +180,7 @@ class Graph2SequenceTool():
                 print('New order \t => ', dataset_indices)
 
             network_input_sentences = vectorized_sequences[dataset_indices]
+            network_input_targets = vectorized_targets[dataset_indices]
             network_input_graph_features = datasets_nodes_embedding[dataset_indices]
             network_input_fw_look_up = edge_fw_look_up[dataset_indices]
             network_input_bw_look_up = edge_bw_look_up[dataset_indices]
@@ -196,12 +198,15 @@ class Graph2SequenceTool():
             x_train_edge_bw = network_input_bw_look_up[:-nb_validation_samples]
             x_train_features = network_input_graph_features[:-nb_validation_samples]
             y_train_sentences = network_input_sentences[:-nb_validation_samples]
+            y_train_targets = network_input_targets[:-nb_validation_samples]
             
+
             if(self.SHOW_FEEDBACK): 
                 print('x_train_edge_fw: ', type(x_train_edge_fw), x_train_edge_fw.shape)
                 print('x_train_edge_bw: ', type(x_train_edge_bw), x_train_edge_bw.shape)
                 print('x_train_features: ', type(x_train_features), x_train_features.shape)
                 print('y_train_sentences: ', type(y_train_sentences), y_train_sentences.shape)
+                print('y_train_targets: ', type(y_train_targets), y_train_targets.shape)
 
             print('Train set \t =>  defined!')
 
@@ -209,12 +214,14 @@ class Graph2SequenceTool():
             x_validation_edge_bw = network_input_bw_look_up[-nb_validation_samples:]
             x_validation_features = network_input_graph_features[-nb_validation_samples:]
             y_validation_sentences = network_input_sentences[-nb_validation_samples:]
+            y_validation_targets = network_input_targets[-nb_validation_samples:]
 
             if(self.SHOW_FEEDBACK): 
                 print('x_validation_edge_fw: ', type(x_validation_edge_fw), x_validation_edge_fw.shape)
                 print('x_validation_edge_bw: ', type(x_validation_edge_bw), x_validation_edge_bw.shape)
                 print('x_validation_features: ', type(x_validation_features), x_validation_features.shape)
                 print('y_validation_sentences: ', type(y_validation_sentences), y_validation_sentences.shape)
+                print('y_validation_targets: ', type(y_validation_targets), y_validation_targets.shape)
 
             print('Test set \t =>  defined!')
 
@@ -241,13 +248,14 @@ class Graph2SequenceTool():
             print("########### Starts Training ###########")
 
             
-            model.fit([], 
+            ''' model.fit([], 
                       [], 
                       steps_per_epoch=1, 
                       validation_steps=1, 
                       epochs=1, 
                       verbose=0, 
                       shuffle=False)
+            '''
             
 
             print("#######################################\n")

@@ -154,6 +154,8 @@ class GloVeDatasetPreprocessor():
                 print('\t=> Fixed',vectorized_tar_ins.shape,'decoder target tensor.')
 
             self.tokenizer_words = self.tokenizer.word_index.items()
+            self.edge_matrices_fw = np.array(self.edge_matrices_fw)
+            self.edge_matrices_bw = np.array(self.edge_matrices_bw)
 
             print('Result structure! \n\t=> [RawTextDecIn, RawTextTarIn, EdgesFw, EdgesBW, VectorizedDecIn, VectorizedTarIn, GraphNodesValuesList, VectorizedInputsIndices]')
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')

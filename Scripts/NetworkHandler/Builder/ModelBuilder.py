@@ -8,6 +8,8 @@ from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embed
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
+#TODO the unused decoder inputs can be completely removed since i add an external embedding layer.
+
 class ModelBuilder():
     """
     This class allows to easily build a Graph2Sequence neural network model.
@@ -42,8 +44,8 @@ class ModelBuilder():
         self.edge_dim = edge_dim
         self.input_dec_dim = input_dec_dim
 
-        self.input_enc_shape = (input_enc_dim,)
-        self.edge_shape = (edge_dim,)
+        self.input_enc_shape = (None, input_enc_dim)
+        self.edge_shape = (None, edge_dim)
         self.input_dec_shape = (input_dec_dim,)
 
         self.encoder_inputs = self.BuildEncoderInputs()

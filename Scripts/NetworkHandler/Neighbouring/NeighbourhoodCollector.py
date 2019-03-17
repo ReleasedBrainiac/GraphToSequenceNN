@@ -48,6 +48,8 @@ class Neighbourhood():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
+    #TODO add changes for neighbourhood collection! added 1 more dim for dataset input not just only 1 sample input.
+
     def GetAllVectorsFeatures(self):
         """
         This function collects and aggregates all verticies next hop neighbourhood feature vectors.

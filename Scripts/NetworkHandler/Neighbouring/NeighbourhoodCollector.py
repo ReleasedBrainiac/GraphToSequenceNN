@@ -31,43 +31,77 @@ class Neighbourhood():
         self.aggregator = aggregator
         self.axis = axis
 
-    def GetVectorNeighbours(self, index:int):
+    def GetVectorNeighbours(self, features, neighbouring, index:int):
         """
         This function collects the neighbourhood vectors for a spezific vertex given by index.
-            :param index:int: desired vertex index
+            :param features: previous features
+            :param neighbouring: neighbourhood look up
+            :param index:int: viewed feature index
         """
         try:
             AssertNotNegative(index)
-            AssertNotNone(self.features, 'features')
-            AssertNotNone(self.neighbouring, 'neighbouring look-up')
-            neighbouring = self.neighbouring[index, :]
+            AssertNotNone(features, 'features')
+            AssertNotNone(neighbouring, 'neighbouring look-up')
+
+            neighbouring = neighbouring[index, :]
             neighbouring = K.reshape(neighbouring, (neighbouring.shape[0],-1))
-            return multiply([self.features, neighbouring])
+            return multiply([features, neighbouring])
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetVectorNeighbours]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print(message) 
+            print(message)
 
-    #TODO add changes for neighbourhood collection! added 1 more dim for dataset input not just only 1 sample input.
-
-    def GetAllVectorsFeatures(self):
+    def GetSamplesAggregatedFeatures(self, features, neighbourhood, features_size:int):
         """
-        This function collects and aggregates all verticies next hop neighbourhood feature vectors.
-        """
+        This function collects and aggregates all given features next hop neighbourhood feature vectors for 1 sample.
+            :param features: samples previous or initial features
+            :param neighbourhood: samples graph neighbourhood look up
+            :param features_size:int: amount of features in the sample
+        """   
         try:
             agg_f_vecs = None
-            vecs = self.neighbouring.shape[1]
 
-            for i in range(vecs):        
-                found_neighbour_vectors = self.GetVectorNeighbours(i)       
+            for i in range(features_size):        
+                found_neighbour_vectors = self.GetVectorNeighbours(features, neighbourhood, i)
                 aggregator_result = Aggregators(found_neighbour_vectors, self.axis, self.aggregator).Execute()
                 AssertNotNone(aggregator_result, 'aggregator_result')
                 agg_f_vecs = aggregator_result if (agg_f_vecs is None) else K.concatenate([agg_f_vecs, aggregator_result])
-
-            transpose = K.transpose(K.reshape(agg_f_vecs, (vecs,-1)))
-            return K.concatenate([self.features,transpose])
+                
+            return K.transpose(K.reshape(agg_f_vecs, (features_size,-1)))
         except Exception as ex:
-            template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetAllVectorsFeatures]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetSamplesAggregatedFeatures]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    def GetAllSamplesAggregatedFeatures(self):
+        """
+        This function collects and aggregates all given features next hop neighbourhood feature vectors for all samples.
+        Attention!
+            => since the neighbourhood tensors have to be for each sample an (MxM) matrix i collect the dim from last shape value!
+        """
+        try:
+            
+            dims = len(self.neighbouring.shape)
+            vecs = self.neighbouring.shape[dims-1]
+            samples = 1 if(dims < 3) else int(self.neighbouring.shape[0])
+
+            samples_results = []
+            for sample in range(samples):
+                
+                sample_concatenate = None
+                sample_features = self.features[sample,:,:] if (dims > 2) else self.features
+                sample_neigbourhood = self.neighbouring[sample,:,:] if (dims > 2) else self.neighbouring
+
+                agg_f_vecs = self.GetSamplesAggregatedFeatures(features=sample_features, neighbourhood=sample_neigbourhood, features_size=vecs)
+                sample_concatenate = K.concatenate([sample_features,agg_f_vecs])
+
+                AssertNotNone(sample_concatenate, 'sample_concatenate')
+                samples_results.append(sample_concatenate)
+
+            assert samples_results, 'No results calculated for feature and neighbourhood samples!'
+            return K.stack(samples_results)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetAllSamplesAggregatedFeatures]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
@@ -78,7 +112,7 @@ class Neighbourhood():
         try:
             AssertIsTensor(self.features)
             AssertIsTensor(self.neighbouring)
-            return self.GetAllVectorsFeatures()
+            return self.GetAllSamplesAggregatedFeatures()
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

@@ -18,18 +18,20 @@ class Neighbourhood():
         2. https://keras.io/backend/#backend
     """
 
-    def __init__(self, features, neighbouring, axis:int=1, aggregator:str ='mean'):
+    def __init__(self, features, neighbouring, axis:int=1, aggregator:str ='mean', is_2d:bool =True):
         """
         This constructor stores all necessary variables for the setup.
             :param features: matrix of feature vectors defining graph verticies
             :param neighbouring: matrix defining graph verticies neighbouring
             :param axis:int: axis definition if an element-wise aggregator is chosen and for the other matrix operations (default = 1) 
             :param aggregator:str: aggregator of choice (default = mean)
-        """   
+            :param is_2d:bool: relevant if the function is used on single samples. allows the inserted 2D return a 2D result otherwise its 3D
+        """
         self.features = features
         self.neighbouring = neighbouring
         self.aggregator = aggregator
         self.axis = axis
+        self.is_2d = is_2d
 
     def GetVectorNeighbours(self, features, neighbouring, index:int):
         """
@@ -73,20 +75,20 @@ class Neighbourhood():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def GetAllSamplesAggregatedFeatures(self):
+    def GetAllSamplesAggregatedFeatures(self, sample_size:int):
         """
         This function collects and aggregates all given features next hop neighbourhood feature vectors for all samples.
         Attention!
             => since the neighbourhood tensors have to be for each sample an (MxM) matrix i collect the dim from last shape value!
-        """
+
+            :param sample_size:int: amount of samples
+        """   
         try:
-            
+            samples_results = []
             dims = len(self.neighbouring.shape)
             vecs = self.neighbouring.shape[dims-1]
-            samples = 1 if(dims < 3) else int(self.neighbouring.shape[0])
 
-            samples_results = []
-            for sample in range(samples):
+            for sample in range(sample_size):
                 
                 sample_concatenate = None
                 sample_features = self.features[sample,:,:] if (dims > 2) else self.features
@@ -99,9 +101,30 @@ class Neighbourhood():
                 samples_results.append(sample_concatenate)
 
             assert samples_results, 'No results calculated for feature and neighbourhood samples!'
-            return K.stack(samples_results)
+            return samples_results
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetAllSamplesAggregatedFeatures]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    def InputStrategySelection(self):
+        """
+        #TODO docu missing and maybe split back and export sample definition into init method.
+        """
+        try:
+            sample_size= self.neighbouring.shape[0].value
+            samples = 1 if (sample_size is None) else int(sample_size)
+            samples_results = self.GetAllSamplesAggregatedFeatures(sample_size=samples)
+
+            if self.is_2d:
+                return samples_results[0]
+            else:
+                if(samples == 1):
+                    return K.expand_dims(samples_results[0], axis=0)
+                else:  
+                    return K.stack(samples_results)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [NeighbourhoodCollector.InputStrategySelection]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
@@ -112,7 +135,7 @@ class Neighbourhood():
         try:
             AssertIsTensor(self.features)
             AssertIsTensor(self.neighbouring)
-            return self.GetAllSamplesAggregatedFeatures()
+            return self.InputStrategySelection()
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

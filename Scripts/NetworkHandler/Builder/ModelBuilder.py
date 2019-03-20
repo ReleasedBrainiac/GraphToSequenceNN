@@ -4,7 +4,7 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, TimeDistributed 
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -27,7 +27,7 @@ class ModelBuilder():
         => 2. https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
 
-    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int):
+    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int, input_is_2d:bool =True):
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
         and build the necessary input tensors for the network. 
@@ -35,6 +35,8 @@ class ModelBuilder():
             :param input_enc_dim:int: dimension of the encode inputs
             :param edge_dim:int: dimension of edge look ups
             :param input_dec_dim:int: dimension of the decoder inputs
+            :param input_is_2d:bool: this informs the system about the construction of the input shapes
+            
         """   
         AssertNotNegative(input_enc_dim), 'Encoder input dim was negative!'
         AssertNotNegative(edge_dim), 'Edge  dim was negative!'
@@ -44,8 +46,10 @@ class ModelBuilder():
         self.edge_dim = edge_dim
         self.input_dec_dim = input_dec_dim
 
-        self.input_enc_shape = (None, input_enc_dim)
-        self.edge_shape = (None, edge_dim)
+        self.input_is_2d = input_is_2d
+
+        self.input_enc_shape = (input_enc_dim,) if (input_is_2d) else (edge_dim,input_enc_dim)
+        self.edge_shape = (edge_dim,) if (input_is_2d) else (edge_dim,edge_dim)
         self.input_dec_shape = (input_dec_dim,)
 
         self.encoder_inputs = self.BuildEncoderInputs()
@@ -144,16 +148,17 @@ class ModelBuilder():
             :param drop_rate:float: dropout percentage
         """
         try:
-            x = Dense(  units=hidden_dim,
-                        kernel_initializer=kernel_init,
-                        bias_initializer=bias_init,
-                        activation=act,
-                        kernel_regularizer=kernel_regularizer,
-                        activity_regularizer=activity_regularizer,
-                        use_bias=use_bias,
-                        name=name+'_dense_act')(previous_layer)
-            
-            return Dropout(drop_rate, name=name+'_drop')(x)
+            dense = Dense(  units=hidden_dim,
+                            input_shape = previous_layer.shape,
+                            kernel_initializer=kernel_init,
+                            bias_initializer=bias_init,
+                            activation=act,
+                            kernel_regularizer=kernel_regularizer,
+                            activity_regularizer=activity_regularizer,
+                            use_bias=use_bias,
+                            name=name+'_time_dist_dense_act')(previous_layer)
+
+            return Dropout(drop_rate, name=name+'_drop')(dense)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildSingleHopActivation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -292,10 +297,10 @@ class ModelBuilder():
             :param drop_rate:float: dropout percentage [Default 0.2]
         """ 
         try:
-            out_shape_lambda = (self.input_enc_dim+self.edge_dim,)
+            out_shape_lambda = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
             features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator).Execute()
-            
+            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute()
+
             forward = features_inputs 
             backward = features_inputs 
 

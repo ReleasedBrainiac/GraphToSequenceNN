@@ -185,56 +185,17 @@ class Graph2SequenceTool():
             network_input_fw_look_up = edge_fw_look_up[dataset_indices]
             network_input_bw_look_up = edge_bw_look_up[dataset_indices]
 
-
-            print("#######################################\n")
-            print("############ Split Dataset ############")
-            samples_size = len(network_input_fw_look_up)
-            print('Samples \t => ', samples_size)
-
-            nb_validation_samples = int(self.VALIDATION_SPLIT * samples_size)
-            print('Validation \t => ', nb_validation_samples)
-
-            x_train_edge_fw = network_input_fw_look_up[:-nb_validation_samples]
-            x_train_edge_bw = network_input_bw_look_up[:-nb_validation_samples]
-            x_train_features = network_input_graph_features[:-nb_validation_samples]
-            y_train_sentences = network_input_sentences[:-nb_validation_samples]
-            y_train_targets = network_input_targets[:-nb_validation_samples]
-            
-
-            if(self.SHOW_FEEDBACK): 
-                print('x_train_edge_fw: ', type(x_train_edge_fw), x_train_edge_fw.shape)
-                print('x_train_edge_bw: ', type(x_train_edge_bw), x_train_edge_bw.shape)
-                print('x_train_features: ', type(x_train_features), x_train_features.shape)
-                print('y_train_sentences: ', type(y_train_sentences), y_train_sentences.shape)
-                print('y_train_targets: ', type(y_train_targets), y_train_targets.shape)
-
-            print('Train set \t =>  defined!')
-
-            x_validation_edge_fw = network_input_fw_look_up[-nb_validation_samples:]
-            x_validation_edge_bw = network_input_bw_look_up[-nb_validation_samples:]
-            x_validation_features = network_input_graph_features[-nb_validation_samples:]
-            y_validation_sentences = network_input_sentences[-nb_validation_samples:]
-            y_validation_targets = network_input_targets[-nb_validation_samples:]
-
-            if(self.SHOW_FEEDBACK): 
-                print('x_validation_edge_fw: ', type(x_validation_edge_fw), x_validation_edge_fw.shape)
-                print('x_validation_edge_bw: ', type(x_validation_edge_bw), x_validation_edge_bw.shape)
-                print('x_validation_features: ', type(x_validation_features), x_validation_features.shape)
-                print('y_validation_sentences: ', type(y_validation_sentences), y_validation_sentences.shape)
-                print('y_validation_targets: ', type(y_validation_targets), y_validation_targets.shape)
-
-            print('Test set \t =>  defined!')
-
             print("#######################################\n")
             print("########## Construct Network ##########")
 
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
-                                    input_dec_dim=pipe.max_sentences)
+                                    input_dec_dim=pipe.max_sentences,
+                                    input_is_2d=False)
 
-            _, graph_embedding_encoder_states = builder.GraphEmbeddingEncoderBuild(hops=self.HOP_STEPS)
+            _, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
-            model = builder.GraphEmbeddingDecoderBuild( embedding_layer=glove_embedding_layer(builder.get_decoder_inputs()),
+            model = builder.BuildGraphEmbeddingDecoder( embedding_layer=glove_embedding_layer(builder.get_decoder_inputs()),
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
@@ -247,16 +208,14 @@ class Graph2SequenceTool():
             print("#######################################\n")
             print("########### Starts Training ###########")
 
-            
-            ''' model.fit([], 
-                      [], 
-                      steps_per_epoch=1, 
-                      validation_steps=1, 
+            model.fit([network_input_graph_features, network_input_fw_look_up, network_input_bw_look_up, network_input_sentences], 
+                      network_input_targets, 
+                      steps_per_epoch=1,
+                      validation_steps=1,
                       epochs=1, 
-                      verbose=0, 
-                      shuffle=False)
-            '''
-            
+                      verbose=1, 
+                      shuffle=False,
+                      validation_split=self.VALIDATION_SPLIT)
 
             print("#######################################\n")
             print("############# Save Model ##############")
@@ -268,7 +227,7 @@ class Graph2SequenceTool():
             template = "An exception of type {0} occurred in [Main.RunTrainProcess]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-            sys.exit(1)
+            print(ex)
 
     def RunStoringCleanedAMR(self, 
                              in_dataset:str, 

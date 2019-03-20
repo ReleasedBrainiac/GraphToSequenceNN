@@ -318,7 +318,7 @@ def setOrDefault(input, default, wantSet:bool):
         return input
 
 
-# Basic list and matrix operations.
+# Basic values, list and matrix operations.
 def ReorderListByIndices(reorder_list:list, ordering_indices:list):
     """
     This function reorder a list by a given list of ordering indices.
@@ -375,6 +375,27 @@ def CalculateMeanValue(str_lengths:list):
         return int(round(sum(str_lengths)/len(str_lengths)))
     except Exception as ex:
         template = "An exception of type {0} occurred in [ContentSupport.CalculateMeanValue]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
+def RoundUpRestricted(in_value:int, given_dim:int =100, isBidrectional:bool =True):
+    """
+    This function return the smallest value that satisfies the rule [in_value % (given_dim * dimension_multiplier) = 0]
+        :param in_value:int: given value
+        :param given_dim:int=100: desired step size
+        :param isBidrectional:bool=True: sets the dimension_multiplier to  1 or 2
+    """
+    try:
+        dimension_multiplier = 2 if isBidrectional else 1
+        allowed_dim_products = given_dim * dimension_multiplier
+        
+        if((in_value%allowed_dim_products) != 0):        
+            while(in_value > allowed_dim_products): allowed_dim_products += allowed_dim_products
+            return allowed_dim_products
+        else:
+            return in_value
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.RoundUpRestricted]. Arguments:\n{1!r}"
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 

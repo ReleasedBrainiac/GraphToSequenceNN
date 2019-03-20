@@ -242,8 +242,8 @@ class ModelBuilder():
             :param sentences_dim:int: the sentence embedding features count
         """   
         try:
-            encoded_sentences_shape = (sentence_dim,)
-            dense_to_word_emb_dim = Dense(units=units, activation=act)(lstm_decoder_outs)
+            encoded_sentences_shape = (sentences_dim,)
+            dense_to_word_emb_dim = Dense(units=units, activation=act)(previous_layer)
             denste_to_sentence_emb_dim = Dense(units=1, activation=act)(dense_to_word_emb_dim)
             return Reshape(encoded_sentences_shape)(denste_to_sentence_emb_dim)
         except Exception as ex:

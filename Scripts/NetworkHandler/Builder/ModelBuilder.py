@@ -4,7 +4,7 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, TimeDistributed 
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape 
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -169,7 +169,7 @@ class ModelBuilder():
                             prev_memory_state, 
                             prev_carry_state,
                             name:str = 'sequence_decoder',
-                            training:bool = True,
+                            training:bool = False,
                             units=0, 
                             act:str ='tanh', 
                             rec_act:str ='hard_sigmoid', 
@@ -233,6 +233,24 @@ class ModelBuilder():
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
+    def BuildDecoderPrediction(self, previous_layer:Layer, units:int, act:activations, sentences_dim:int):
+        """
+        This function build the prediction part of the decoder.
+            :param previous_layer:Layer: previous layer (e.g. lstm)
+            :param units:int: units for the next dense layer (in this case the word vector features count)
+            :param act:activations: the dense layers activations
+            :param sentences_dim:int: the sentence embedding features count
+        """   
+        try:
+            encoded_sentences_shape = (sentence_dim,)
+            dense_to_word_emb_dim = Dense(units=units, activation=act)(lstm_decoder_outs)
+            denste_to_sentence_emb_dim = Dense(units=1, activation=act)(dense_to_word_emb_dim)
+            return Reshape(encoded_sentences_shape)(denste_to_sentence_emb_dim)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
     def BuildGraphEmeddingConcatenation(self, 
                                         forward_layer: Layer =None, 
                                         backward_layer: Layer =None, 
@@ -263,15 +281,26 @@ class ModelBuilder():
                                 activity_regularizer=activity_regularizer,
                                 name="concatenation_act")(concat)
 
-            concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim]), name='concat_pool')(concat_act)
+            reshape_lambda = lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim])
+
+            if(not self.input_is_2d):
+                print('K.max(x,axis=0) => ', K.max(concat_act,axis=0))
+                print('K.max(x,axis=1) => ', K.max(concat_act,axis=1))
+                print('K.max(x,axis=2) => ', K.max(concat_act,axis=2))
+
+                reshape_lambda = lambda x: K.reshape(K.max(x,axis=1), [-1, 1, hidden_dim])
+
+            concat_pool = Lambda(reshape_lambda, name='concat_pool')(concat_act)
             graph_embedding_encoder_states = [concat_pool, concat_pool]
+
+
             return [concat_act, graph_embedding_encoder_states]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmeddingConcatenation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def GraphEmbeddingEncoderBuild(
+    def BuildGraphEmbeddingEncoder(
                             self, 
                             hops: int =1,
                             aggregator: str ='mean',
@@ -316,11 +345,11 @@ class ModelBuilder():
 
             return self.BuildGraphEmeddingConcatenation(forward,backward)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.GraphEmbeddingEncoderBuild]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingEncoder]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def GraphEmbeddingDecoderBuild( self,
+    def BuildGraphEmbeddingDecoder( self,
                                     embedding_layer: Embedding,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
@@ -337,12 +366,16 @@ class ModelBuilder():
             AssertIsKerasTensor(prev_memory_state)
             AssertIsKerasTensor(prev_carry_state)
 
-            out_vecs_lenghts = int(embedding_layer.shape[len(embedding_layer.shape)-1])
+            emb_shape = embedding_layer.shape
+            emb_shape_len = len(emb_shape)
+            word_emb_dim = int(emb_shape[emb_shape_len-1])
+            sentence_dim = int(emb_shape[emb_shape_len-2])
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+
             lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim)
-            return Dense(units=out_vecs_lenghts, activation=act)(lstm_decoder_outs)
+            return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, units=word_emb_dim, act=act, sentences_dim=sentence_dim)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.GraphEmbeddingDecoderBuild]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 

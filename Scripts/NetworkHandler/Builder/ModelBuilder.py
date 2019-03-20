@@ -284,10 +284,6 @@ class ModelBuilder():
             reshape_lambda = lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim])
 
             if(not self.input_is_2d):
-                print('K.max(x,axis=0) => ', K.max(concat_act,axis=0))
-                print('K.max(x,axis=1) => ', K.max(concat_act,axis=1))
-                print('K.max(x,axis=2) => ', K.max(concat_act,axis=2))
-
                 reshape_lambda = lambda x: K.reshape(K.max(x,axis=1), [-1, 1, hidden_dim])
 
             concat_pool = Lambda(reshape_lambda, name='concat_pool')(concat_act)

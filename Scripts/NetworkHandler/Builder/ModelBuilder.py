@@ -203,30 +203,34 @@ class ModelBuilder():
             AssertNotNone(prev_carry_state, 'prev_carry_state')
             AssertNotNegative(units)
 
-            outputs, state_h, state_c = LSTM(   name=name,
-                                                units=units, 
-                                                activation=act, 
-                                                recurrent_activation=rec_act, 
-                                                use_bias=use_bias, 
-                                                kernel_initializer=kernel_initializer, 
-                                                recurrent_initializer=recurrent_initializer, 
-                                                bias_initializer=bias_initializer, 
-                                                unit_forget_bias=unit_forget_bias, 
-                                                kernel_regularizer=kernel_regularizer, 
-                                                recurrent_regularizer=recurrent_regularizer, 
-                                                bias_regularizer=bias_regularizer, 
-                                                activity_regularizer=activity_regularizer, 
-                                                kernel_constraint=kernel_constraint, 
-                                                recurrent_constraint=recurrent_constraint, 
-                                                bias_constraint=bias_constraint, 
-                                                dropout=dropout, 
-                                                recurrent_dropout=rec_dropout, 
-                                                implementation=implementation, 
-                                                return_sequences=return_sequences, 
-                                                return_state=return_state, 
-                                                go_backwards=go_backwards, 
-                                                stateful=stateful, 
-                                                unroll=unroll)(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            decoder_lstm = LSTM(name=name,
+                                units=units, 
+                                activation=act, 
+                                recurrent_activation=rec_act, 
+                                use_bias=use_bias, 
+                                kernel_initializer=kernel_initializer, 
+                                recurrent_initializer=recurrent_initializer, 
+                                bias_initializer=bias_initializer, 
+                                unit_forget_bias=unit_forget_bias, 
+                                kernel_regularizer=kernel_regularizer, 
+                                recurrent_regularizer=recurrent_regularizer, 
+                                bias_regularizer=bias_regularizer, 
+                                activity_regularizer=activity_regularizer, 
+                                kernel_constraint=kernel_constraint, 
+                                recurrent_constraint=recurrent_constraint, 
+                                bias_constraint=bias_constraint, 
+                                dropout=dropout, 
+                                recurrent_dropout=rec_dropout, 
+                                implementation=implementation, 
+                                return_sequences=return_sequences, 
+                                return_state=return_state, 
+                                go_backwards=go_backwards, 
+                                stateful=stateful, 
+                                unroll=unroll)
+
+            outputs, state_h, state_c = decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+
+
             return [outputs, state_h, state_c]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"
@@ -295,7 +299,6 @@ class ModelBuilder():
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmeddingConcatenation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-            raise
 
     def BuildGraphEmbeddingEncoder(
                             self, 

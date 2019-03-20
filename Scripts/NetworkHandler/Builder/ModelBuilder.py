@@ -228,7 +228,7 @@ class ModelBuilder():
                                 stateful=stateful, 
                                 unroll=unroll)
 
-           return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

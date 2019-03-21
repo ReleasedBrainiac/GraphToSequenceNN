@@ -4,7 +4,7 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape 
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -27,7 +27,7 @@ class ModelBuilder():
         => 2. https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
 
-    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int, input_is_2d:bool =True):
+    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int, batch_size:int = 1, input_is_2d:bool =True):
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
         and build the necessary input tensors for the network. 
@@ -35,16 +35,18 @@ class ModelBuilder():
             :param input_enc_dim:int: dimension of the encode inputs
             :param edge_dim:int: dimension of edge look ups
             :param input_dec_dim:int: dimension of the decoder inputs
+            :param batch_size:int: batch size
             :param input_is_2d:bool: this informs the system about the construction of the input shapes
-            
         """   
         AssertNotNegative(input_enc_dim), 'Encoder input dim was negative!'
         AssertNotNegative(edge_dim), 'Edge  dim was negative!'
         AssertNotNegative(input_dec_dim), 'Decoder input dim was negative!'
+        AssertNotNegative(batch_size), 'Batch size was negative!'
 
         self.input_enc_dim = input_enc_dim
         self.edge_dim = edge_dim
         self.input_dec_dim = input_dec_dim
+        self.batch_size = batch_size
 
         self.input_is_2d = input_is_2d
 
@@ -170,7 +172,8 @@ class ModelBuilder():
                             prev_carry_state,
                             name:str = 'sequence_decoder',
                             training:bool = False,
-                            units=0, 
+                            units=0,
+                            batch_size=0,
                             act:str ='tanh', 
                             rec_act:str ='hard_sigmoid', 
                             use_bias:bool =True, 
@@ -204,7 +207,8 @@ class ModelBuilder():
             AssertNotNegative(units)
 
             decoder_lstm = LSTM(name=name,
-                                units=units, 
+                                units=units,
+                                batch_size=batch_size,
                                 activation=act, 
                                 recurrent_activation=rec_act, 
                                 use_bias=use_bias, 
@@ -243,10 +247,20 @@ class ModelBuilder():
             :param sentences_dim:int: the sentence embedding features count
         """   
         try:
+            '''
+            This outcommented setup allow to get more trainable params but creates also more performance loose.
+
             encoded_sentences_shape = (sentences_dim,)
-            dense_to_word_emb_dim = Dense(units=units, activation=act)(previous_layer)
-            denste_to_sentence_emb_dim = Dense(units=1, activation=act)(dense_to_word_emb_dim)
-            return Reshape(encoded_sentences_shape)(denste_to_sentence_emb_dim)
+            dense_to_word_emb_dim = Dense(units=units, activation=act, name='down_sample_word_emb')(previous_layer)
+            denste_to_sentence_emb_dim = Dense(units=1, activation=act, name='dense_predict')(dense_to_word_emb_dim)
+            return Reshape(encoded_sentences_shape, name='reshape_to_input_format')(denste_to_sentence_emb_dim)
+            '''
+            
+            flatten = Flatten()(previous_layer)
+            dense_to_word_emb_dim = Dense(units=221, activation=act, name='dense_predict')(flatten)
+            return dense_to_word_emb_dim
+            #return Reshape(encoded_sentences_shape, name='reshape_to_input_format')(dense_to_word_emb_dim)
+
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -282,12 +296,12 @@ class ModelBuilder():
                                 activity_regularizer=activity_regularizer,
                                 name="concatenation_act")(concat)
 
-            reshape_lambda = lambda x: K.reshape(K.max(x,axis=0), [-1, hidden_dim])
-
+            concat_pool = None
             if(not self.input_is_2d):
-                reshape_lambda = lambda x: K.reshape(K.max(x,axis=1), [-1, 1, hidden_dim])
+                concat_pool = GlobalMaxPooling1D(data_format='channels_last', name='concat_max_pooling')(concat_act)
+            else: 
+                concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), (-1, hidden_dim)), name='concat_max_pool')(concat_act)
 
-            concat_pool = Lambda(reshape_lambda, name='concat_pool')(concat_act)
             graph_embedding_encoder_states = [concat_pool, concat_pool]
 
 
@@ -369,7 +383,7 @@ class ModelBuilder():
             sentence_dim = int(emb_shape[emb_shape_len-2])
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
-            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim)
+            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size)
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, units=word_emb_dim, act=act, sentences_dim=sentence_dim)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"
@@ -393,9 +407,9 @@ class ModelBuilder():
 
     def CompileModel(self, 
                      model:training.Model, 
-                     loss:str ='mean_squared_error', 
+                     loss:str ='categorical_crossentropy', 
                      optimizer:str ='rmsprop', 
-                     metrics:list =['mae', 'acc']):
+                     metrics:list =['mae', 'categorical_accuracy']):
         """
         This function compiles the training model.
             :param model:training.Model: the training model
@@ -419,7 +433,7 @@ class ModelBuilder():
         """
         try:
             AssertNotNone(model, 'plotting_tensor'), 'Plotting model was None!'
-            print(model.summary())
+            print(model.summary(line_length=200))
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.Summary]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

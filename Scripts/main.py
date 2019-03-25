@@ -4,6 +4,7 @@ import platform as pf
 import numpy as np
 import tensorflow as tf
 import keras
+from keras.callbacks import History
 import matplotlib.pyplot as plt
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
@@ -64,7 +65,8 @@ class Graph2SeqInKeras():
     EXTENDER:str = "dc.ouput"
     MAX_LENGTH_DATA:int = -1
     SHOW_FEEDBACK:bool = False
-    STORE_STDOUT:bool = True
+    STORE_STDOUT:bool = False
+    SAVE_PLOTS = False
     SAVING_CLEANED_AMR:bool = False
     KEEP_EDGES:bool = True
     GLOVE_OUTPUT_DIM:int = 100
@@ -230,39 +232,42 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
-            #plt.plot(history.history['top_k_categorical_accuracy'])
-            #plt.plot(history.history['val_top_k_categorical_accuracy'])
-            #plt.title('Model Top k Categorical Accuracy')
-            #plt.ylabel('Top k Categorical Accuracy')
-            #plt.xlabel('Epoch')
-            #plt.legend(['Train', 'Test'], loc='upper left')
-            #self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+            plt.plot(history.history['top_k_categorical_accuracy'])
+            plt.plot(history.history['val_top_k_categorical_accuracy'])
+            plt.title('Model Top k Categorical Accuracy')
+            plt.ylabel('Top k Categorical Accuracy')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            if not self.SAVE_PLOTS: 
+                self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+            else: 
+               plt.show()
 
-            self.ExecutePyPlotHistory(history=history, title= 'Model Top k Categorical Accuracy',  extender ='top_k_categoriacal_epoch_plot', plotable_info_pair = ['top_k_categorical_accuracy', 'val_top_k_categorical_accuracy'], labels_xy = ['Top k Categorical Accuracy', 'Epoch'])
+            plt.plot(history.history['categorical_accuracy'])
+            plt.plot(history.history['val_categorical_accuracy'])
+            plt.title('Model Categorical Accuracy')
+            plt.ylabel('Categorical Accuracy')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            if not self.SAVE_PLOTS: 
+                self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+            else: 
+               plt.show()
 
-            #plt.plot(history.history['categorical_accuracy'])
-            #plt.plot(history.history['val_categorical_accuracy'])
-            #plt.title('Model Categorical Accuracy')
-            #plt.ylabel('Categorical Accuracy')
-            #plt.xlabel('Epoch')
-            #plt.legend(['Train', 'Test'], loc='upper left')
-            #self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+            plt.plot(history.history['loss'])
+            plt.plot(history.history['val_loss'])
+            plt.title('Model loss')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            if not self.SAVE_PLOTS: 
+                self.SavePyPlotToFile(extender='loss_epoch_plot')
+            else: 
+                plt.show()
 
-            self.ExecutePyPlotHistory(history=history, title= 'Model Categorical Accuracy',  extender ='categoriacal_epoch_plot', plotable_info_pair = ['categorical_accuracy', 'val_categorical_accuracy'], labels_xy = ['Categorical Accuracy', 'Epoch'])
-
-            #plt.plot(history.history['loss'])
-            #plt.plot(history.history['val_loss'])
-            #plt.title('Model loss')
-            #plt.ylabel('Loss')
-            #plt.xlabel('Epoch')
-            #plt.legend(['Train', 'Test'], loc='upper left')
-            #self.SavePyPlotToFile(extender='loss_epoch_plot')
-
-            self.ExecutePyPlotHistory(history=history)
-
-            print("#######################################\n")
-            print("######## Predict Model ########")
-
+            #TODO Maybe add Predict
+            #print("#######################################\n")
+            #print("######## Predict Model ########")
 
             print("#######################################\n")
             print("######## Process End ########")
@@ -358,43 +363,5 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)
     
-    def ExecutePyPlotHistory(   self, 
-                                history, 
-                                title:str = 'Model Loss', 
-                                extender:str ='loss_epoch_plot', 
-                                plotable_info_pair:list = ['loss', 'val_loss'], 
-                                labels_xy:list = ['Loss', 'Epoch'], 
-                                legend:list = ['Train', 'Test'], 
-                                save:bool = False):
-        """
-        This function wraps the pyplot functionality with default values.
-        Remind you can show the plot OR store it!
-            :param history: the model history after fitting
-            :param title:str: title of the plot [Default 'ModelLoss']
-            :param extender:str: extender for the filename [Default 'loss_epoch_plot']
-            :param plotable_info_pair:list: desired plotable value pair[Default ['loss', 'val_loss']]
-            :param labels_xy:list: desired plotable axis pair [Default ['Loss', 'Epoch']]
-            :param legend:list: desired plotable legend [Default ['Train', 'Test']]
-            :param save:bool: should plot be saved [Default False]
-        """   
-        try:
-            print('Type:', history)
-            plt.plot(history.history[plotable_info_pair[0]])
-            plt.plot(history.history[plotable_info_pair[1]])
-            plt.title(title)
-            plt.ylabel(labels_xy[0])
-            plt.xlabel(labels_xy[1])
-            plt.legend(legend, loc='upper left')
-
-            if save:
-                self.SavePyPlotToFile(extender=extender)
-            else:
-                plt.show()
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.ExecutePyPlotHistory]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-            print(ex)
-
 if __name__ == "__main__":
     Graph2SeqInKeras().ExecuteTool()

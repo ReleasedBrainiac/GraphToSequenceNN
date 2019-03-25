@@ -4,10 +4,10 @@ import platform as pf
 import numpy as np
 import tensorflow as tf
 import keras
-from subprocess import call
+import matplotlib.pyplot as plt
 
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import ReorderListByIndices
+from DatasetHandler.ContentSupport import RoundUpRestricted
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -22,44 +22,70 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 #TODO IN MA => Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
 #TODO IN MA => 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
 
+#TODO Guide to finalize Tool => https://keras.io/examples/lstm_stateful/
+#TODO Guide to finalize Tool => https://machinelearningmastery.com/diagnose-overfitting-underfitting-lstm-models/
+#TODO Guide to finalize Tool => https://keras.io/models/model/#fit 
+#TODO Guide to finalize Tool => https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
+#TODO Guide to finalize Tool => https://keras.io/visualization/#training-history-visualization
 
+class Graph2SeqInKeras():
+    """
+    This class provides a AMR Dataset cleaner which is especially developed for this tool 
+    and it also provides a graph 2 sequence network construction with the Keras framework.
 
+    The technological idea behind my code is partially based on the work => https://arxiv.org/abs/1804.00823
+    The models hyperparamter definitions is oriented on the IBM tensorflow implementation => https://github.com/IBM/Graph2Seq
 
-'''
-#TODO Packages missing reviews!
-#TODO NetworkHandler
-#TODO GloVeHandler
+    #TODO If insertion of Philippe Remy's attention layer is necessary... change the next documentation lines.
+    #TODO His repo => https://github.com/philipperemy/keras-attention-mechanism 
 
-'''
+    Attention!
+        This is NOT a reimplementation of the referenced repository.
+        I strictly implemtented the idea of the paper for keras (currently without attention) users. 
+        The interenal structure of the model is completely different to the ibm tensorflow implementation.
+        In the first place i don't used an attention layer, since this tool only evaluates the possibility, 
+        to implemtent the graph2sequence network structure in Keras and a model reach acc >= 50%.
 
-class Graph2SequenceTool():
+        If there are any questions please feel free to open an issue on github.        
+    """
 
-    TF_CPP_MIN_LOG_LEVEL="2"
-    EPOCHS = 50
-    BATCH_SIZE = 15
-    BUILDTYPE = 1
-    DATASET = './Datasets/Raw/Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
-    GLOVE = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
-    GLOVE_VEC_SIZE = 100
-    MODEL = "graph2seq_model"
-    PLOT = "plot.png"
-    EXTENDER = "dc.ouput"
-    MAX_LENGTH_DATA = -1
-    SHOW_FEEDBACK = False
-    SAVING_CLEANED_AMR = False
-    KEEP_EDGES = True
-    GLOVE_OUTPUT_DIM = 100
-    GLOVE_VOCAB_SIZE = 20000
-    VALIDATION_SPLIT = 0.2
-    MIN_NODE_CARDINALITY = 3
-    MAX_NODE_CARDINALITY = 19
-    HOP_STEPS = 3
+    TF_CPP_MIN_LOG_LEVEL:str = '2'
+    EPOCHS:int = 5
+    VERBOSE:int = 1
+    BATCH_SIZE:int = 1
+    BUILDTYPE:int = 1
+    DATASET_NAME:str = 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
+    fname = DATASET_NAME.split('/')[0]
+    DATASET:str = './Datasets/Raw/'+DATASET_NAME
+    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
+    GLOVE_VEC_SIZE:int = 100
+    MODEL:str = "graph2seq_model"
+    PLOT:str = "plot.png"
+    EXTENDER:str = "dc.ouput"
+    MAX_LENGTH_DATA:int = -1
+    SHOW_FEEDBACK:bool = False
+    STORE_STDOUT:bool = True
+    SAVING_CLEANED_AMR:bool = False
+    KEEP_EDGES:bool = True
+    GLOVE_OUTPUT_DIM:int = 100
+    GLOVE_VOCAB_SIZE:int = 5000
+    VALIDATION_SPLIT:float = 0.2
+    MIN_NODE_CARDINALITY:int = 3
+    MAX_NODE_CARDINALITY:int = 19
+    HOP_STEPS:int = 3
+    BIDIRECTIONAL_MULT:int = 2
+    SHUFFLE_DATASET:bool = True
 
-    def RunTool(self):
+    def ExecuteTool(self):
         """
-        This is the main method of the tool.
+        The main method of the tool.
+        It provides 2 functions:
+            1. Storing the cleaned version of the passed AMR file
+            2. Execute the network on the given dataset (includes cleaning but no storing of the AMR). 
         """  
         try:
+            if (self.STORE_STDOUT): sys.stdout = open(self.fname+' console_report.txt', 'w')
+
             print("\n#######################################")
             print("######## Graph to Sequence ANN ########")
             print("#######################################\n")
@@ -81,33 +107,41 @@ class Graph2SequenceTool():
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
             if self.SAVING_CLEANED_AMR:
-                self.RunStoringCleanedAMR(in_dataset=self.DATASET,
-                                          in_extender=self.EXTENDER,
-                                          in_max_length=self.MAX_LENGTH_DATA,
-                                          is_show=self.SHOW_FEEDBACK,
-                                          keep_edges=self.KEEP_EDGES,
-                                          as_amr=True)
+                self.ExecuteCleanedAMRStoring(  in_dataset=self.DATASET,
+                                                in_extender=self.EXTENDER,
+                                                in_max_length=self.MAX_LENGTH_DATA,
+                                                is_show=self.SHOW_FEEDBACK,
+                                                keep_edges=self.KEEP_EDGES,
+                                                as_amr=True)
             else:
-                self.RunTrainProcess(in_dataset=self.DATASET, 
-                                     in_glove=self.GLOVE, 
-                                     in_extender=self.EXTENDER,
-                                     in_max_length=self.MAX_LENGTH_DATA,
-                                     in_vocab_size=self.GLOVE_VOCAB_SIZE,
-                                     out_dim_emb=self.GLOVE_OUTPUT_DIM,
-                                     is_show=self.SHOW_FEEDBACK,
-                                     keep_edges=self.KEEP_EDGES)
-
+                self.ExecuteNetwork(in_dataset=self.DATASET, 
+                                    in_glove=self.GLOVE, 
+                                    in_extender=self.EXTENDER,
+                                    in_max_length=self.MAX_LENGTH_DATA,
+                                    in_vocab_size=self.GLOVE_VOCAB_SIZE,
+                                    out_dim_emb=self.GLOVE_OUTPUT_DIM,
+                                    is_show=self.SHOW_FEEDBACK,
+                                    keep_edges=self.KEEP_EDGES)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.RunTool]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.ExecuteTool]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
 
-    #TODO maybe rename cause train, test and predict will be solved at once
-    
-    def RunTrainProcess(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, keep_edges=False):
+    def ExecuteNetwork(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, keep_edges=False):
         """
-        This function execute the training pipeline for the graph2seq tool.
+        This function executes the training pipeline for the graph2seq tool.
+
+        This includes:
+            1. Clean the AMR Dataset
+            2. Convert to Lookup
+            3. Initiate Glove Embedding
+            4. Collect Worde and Sentence Features
+            5. Construct Network Model
+            6. Train Network Model
+            7. Save Network Model Weights
+            8. Plot Train Results
+
             :param in_dataset: input dataset
             :param in_glove: path to glove word vector file
             :param in_extender: output file entension
@@ -133,10 +167,10 @@ class Graph2SequenceTool():
             print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
             pipe.ShowNodeCardinalityOccurences()
             self.DatasetLookUpEqualization(datapairs, max_cardinality)
+                
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
-            #TODO check switches!
             glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=pipe.max_sentences,
@@ -151,46 +185,19 @@ class Graph2SequenceTool():
                                                 output_dim=out_dim_emb, 
                                                 show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-
-            print('Embeddings:', datasets_nodes_embedding.shape)
-
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
-
-            #TODO insert missing dimension for Encoder Model
-
-            print('DS_Nodes_Emb:\n', datasets_nodes_embedding.shape)
-            print('Inp_Vec:\n', vectorized_sequences.shape, ' | ', vectorized_sequences[0].shape )
-            print('Tar_Vec:\n', vectorized_targets.shape, ' | ', vectorized_targets[0].shape)
                 
-
-
-            print("#######################################\n")
-            print("######### Random Order Dataset ########")
-
-            if (self.SHOW_FEEDBACK): 
-                print('Old order \t => ', dataset_indices)
-
-            np.random.shuffle(dataset_indices)
-
-            if (self.SHOW_FEEDBACK): 
-                print('New order \t => ', dataset_indices)
-
-            network_input_sentences = vectorized_sequences[dataset_indices]
-            network_input_targets = vectorized_targets[dataset_indices]
-            network_input_graph_features = datasets_nodes_embedding[dataset_indices]
-            network_input_fw_look_up = edge_fw_look_up[dataset_indices]
-            network_input_bw_look_up = edge_bw_look_up[dataset_indices]
-
             print("#######################################\n")
             print("########## Construct Network ##########")
 
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
                                     input_dec_dim=pipe.max_sentences,
+                                    batch_size=self.BATCH_SIZE,
                                     input_is_2d=False)
 
             _, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
@@ -202,34 +209,71 @@ class Graph2SequenceTool():
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model)
             builder.Summary(model)
-            builder.Plot(model=model, file_name='model_graph.png')
-
+            builder.Plot(model=model, file_name=self.fname+'_model_graph.png')
 
             print("#######################################\n")
             print("########### Starts Training ###########")
 
-            model.fit([network_input_graph_features, network_input_fw_look_up, network_input_bw_look_up, network_input_sentences], 
-                      network_input_targets, 
-                      steps_per_epoch=1,
-                      validation_steps=1,
-                      epochs=1, 
-                      verbose=1, 
-                      shuffle=False,
-                      validation_split=self.VALIDATION_SPLIT)
+            history = model.fit([datasets_nodes_embedding, edge_fw_look_up, edge_bw_look_up, vectorized_sequences], 
+                                vectorized_targets,
+                                batch_size = self.BATCH_SIZE,
+                                epochs=self.EPOCHS, 
+                                verbose=self.VERBOSE, 
+                                shuffle=self.SHUFFLE_DATASET,
+                                validation_split=self.VALIDATION_SPLIT)
 
             print("#######################################\n")
             print("############# Save Model ##############")
 
+            model.save_weights(self.fname+'_graph_2_sequence_trained_weights.h5')
+
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
+            #plt.plot(history.history['top_k_categorical_accuracy'])
+            #plt.plot(history.history['val_top_k_categorical_accuracy'])
+            #plt.title('Model Top k Categorical Accuracy')
+            #plt.ylabel('Top k Categorical Accuracy')
+            #plt.xlabel('Epoch')
+            #plt.legend(['Train', 'Test'], loc='upper left')
+            #self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+
+            self.ExecutePyPlotHistory(history=history, title= 'Model Top k Categorical Accuracy',  extender ='top_k_categoriacal_epoch_plot', plotable_info_pair = ['top_k_categorical_accuracy', 'val_top_k_categorical_accuracy'], labels_xy = ['Top k Categorical Accuracy', 'Epoch'])
+
+            #plt.plot(history.history['categorical_accuracy'])
+            #plt.plot(history.history['val_categorical_accuracy'])
+            #plt.title('Model Categorical Accuracy')
+            #plt.ylabel('Categorical Accuracy')
+            #plt.xlabel('Epoch')
+            #plt.legend(['Train', 'Test'], loc='upper left')
+            #self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+
+            self.ExecutePyPlotHistory(history=history, title= 'Model Categorical Accuracy',  extender ='categoriacal_epoch_plot', plotable_info_pair = ['categorical_accuracy', 'val_categorical_accuracy'], labels_xy = ['Categorical Accuracy', 'Epoch'])
+
+            #plt.plot(history.history['loss'])
+            #plt.plot(history.history['val_loss'])
+            #plt.title('Model loss')
+            #plt.ylabel('Loss')
+            #plt.xlabel('Epoch')
+            #plt.legend(['Train', 'Test'], loc='upper left')
+            #self.SavePyPlotToFile(extender='loss_epoch_plot')
+
+            self.ExecutePyPlotHistory(history=history)
+
+            print("#######################################\n")
+            print("######## Predict Model ########")
+
+
+            print("#######################################\n")
+            print("######## Process End ########")
+
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.RunTrainProcess]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.ExecuteNetwork]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)
 
-    def RunStoringCleanedAMR(self, 
+    def ExecuteCleanedAMRStoring(self, 
                              in_dataset:str, 
                              in_extender:str, 
                              in_max_length:int, 
@@ -258,7 +302,7 @@ class Graph2SequenceTool():
             pipe.SaveData(as_amr=as_amr)
             print('Finished storing process!')
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.RunStoringCleanedAMR]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.ExecuteCleanedAMRStoring]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
@@ -296,5 +340,61 @@ class Graph2SequenceTool():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def SavePyPlotToFile(self, extender:str = None, orientation:str = 'landscape', image_type:str = 'png'):
+        """
+        This function is a simple wrapper for the PyPlot savefig function with default values.
+            :param extender:str: extender for the filename [Default None]
+            :param orientation:str: print orientation [Default 'landscape']
+            :parama image_type:str: image file type [Default 'png']
+        """   
+        try:
+            if extender is None:
+                plt.savefig((self.fname+'_plot.'+image_type), orientation=orientation)
+            else: 
+                plt.savefig((self.fname+'_'+extender+'.'+image_type), orientation=orientation)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.SavePyPlotToFile]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+    
+    def ExecutePyPlotHistory(   self, 
+                                history, 
+                                title:str = 'Model Loss', 
+                                extender:str ='loss_epoch_plot', 
+                                plotable_info_pair:list = ['loss', 'val_loss'], 
+                                labels_xy:list = ['Loss', 'Epoch'], 
+                                legend:list = ['Train', 'Test'], 
+                                save:bool = False):
+        """
+        This function wraps the pyplot functionality with default values.
+        Remind you can show the plot OR store it!
+            :param history: the model history after fitting
+            :param title:str: title of the plot [Default 'ModelLoss']
+            :param extender:str: extender for the filename [Default 'loss_epoch_plot']
+            :param plotable_info_pair:list: desired plotable value pair[Default ['loss', 'val_loss']]
+            :param labels_xy:list: desired plotable axis pair [Default ['Loss', 'Epoch']]
+            :param legend:list: desired plotable legend [Default ['Train', 'Test']]
+            :param save:bool: should plot be saved [Default False]
+        """   
+        try:
+            print('Type:', history)
+            plt.plot(history.history[plotable_info_pair[0]])
+            plt.plot(history.history[plotable_info_pair[1]])
+            plt.title(title)
+            plt.ylabel(labels_xy[0])
+            plt.xlabel(labels_xy[1])
+            plt.legend(legend, loc='upper left')
+
+            if save:
+                self.SavePyPlotToFile(extender=extender)
+            else:
+                plt.show()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.ExecutePyPlotHistory]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+
 if __name__ == "__main__":
-    Graph2SequenceTool().RunTool()
+    Graph2SeqInKeras().ExecuteTool()

@@ -109,7 +109,7 @@ class Neighbourhood():
 
     def InputStrategySelection(self):
         """
-        #TODO docu missing and maybe split back and export sample definition into init method.
+        This function processes the neighbourhood collection and selects a dimension conversion strategy for the desired returning dimension (2D or 3D)
         """
         try:
             sample_size= self.neighbouring.shape[0].value

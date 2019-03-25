@@ -247,20 +247,9 @@ class ModelBuilder():
             :param sentences_dim:int: the sentence embedding features count
         """   
         try:
-            '''
-            This outcommented setup allow to get more trainable params but creates also more performance loose.
-
-            encoded_sentences_shape = (sentences_dim,)
-            dense_to_word_emb_dim = Dense(units=units, activation=act, name='down_sample_word_emb')(previous_layer)
-            denste_to_sentence_emb_dim = Dense(units=1, activation=act, name='dense_predict')(dense_to_word_emb_dim)
-            return Reshape(encoded_sentences_shape, name='reshape_to_input_format')(denste_to_sentence_emb_dim)
-            '''
-            
-            flatten = Flatten()(previous_layer)
-            dense_to_word_emb_dim = Dense(units=221, activation=act, name='dense_predict')(flatten)
-            return dense_to_word_emb_dim
-            #return Reshape(encoded_sentences_shape, name='reshape_to_input_format')(dense_to_word_emb_dim)
-
+            #word_emd_down_size = Dense(units=units, activation=act, name='word_emb_down_sample')(previous_layer)
+            flatten = Flatten(name='reduce_dimension')(previous_layer)
+            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(flatten)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -409,7 +398,7 @@ class ModelBuilder():
                      model:training.Model, 
                      loss:str ='categorical_crossentropy', 
                      optimizer:str ='rmsprop', 
-                     metrics:list =['mae', 'categorical_accuracy']):
+                     metrics:list =['top_k_categorical_accuracy', 'categorical_accuracy']):
         """
         This function compiles the training model.
             :param model:training.Model: the training model

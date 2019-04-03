@@ -55,7 +55,7 @@ class Graph2SeqInKeras():
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
-    DATASET_NAME:str = 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
+    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt'    #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
@@ -210,7 +210,7 @@ class Graph2SeqInKeras():
 
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model)
-            builder.Summary(model)
+            if self.SHOW_FEEDBACK: builder.Summary(model)
             builder.Plot(model=model, file_name=self.fname+'_model_graph.png')
 
             print("#######################################\n")

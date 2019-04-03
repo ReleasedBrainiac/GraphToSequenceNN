@@ -163,16 +163,17 @@ class DatasetPipeline():
             dataset_pairs_sent_sem = []
             for pair in data_pairs: 
                 data_pair = self.CollectDatasetPair(pair)
-                if(not self.as_amr):
-                    edges_dim = data_pair[1][0][0].shape[0]
+                if isNotNone(data_pair):
+                    if(not self.as_amr):
+                        edges_dim = data_pair[1][0][0].shape[0]
 
-                    if (self.min_cardinality <= edges_dim and edges_dim <= self.max_cardinality):
-                        self.CollectCardinalities(edges_dim)
+                        if (self.min_cardinality <= edges_dim and edges_dim <= self.max_cardinality):
+                            self.CollectCardinalities(edges_dim)
 
-                        if (self.max_sentences < len(data_pair[0])): self.max_sentences = len(data_pair[0])
+                            if (self.max_sentences < len(data_pair[0])): self.max_sentences = len(data_pair[0])
+                            dataset_pairs_sent_sem.append(data_pair)
+                    else:
                         dataset_pairs_sent_sem.append(data_pair)
-                else:
-                    dataset_pairs_sent_sem.append(data_pair)
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"

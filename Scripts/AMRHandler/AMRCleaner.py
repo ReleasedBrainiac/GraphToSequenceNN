@@ -474,6 +474,7 @@ class Cleaner:
                 self.context = self.GetNestedContent(self.context)
                 self.context = self.ReplaceKnownExtensions(self.context)
                 self.cleaned_context = self.FinalFormatter(self.context)
+                self.cleaned_context = self.cleaned_context.replace('-', ' ')
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned_context)
                 if(self.isCleaned):
                     return self.cleaned_context
@@ -493,6 +494,11 @@ class Cleaner:
             only_allowed_chars = all(x.isalnum() or x.isspace() or (x is '[') or (x is ']') or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
             has_correct_parenthesis = self.MatchSignsOccurences(in_context) and self.MatchSignsOccurences(in_context, self.edge_parenthesis)
             allowed = only_allowed_chars and has_correct_parenthesis
+
+            if (not allowed):
+                if not only_allowed_chars: print(self.constants.SIGN_ERROR)
+                if not has_correct_parenthesis: print(self.constants.PARENTHESIS_ERROR)
+
             return allowed
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.AllowedCharacterOccurenceCheck]. Arguments:\n{1!r}"

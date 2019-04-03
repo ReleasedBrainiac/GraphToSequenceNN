@@ -5,6 +5,8 @@ class Constants():
 
     # Dataset Provider Constants
     TYP_ERROR = 'Entered wrong type! Input is no String!'
+    SIGN_ERROR = 'Unauthorized sign found!'
+    PARENTHESIS_ERROR = 'Unauthorized parenthtesis found!'
     SENTENCE_DELIM = '::snt'
     SEMANTIC_DELIM = '::smt'
     FILE_DELIM = '::file'

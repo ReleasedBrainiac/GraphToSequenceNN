@@ -2,6 +2,11 @@ class Constants():
     """
     This class provides necessary constants for the whole Graph2Sequence Tool.
     """
+    # Raw Datafile Constants
+    ELEMENT_SPLIT_REGEX = '\#\s+\:+'
+
+    # Look up Datafile Constants
+    MAPPING_SPLIT_REGEX = '\#'
 
     # Dataset Provider Constants
     TYP_ERROR = 'Entered wrong type! Input is no String!'

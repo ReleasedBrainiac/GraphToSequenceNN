@@ -170,10 +170,10 @@ class ModelBuilder:
                             inputs:Layer,
                             prev_memory_state, 
                             prev_carry_state,
-                            name:str = 'sequence_decoder',
-                            training:bool = False,
-                            units=0,
-                            batch_size=0,
+                            name:str ='sequence_decoder',
+                            training:bool =False,
+                            units =0,
+                            batch_size =0,
                             act:str ='tanh', 
                             rec_act:str ='hard_sigmoid', 
                             use_bias:bool =True, 
@@ -231,7 +231,7 @@ class ModelBuilder:
                                 go_backwards=go_backwards, 
                                 stateful=stateful, 
                                 unroll=unroll)
-
+                                
             return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"

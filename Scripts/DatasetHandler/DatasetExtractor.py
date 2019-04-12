@@ -1,7 +1,7 @@
 from DatasetHandler.ContentSupport import isNotNone
 from Configurable.ProjectConstants import Constants
 
-class Extractor():
+class Extractor:
     """
     This class allow to collect semantics and sentences from a given amr context.
     Additionally a size restrictions for the semantics an sentences can be passed.
@@ -9,7 +9,7 @@ class Extractor():
 
     def __init__(self, in_content:str =None, sentence_restriction:int =-1, semantics_restriction:int=-1):
         """
-        This constructor store the given context, optional a size restirction and load at least the projeczt constants.
+        This constructor store the given context, optional a size restriction and load at least the project constants.
             :param in_content:str: input context by default None
             :param sentence_restriction:int: sentence restriction by default -1
             :param semantics_restriction:int: semantic restriction by default -1

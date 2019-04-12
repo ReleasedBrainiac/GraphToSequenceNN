@@ -55,7 +55,7 @@ class Graph2SeqInKeras():
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
-    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt'    #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt'
+    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' 
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
@@ -72,8 +72,8 @@ class Graph2SeqInKeras():
     GLOVE_OUTPUT_DIM:int = 100
     GLOVE_VOCAB_SIZE:int = 5000
     VALIDATION_SPLIT:float = 0.2
-    MIN_NODE_CARDINALITY:int = 3
-    MAX_NODE_CARDINALITY:int = 19
+    MIN_NODE_CARDINALITY:int = 7
+    MAX_NODE_CARDINALITY:int = 48
     HOP_STEPS:int = 3
     BIDIRECTIONAL_MULT:int = 2
     SHUFFLE_DATASET:bool = True

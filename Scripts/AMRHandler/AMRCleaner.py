@@ -455,8 +455,8 @@ class Cleaner:
                 new_line = self.HandleAdditionalContent(new_line)
                 struct_contain.append(new_line)
 
-            return '\n'.join(struct_contain) + ')'
-
+            joined = '\n'.join(struct_contain) + ')'
+            return joined.replace('-', ' ')
         except Exception as ex:
             template = "An exception of type {0} occurred in [AMRCleaner.FinalFormatter]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -474,7 +474,6 @@ class Cleaner:
                 self.context = self.GetNestedContent(self.context)
                 self.context = self.ReplaceKnownExtensions(self.context)
                 self.cleaned_context = self.FinalFormatter(self.context)
-                self.cleaned_context = self.cleaned_context.replace('-', ' ')
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned_context)
                 if(self.isCleaned):
                     return self.cleaned_context

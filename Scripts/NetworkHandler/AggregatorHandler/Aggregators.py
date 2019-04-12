@@ -1,7 +1,7 @@
 from keras import backend as K
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertIsTensor
 
-class Aggregators():
+class Aggregators:
     """
     This class provide the mean and max aggregation functions.
 

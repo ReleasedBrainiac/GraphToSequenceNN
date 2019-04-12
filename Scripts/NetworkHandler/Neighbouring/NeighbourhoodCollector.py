@@ -3,7 +3,7 @@ from NetworkHandler.AggregatorHandler.Aggregators import Aggregators
 from keras import backend as K
 from keras.layers import multiply
 
-class Neighbourhood():
+class Neighbourhood:
     """
     This class calculates the neighborhood feature aggregation.
 

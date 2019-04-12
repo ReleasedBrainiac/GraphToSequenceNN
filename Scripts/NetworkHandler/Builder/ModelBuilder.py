@@ -10,7 +10,7 @@ from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, Ass
 
 #TODO the unused decoder inputs can be completely removed since i add an external embedding layer.
 
-class ModelBuilder():
+class ModelBuilder:
     """
     This class allows to easily build a Graph2Sequence neural network model.
 

@@ -7,7 +7,7 @@ from anytree.exporter import JsonExporter
 from anytree.importer import JsonImporter
 from Configurable.ProjectConstants import Constants
 
-class TParser():
+class TParser:
     """
     This class library allow to extract content from AMR String representation.
     The result will provide as AnyNode or Json-AnyNode representation.

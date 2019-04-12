@@ -9,7 +9,7 @@ from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
 from AMRHandler.AMRCleaner import Cleaner
 
 
-class DatasetPipeline():
+class DatasetPipeline:
     """
     This class prepare the AMR for further usage. 
     It is possible to only clean and store the AMR dataset or it can be cleaned and passed to other processes.

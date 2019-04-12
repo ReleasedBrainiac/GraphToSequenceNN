@@ -18,10 +18,7 @@ class DatasetPipeline:
         => https://stackoverflow.com/questions/32382686/unicodeencodeerror-charmap-codec-cant-encode-character-u2010-character-m
         => https://www.pythonsheets.com/notes/python-rexp.html
     """
-
-    look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
-    extension_dict =  Reader(input_path=look_up_extension_replace_path).LineReadContent()
-
+    
     def __init__(self, 
                  in_path:str=None, 
                  output_path_extender:str='ouput', 
@@ -52,6 +49,8 @@ class DatasetPipeline:
         """   
         try:
             self.constants = Constants()
+            self.look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
+            self.extension_dict =  Reader(path=self.look_up_extension_replace_path, seperator_regex=self.constants.MAPPING_SPLIT_REGEX).LineReadContent()
             self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
             self.dataset_drop_outs = 0
             self.max_sentences = 0

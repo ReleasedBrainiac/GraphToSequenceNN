@@ -185,6 +185,7 @@ class Graph2SeqInKeras():
                                                 max_sequence_length=pipe.max_sentences,
                                                 glove_file_path=self.GLOVE, 
                                                 output_dim=out_dim_emb, 
+                                                batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
@@ -264,10 +265,6 @@ class Graph2SeqInKeras():
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
-
-            #TODO Maybe add Predict
-            #print("#######################################\n")
-            #print("######## Predict Model ########")
 
             print("#######################################\n")
             print("######## Process End ########")

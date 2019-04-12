@@ -3,7 +3,7 @@ from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
 import numpy as np
 
-class MatrixBuilder():
+class MatrixBuilder:
     """
     This class provide amr context to graph matrices builder.
     """

@@ -1,21 +1,22 @@
+import re
+from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotNone
 
 class Reader():
     """
     This class provides a FileReader for text containing files with an [otpional] delimiter.
     """
-    path = None
-    delimiter = '#'
 
-    def __init__(self, input_path:str =None, delimiter:str ='#'):
+    def __init__(self, path:str =None, seperator_regex:str =None):
         """
         The class constructor check for valid input and store it for local usage. 
-            :param input_path: path of file with string content
-            :param delimiter: an optional sign that allow to split an amr dataset at each occurence
+            :param path:str: path of file with string content
+            :param seperator_regex:str: an optional regex string that allow to split an amr dataset at each occurence
         """   
         try:
-            if isNotNone(input_path): self.path = input_path
-            if isNotNone(delimiter): self.delimiter = delimiter
+            self.constants = Constants()
+            self.path = path  if isNotNone(path) else None           
+            self.seperator_regex = seperator_regex if isNotNone(seperator_regex) else self.constants.ELEMENT_SPLIT_REGEX
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -30,7 +31,8 @@ class Reader():
             with open(self.path, 'r', encoding="utf8") as fileIn:
                 data=fileIn.readlines()
                 for line in data:
-                    content = line.replace('\n','').replace(',','').split('#')
+                    replaced = line.replace('\n','').replace(',','')
+                    content = re.split(self.seperator_regex, replaced)
                     look_up_elements[content[0]]=content[1]
 
             return look_up_elements
@@ -45,7 +47,7 @@ class Reader():
         """
         try:
             with open(self.path, 'r', encoding="utf8") as fileIn:
-                return fileIn.read().split(self.delimiter)
+                return re.split(self.seperator_regex, fileIn.read())
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.GroupReadAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

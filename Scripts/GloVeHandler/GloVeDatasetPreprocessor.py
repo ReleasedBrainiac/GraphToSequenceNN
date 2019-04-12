@@ -4,7 +4,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from DatasetHandler.ContentSupport import isNotNone
 
-class GloVeDatasetPreprocessor():
+class GloVeDatasetPreprocessor:
     """
     This class preprocesses given Datapairs from DatasetHandler.
     This includes:

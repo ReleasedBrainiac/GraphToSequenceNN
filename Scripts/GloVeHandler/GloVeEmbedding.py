@@ -5,7 +5,7 @@ from keras.initializers import Constant
 from keras.preprocessing.text import Tokenizer
 
 
-class GloVeEmbedding():
+class GloVeEmbedding:
     """
     This class provides the GloVeEmbedding Layer and the conversion of words into vectors of numbers.
 

@@ -1,7 +1,7 @@
 from __future__ import division
 from DatasetHandler.ContentSupport import toInt
 
-class NumWordParser():
+class NumWordParser:
     """
     Attention UNUSED!
     This class provide a simple number to qualified word representation parser.

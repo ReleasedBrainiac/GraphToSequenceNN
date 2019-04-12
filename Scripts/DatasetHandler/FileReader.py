@@ -2,7 +2,7 @@ import re
 from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotNone
 
-class Reader():
+class Reader:
     """
     This class provides a FileReader for text containing files with an [otpional] delimiter.
     """

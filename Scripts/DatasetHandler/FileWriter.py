@@ -2,7 +2,7 @@ from DatasetHandler.ContentSupport import isStr, isNotNone
 from DatasetHandler.ContentSupport import setOrDefault, AssertNotNone
 from Configurable.ProjectConstants import Constants
 
-class Writer():
+class Writer:
     """
     This class provides a FileWriter to store cleaned AMR Datasetpairs or stringyfied context.
     """

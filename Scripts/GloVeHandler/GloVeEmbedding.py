@@ -30,7 +30,8 @@ class GloVeEmbedding:
                  vocab_size:int =20000, 
                  max_sequence_length:int =1000, 
                  glove_file_path:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt', 
-                 output_dim:int =100, 
+                 output_dim:int =100,
+                 batch_size:int = 1,
                  show_feedback:bool =False):
         """
         This constructor stores all given parameters. 
@@ -43,6 +44,7 @@ class GloVeEmbedding:
             :param max_sequence_length:int: max length length over all sequences (padding)
             :param glove_file_path:str: path of the desired GloVe word vector file
             :param output_dim:int: the general vector size for each word embedding
+            :param batch_size:int: embedding batch size
             :param show_feedback:bool: switch allows to show process response on console or not
         """   
         try:
@@ -55,6 +57,8 @@ class GloVeEmbedding:
 
             self.MAX_SEQUENCE_LENGTH = max_sequence_length if (max_sequence_length > 0) else 1000
             print('Input/padding:\t\t=> ', self.MAX_SEQUENCE_LENGTH)
+            
+            self.batch_input_shape=(batch_size, self.MAX_SEQUENCE_LENGTH)
 
             self.MAX_NUM_WORDS = vocab_size if (vocab_size > 0) else 20000
             print('Vocab size:\t\t=> ', self.MAX_NUM_WORDS)
@@ -174,6 +178,7 @@ class GloVeEmbedding:
         try:
             return Embedding(input_dim=self.NUMBER_WORDS,
                              output_dim=self.EMBEDDING_DIM,
+                             batch_input_shape=self.batch_input_shape,
                              embeddings_initializer=Constant(embedding_matrix),
                              input_length=self.MAX_SEQUENCE_LENGTH,
                              trainable=False,

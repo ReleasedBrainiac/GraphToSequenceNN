@@ -171,7 +171,7 @@ class ModelBuilder:
                             name:str ='sequence_decoder',
                             training:bool =False,
                             units =0,
-                            batch_size =0,
+                            batch_size =1,
                             act:str ='tanh', 
                             rec_act:str ='hard_sigmoid', 
                             use_bias:bool =True, 

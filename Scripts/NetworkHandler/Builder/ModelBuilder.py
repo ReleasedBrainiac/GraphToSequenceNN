@@ -8,8 +8,6 @@ from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embed
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
-#TODO the unused decoder inputs can be completely removed since i add an external embedding layer.
-
 class ModelBuilder:
     """
     This class allows to easily build a Graph2Sequence neural network model.
@@ -231,7 +229,7 @@ class ModelBuilder:
                                 go_backwards=go_backwards, 
                                 stateful=stateful, 
                                 unroll=unroll)
-                                
+
             return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"

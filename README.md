@@ -8,15 +8,15 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 
 ## The Setup (necessary libraries!)
 
+- Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
 - Tensorflow Version:   1.10.0 => https://www.tensorflow.org/ [For GPU or CPU]
 - Keras Version:        2.2.2 => https://keras.io/
-- Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/
 - Ordereddict Version:  1.1   => https://pypi.org/project/ordereddict/
 - Pydot Version:        1.2.4 => https://pypi.org/project/pydot/
 - Graphviz Version:     0.8.4 => https://pypi.org/project/graphviz/
 - H5PY                        => http://docs.h5py.org/en/latest/build.html
-- Jupyter Notebook [optional] => http://jupyter.org/install 
+- Matplotlib            1.1.0 => https://matplotlib.org/faq/installing_faq.html
 
 ## Usage
 

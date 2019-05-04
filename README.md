@@ -8,7 +8,7 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 
 ## The Setup (necessary libraries!)
 
-- Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
+- Python version:       3.6.5 => https://www.python.org/downloads/release/python-365/
 - Tensorflow Version:   1.10.0 => https://www.tensorflow.org/ [For GPU or CPU]
 - Keras Version:        2.2.2 => https://keras.io/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/

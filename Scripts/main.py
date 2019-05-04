@@ -1,5 +1,6 @@
 import argparse
-import os, sys
+import os
+import sys
 import platform as pf
 import numpy as np
 import tensorflow as tf
@@ -65,7 +66,7 @@ class Graph2SeqInKeras():
     EXTENDER:str = "dc.ouput"
     MAX_LENGTH_DATA:int = -1
     SHOW_FEEDBACK:bool = False
-    STORE_STDOUT:bool = True
+    STORE_STDOUT:bool = False
     SAVE_PLOTS = True
     SAVING_CLEANED_AMR:bool = False
     KEEP_EDGES:bool = True
@@ -239,7 +240,7 @@ class Graph2SeqInKeras():
             plt.ylabel('Top k Categorical Accuracy')
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
-            if not self.SAVE_PLOTS: 
+            if self.SAVE_PLOTS: 
                 print('1. Image')
                 self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
             else: 
@@ -251,7 +252,7 @@ class Graph2SeqInKeras():
             plt.ylabel('Categorical Accuracy')
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
-            if not self.SAVE_PLOTS: 
+            if self.SAVE_PLOTS: 
                 print('2. Image')
                 self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
             else: 
@@ -263,7 +264,7 @@ class Graph2SeqInKeras():
             plt.ylabel('Loss')
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
-            if not self.SAVE_PLOTS: 
+            if self.SAVE_PLOTS: 
                 print('3. Image')
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 

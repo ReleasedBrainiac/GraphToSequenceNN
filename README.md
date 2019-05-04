@@ -8,15 +8,15 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 
 ## The Setup (necessary libraries!)
 
+- Python version:       3.6.5 => https://www.python.org/downloads/release/python-365/
 - Tensorflow Version:   1.10.0 => https://www.tensorflow.org/ [For GPU or CPU]
 - Keras Version:        2.2.2 => https://keras.io/
-- Python version:       3.5.6 => https://www.python.org/downloads/release/python-365/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/
 - Ordereddict Version:  1.1   => https://pypi.org/project/ordereddict/
 - Pydot Version:        1.2.4 => https://pypi.org/project/pydot/
 - Graphviz Version:     0.8.4 => https://pypi.org/project/graphviz/
 - H5PY                        => http://docs.h5py.org/en/latest/build.html
-- Jupyter Notebook [optional] => http://jupyter.org/install 
+- Matplotlib            1.1.0 => https://matplotlib.org/faq/installing_faq.html
 
 ## Usage
 
@@ -31,25 +31,22 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 - Change "STORE_STDOUT" to False to see console reports... otherwise they gonna be stored in a file and the console will be empty until the process is done!
 
 ## Current developement status
-
 - Tool is Finished
 
 ## Resources
-
 - I used the following ressource for lookup the table replacement.
         => https://www.thesaurus.com/browse/clean%20out?s=t 
 - Try Catch Style/Code Source:
         => https://stackoverflow.com/questions/9823936/python-how-do-i-know-what-type-of-exception-occurred
 
 ## Tools
-
 - Live Regex Online Tool => https://regex101.com/r/U7SV1y/1/ 
 - Visual Studio Code + Extensions
 
 ## Questions
 - [?]  Is GloVe able to encode "New Zealand", "North_Pole" or other definitions
 
-## [AMR Parser] What do I expel from AMR string
+## [AMR Parser] What's expeled from AMR string?
  
 1. Replaced all base word extensions 
         1. "do-01" => "d0"
@@ -65,7 +62,7 @@ This is caused by the differnt interpretation of the paper and my goal to strict
         1. => {"NSLx": "Zealand"}
 6. Expelled all signs which not match alpahnumeric, whitespacing, "/" and round parenthesis
 
-## [GloVe Dataset Parser]
+## [GloVe Dataset Parser] What's changed for the process?
 
 1. Removed ['#::snt ', '" ',' "'] and replaced '- -' with '-' in the sentences
 
@@ -74,6 +71,6 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 ## [Bugs]
 
 1. It isn't possible to extend the batch_size > 1 [Fix status => PAUSED]
-2. For python 3.6.5 saving the whole model throws an key argument error [Fix status => ignored]
+2. For python 3.6.5 saving the whole model throws an key argument error [Fix status => IGNORED]
         1. Currently saving weights is possible
                                           

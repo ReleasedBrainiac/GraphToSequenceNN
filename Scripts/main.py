@@ -240,7 +240,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
-				print('1. Plotted!')
+                print('1. Image')
                 self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -252,7 +252,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
-				print('2. Plotted!')
+                print('2. Image')
                 self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -264,7 +264,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
-				print('3. Plotted!')
+                print('3. Image')
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
@@ -354,8 +354,8 @@ class Graph2SeqInKeras():
         """   
         try:
             tmp_path = (self.fname+'_plot.'+image_type) if (extender is None) else (self.fname+'_'+extender+'.'+image_type)
-			print('File: ', tmp_path)
-			plt.savefig(tmp_path, orientation=orientation)	
+            print('Image: ', tmp_path)
+            plt.savefig(tmp_path, orientation=orientation)
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.SavePyPlotToFile]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

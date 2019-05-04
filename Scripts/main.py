@@ -51,7 +51,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 5
+    EPOCHS:int = 1
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -65,8 +65,8 @@ class Graph2SeqInKeras():
     EXTENDER:str = "dc.ouput"
     MAX_LENGTH_DATA:int = -1
     SHOW_FEEDBACK:bool = False
-    STORE_STDOUT:bool = False
-    SAVE_PLOTS = False
+    STORE_STDOUT:bool = True
+    SAVE_PLOTS = True
     SAVING_CLEANED_AMR:bool = False
     KEEP_EDGES:bool = True
     GLOVE_OUTPUT_DIM:int = 100
@@ -240,6 +240,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
+				print('1. Plotted!')
                 self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -251,6 +252,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
+				print('2. Plotted!')
                 self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -262,6 +264,7 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if not self.SAVE_PLOTS: 
+				print('3. Plotted!')
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
@@ -350,10 +353,9 @@ class Graph2SeqInKeras():
             :parama image_type:str: image file type [Default 'png']
         """   
         try:
-            if extender is None:
-                plt.savefig((self.fname+'_plot.'+image_type), orientation=orientation)
-            else: 
-                plt.savefig((self.fname+'_'+extender+'.'+image_type), orientation=orientation)
+            tmp_path = (self.fname+'_plot.'+image_type) if (extender is None) else (self.fname+'_'+extender+'.'+image_type)
+			print('File: ', tmp_path)
+			plt.savefig(tmp_path, orientation=orientation)	
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.SavePyPlotToFile]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

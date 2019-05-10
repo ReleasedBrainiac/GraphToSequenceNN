@@ -59,7 +59,6 @@ class Graph2SeqInKeras():
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
     DATASET_NAME:str = 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt'
-    DATASET_NAME_SHORT = 'Prinz' #'Bio'
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
@@ -83,7 +82,40 @@ class Graph2SeqInKeras():
     FOLDERNAME:str = "graph2seq_model_" + fname + "_DT_" + TIME_NOW + "/"
     MODEL_DESC:str = FOLDERNAME + "model_" + fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(GLOVE_VEC_SIZE) + "_DT_" + TIME_NOW + "_"
 
-    def ExecuteTool(self):
+    # Multi Run Setup!
+    datasets = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
+    runs:int = 3
+    multi_epochs = [2, 4, 6]
+    multi_hops = [3, 4, 5]
+    multi_val_split = [0.2, 0.2, 0.80]
+
+
+
+
+    def ExectuteMulti(self):
+        for dataset in self.datasets:
+
+            self.DATASET_NAME = dataset
+            self.fname = dataset.split('/')[0]
+            self.DATASET = './Datasets/Raw/'+dataset
+
+            for run in range(self.runs):
+
+                self.EPOCHS = self.multi_epochs[run]
+                self.HOP_STEPS = self.multi_hops[run]
+                self.VALIDATION_SPLIT = self.multi_val_split[run]
+
+                #Set name elements and time elements
+                self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
+                self.FOLDERNAME:str = "graph2seq_model_" + self.fname + "_DT_" + self.TIME_NOW + "/"
+                self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self.fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.GLOVE_VEC_SIZE) + "_DT_" + self.TIME_NOW + "_"
+
+                
+
+                self.Execute()
+
+
+    def Execute(self):
         """
         The main method of the tool.
         It provides 2 functions:
@@ -371,4 +403,4 @@ class Graph2SeqInKeras():
             print(ex)
 
 if __name__ == "__main__":
-    Graph2SeqInKeras().ExecuteTool()
+    Graph2SeqInKeras().ExectuteMulti()

@@ -8,6 +8,8 @@ import keras
 from keras.callbacks import History
 import matplotlib.pyplot as plt
 
+from time import gmtime, strftime
+from Logger.Logger import FACLogger, FolderCreator
 from DatasetHandler.DatasetProvider import DatasetPipeline
 from DatasetHandler.ContentSupport import RoundUpRestricted
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
@@ -56,17 +58,16 @@ class Graph2SeqInKeras():
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
-    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' 
+    DATASET_NAME:str = 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt'
+    DATASET_NAME_SHORT = 'Prinz' #'Bio'
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
     GLOVE_VEC_SIZE:int = 100
-    MODEL:str = "graph2seq_model"
     PLOT:str = "plot.png"
     EXTENDER:str = "dc.ouput"
     MAX_LENGTH_DATA:int = -1
     SHOW_FEEDBACK:bool = False
-    STORE_STDOUT:bool = False
     SAVE_PLOTS = True
     SAVING_CLEANED_AMR:bool = False
     KEEP_EDGES:bool = True
@@ -75,9 +76,12 @@ class Graph2SeqInKeras():
     VALIDATION_SPLIT:float = 0.2
     MIN_NODE_CARDINALITY:int = 7
     MAX_NODE_CARDINALITY:int = 48
-    HOP_STEPS:int = 3
-    BIDIRECTIONAL_MULT:int = 2
+    HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
+
+    TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
+    FOLDERNAME:str = "graph2seq_model_" + fname + "_DT_" + TIME_NOW + "/"
+    MODEL_DESC:str = FOLDERNAME + "model_" + fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(GLOVE_VEC_SIZE) + "_DT_" + TIME_NOW + "_"
 
     def ExecuteTool(self):
         """
@@ -87,7 +91,12 @@ class Graph2SeqInKeras():
             2. Execute the network on the given dataset (includes cleaning but no storing of the AMR). 
         """  
         try:
-            if (self.STORE_STDOUT): sys.stdout = open(self.fname+' console_report.txt', 'w')
+            print("Model Folder Path:", self.FOLDERNAME)
+            if not FolderCreator(self.FOLDERNAME).Create(): 
+                print("Result folder was not being created!")
+                return False
+
+            sys.stdout = FACLogger(self.FOLDERNAME, self.fname + "_Log")
 
             print("\n#######################################")
             print("######## Graph to Sequence ANN ########")
@@ -213,7 +222,7 @@ class Graph2SeqInKeras():
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model)
             if self.SHOW_FEEDBACK: builder.Summary(model)
-            builder.Plot(model=model, file_name=self.fname+'_model_graph.png')
+            builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             print("#######################################\n")
             print("########### Starts Training ###########")
@@ -229,7 +238,7 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("############# Save Model ##############")
 
-            model.save_weights(self.fname+'_graph_2_sequence_trained_weights.h5')
+            model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
@@ -241,7 +250,6 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if self.SAVE_PLOTS: 
-                print('1. Image')
                 self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -253,7 +261,6 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if self.SAVE_PLOTS: 
-                print('2. Image')
                 self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
             else: 
                plt.show()
@@ -265,7 +272,6 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Test'], loc='upper left')
             if self.SAVE_PLOTS: 
-                print('3. Image')
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
@@ -354,14 +360,15 @@ class Graph2SeqInKeras():
             :parama image_type:str: image file type [Default 'png']
         """   
         try:
-            tmp_path = (self.fname+'_plot.'+image_type) if (extender is None) else (self.fname+'_'+extender+'.'+image_type)
-            print('Image: ', tmp_path)
-            plt.savefig(tmp_path, orientation=orientation)
+            if extender is None:
+                plt.savefig((self.MODEL_DESC+'plot.'+image_type), orientation=orientation)
+            else: 
+                plt.savefig((self.MODEL_DESC+extender+'.'+image_type), orientation=orientation)
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.SavePyPlotToFile]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)
-    
+
 if __name__ == "__main__":
     Graph2SeqInKeras().ExecuteTool()

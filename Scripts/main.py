@@ -78,6 +78,10 @@ class Graph2SeqInKeras():
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
 
+    # Run Switch
+    MULTI_RUN = True
+
+    # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
     FOLDERNAME:str = "graph2seq_model_" + fname + "_DT_" + TIME_NOW + "/"
     MODEL_DESC:str = FOLDERNAME + "model_" + fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(GLOVE_VEC_SIZE) + "_DT_" + TIME_NOW + "_"
@@ -90,7 +94,9 @@ class Graph2SeqInKeras():
     multi_val_split = [0.2, 0.2, 0.80]
 
 
-
+    def Execute(self):
+        if self.MULTI_RUN: return self.ExectuteMulti()
+        else: return self.ExecuteSingle()
 
     def ExectuteMulti(self):
         for dataset in self.datasets:
@@ -112,10 +118,10 @@ class Graph2SeqInKeras():
 
                 
 
-                self.Execute()
+                self.ExecuteSingle()
 
 
-    def Execute(self):
+    def ExecuteSingle(self):
         """
         The main method of the tool.
         It provides 2 functions:
@@ -403,4 +409,4 @@ class Graph2SeqInKeras():
             print(ex)
 
 if __name__ == "__main__":
-    Graph2SeqInKeras().ExectuteMulti()
+    Graph2SeqInKeras().Execute()

@@ -89,8 +89,8 @@ class Graph2SeqInKeras():
     # Multi Run Setup!
     datasets = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
     runs:int = 3
-    multi_epochs = [2, 4, 6]
-    multi_hops = [3, 4, 5]
+    multi_epochs = [1, 4, 6]
+    multi_hops = [7, 4, 5]
     multi_val_split = [0.2, 0.2, 0.80]
 
 
@@ -106,7 +106,11 @@ class Graph2SeqInKeras():
             self.DATASET = './Datasets/Raw/'+dataset
 
             for run in range(self.runs):
+                # Reset Logger
+                sys.stdout = sys.__stdout__
+                sys.stdout.flush()
 
+                # Set network changes
                 self.EPOCHS = self.multi_epochs[run]
                 self.HOP_STEPS = self.multi_hops[run]
                 self.VALIDATION_SPLIT = self.multi_val_split[run]
@@ -115,9 +119,6 @@ class Graph2SeqInKeras():
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
                 self.FOLDERNAME:str = "graph2seq_model_" + self.fname + "_DT_" + self.TIME_NOW + "/"
                 self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self.fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.GLOVE_VEC_SIZE) + "_DT_" + self.TIME_NOW + "_"
-
-                
-
                 self.ExecuteSingle()
 
 

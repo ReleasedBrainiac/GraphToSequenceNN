@@ -234,6 +234,7 @@ class DatasetPipeline:
             print('[Size Mean]:\t\t Sentences =', mean_sentences, '| Semantics = ', mean_semantics)
             print('[Size Max]:\t\t Sentences =', self.max_sentences)
             print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
+            print('[Extensions]:\t\t', len(self.extension_dict))
             print('[Path]:\t\t\t', self.in_path)
             print('[Dropouts]:\t\t', self.dataset_drop_outs)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

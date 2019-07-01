@@ -40,14 +40,10 @@ class Reader:
         """
         try:
             look_up_elements = {}
-            #with open(self.path, 'r', encoding="utf8") as fileIn:
-            #    data=fileIn.readlines()
-            data = self.Lines()
-            for line in data:
+            for line in self.Lines():
                 replaced = line.replace('\n','').replace(',','')
                 content = re.split(self.seperator_regex, replaced)
                 look_up_elements[content[0]]=content[1]
-            data = None
             return look_up_elements
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.LineReadContent]. Arguments:\n{1!r}"

@@ -77,9 +77,10 @@ class Graph2SeqInKeras():
     MAX_NODE_CARDINALITY:int = 48
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
+    _accurracy:list = ['top_k_categorical_accuracy']
 
     # Run Switch
-    MULTI_RUN = False
+    MULTI_RUN = True
 
     # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -88,10 +89,11 @@ class Graph2SeqInKeras():
 
     # Multi Run Setup!
     datasets = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
-    runs:int = 3
-    multi_epochs = [1, 4, 6]
-    multi_hops = [7, 4, 5]
-    multi_val_split = [0.2, 0.2, 0.80]
+    multi_epochs = [1, 4, 6, 1, 4, 6]
+    multi_hops = [7, 4, 5, 7, 4, 5]
+    multi_val_split = [0.2, 0.2, 0.80, 0.2, 0.2, 0.80]
+    multi_acc = [['top_k_categorical_accuracy'], ['top_k_categorical_accuracy'], ['top_k_categorical_accuracy'], ['categorical_accuracy'], ['categorical_accuracy'], ['categorical_accuracy']]
+    runs:int = len(multi_epochs)
 
 
     def Execute(self):
@@ -111,6 +113,7 @@ class Graph2SeqInKeras():
                 sys.stdout.flush()
 
                 # Set network changes
+                self._accurracy = self.multi_acc[run]
                 self.EPOCHS = self.multi_epochs[run]
                 self.HOP_STEPS = self.multi_hops[run]
                 self.VALIDATION_SPLIT = self.multi_val_split[run]
@@ -259,7 +262,7 @@ class Graph2SeqInKeras():
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model)
+            builder.CompileModel(model=model, metrics=self._accurracy)
             if self.SHOW_FEEDBACK: builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
@@ -282,8 +285,9 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
+            print(type(history.history.keys()))
             print(history.history.keys())
-            print(history.history.keys()['categorical_accuracy'])
+            print(history.history['categorical_accuracy'])
 
             plt.plot(history.history['top_k_categorical_accuracy'])
             plt.plot(history.history['val_top_k_categorical_accuracy'])

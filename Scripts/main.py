@@ -79,7 +79,7 @@ class Graph2SeqInKeras():
     SHUFFLE_DATASET:bool = True
 
     # Run Switch
-    MULTI_RUN = True
+    MULTI_RUN = False
 
     # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -281,6 +281,9 @@ class Graph2SeqInKeras():
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
+
+            print(history.history.keys())
+            print(history.history.keys()['categorical_accuracy'])
 
             plt.plot(history.history['top_k_categorical_accuracy'])
             plt.plot(history.history['val_top_k_categorical_accuracy'])

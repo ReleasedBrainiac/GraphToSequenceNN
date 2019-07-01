@@ -27,7 +27,7 @@ class Reader:
         This function provides a file lines reader.
         """
         try:
-            with open(self.path, 'r+', encoding="utf8") as fileIn:
+            with open(self.path, 'r', encoding="utf8") as fileIn:
                 return fileIn.readlines()
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.Lines]. Arguments:\n{1!r}"

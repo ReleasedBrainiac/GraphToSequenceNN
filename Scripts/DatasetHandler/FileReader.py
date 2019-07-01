@@ -22,19 +22,32 @@ class Reader:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def Lines(self):
+        """
+        This function provides a file lines reader.
+        """
+        try:
+            with open(self.path, 'r+', encoding="utf8") as fileIn:
+                return fileIn.readlines()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [FileReader.Lines]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def LineReadContent(self):
         """
         This function provides a file reader for the AMR look up table.
         """
         try:
             look_up_elements = {}
-            with open(self.path, 'r', encoding="utf8") as fileIn:
-                data=fileIn.readlines()
-                for line in data:
-                    replaced = line.replace('\n','').replace(',','')
-                    content = re.split(self.seperator_regex, replaced)
-                    look_up_elements[content[0]]=content[1]
-
+            #with open(self.path, 'r', encoding="utf8") as fileIn:
+            #    data=fileIn.readlines()
+            data = self.Lines()
+            for line in data:
+                replaced = line.replace('\n','').replace(',','')
+                content = re.split(self.seperator_regex, replaced)
+                look_up_elements[content[0]]=content[1]
+            data = None
             return look_up_elements
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.LineReadContent]. Arguments:\n{1!r}"

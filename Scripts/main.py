@@ -236,7 +236,7 @@ class Graph2SeqInKeras():
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=pipe.max_sentences,
                                                                 show_feedback=True)
-            _, _, edge_fw_look_up, edge_bw_look_up, vectorized_sequences, vectorized_targets, dataset_nodes_values, dataset_indices = glove_dataset_processor.Execute()
+            _, _, edge_fw_look_up, edge_bw_look_up, vectorized_sequences, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
             
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 

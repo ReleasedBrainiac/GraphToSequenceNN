@@ -5,7 +5,7 @@ import platform as pf
 import numpy as np
 import tensorflow as tf
 import keras
-from keras.callbacks import History
+from keras.callbacks import History, ReduceLROnPlateau, LearningRateScheduler, BaseLogger
 import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
@@ -22,6 +22,7 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
 #TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
 #TODO IN MA => Code => Why min and max cardinality
+#TODO IN MA => Code => https://keras.io/callbacks/ 
 #TODO IN MA => Resource for MA and Code ~> https://stackoverflow.com/questions/32771786/predictions-using-a-keras-recurrent-neural-network-accuracy-is-always-1-0/32788454#32788454 
 #TODO IN MA => Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
 #TODO IN MA => 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
@@ -54,7 +55,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 1
+    EPOCHS:int = 4
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -77,10 +78,10 @@ class Graph2SeqInKeras():
     MAX_NODE_CARDINALITY:int = 48
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
-    _accurracy:list = ['top_k_categorical_accuracy']
+    _accurracy:list = ['categorical_accuracy']
 
     # Run Switch
-    MULTI_RUN = True
+    MULTI_RUN = False
 
     # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -252,8 +253,7 @@ class Graph2SeqInKeras():
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
                                     input_dec_dim=pipe.max_sentences,
-                                    batch_size=self.BATCH_SIZE,
-                                    input_is_2d=False)
+                                    batch_size=self.BATCH_SIZE)
 
             _, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
@@ -269,13 +269,18 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("########### Starts Training ###########")
 
+            base_lr = BaseLogger()
+            #schedule_lr = LearningRateScheduler(schedule=self.EPOCHS, verbose = self.VERBOSE)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001)
+
             history = model.fit([datasets_nodes_embedding, edge_fw_look_up, edge_bw_look_up, vectorized_sequences], 
                                 vectorized_targets,
                                 batch_size = self.BATCH_SIZE,
                                 epochs=self.EPOCHS, 
                                 verbose=self.VERBOSE, 
                                 shuffle=self.SHUFFLE_DATASET,
-                                validation_split=self.VALIDATION_SPLIT)
+                                validation_split=self.VALIDATION_SPLIT,
+                                callbacks=[base_lr, reduce_lr])
 
             print("#######################################\n")
             print("############# Save Model ##############")
@@ -285,31 +290,42 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
-            print(type(history.history.keys()))
             print(history.history.keys())
-            print(history.history['categorical_accuracy'])
 
-            plt.plot(history.history['top_k_categorical_accuracy'])
-            plt.plot(history.history['val_top_k_categorical_accuracy'])
-            plt.title('Model Top k Categorical Accuracy')
-            plt.ylabel('Top k Categorical Accuracy')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Test'], loc='upper left')
-            if self.SAVE_PLOTS: 
-                self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-            else: 
-               plt.show()
+            if 'top_k_categorical_accuracy' in self._accurracy:
+                plt.plot(history.history['top_k_categorical_accuracy'])
+                plt.plot(history.history['val_top_k_categorical_accuracy'])
+                plt.title('Model Top k Categorical Accuracy')
+                plt.ylabel('Top k Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Test'], loc='upper left')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                else: 
+                   plt.show()
 
-            plt.plot(history.history['categorical_accuracy'])
-            plt.plot(history.history['val_categorical_accuracy'])
-            plt.title('Model Categorical Accuracy')
-            plt.ylabel('Categorical Accuracy')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Test'], loc='upper left')
-            if self.SAVE_PLOTS: 
-                self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
-            else: 
-               plt.show()
+            if 'categorical_accuracy' in self._accurracy:
+                plt.plot(history.history['categorical_accuracy'])
+                plt.plot(history.history['val_categorical_accuracy'])
+                plt.title('Model Categorical Accuracy')
+                plt.ylabel('Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Test'], loc='upper left')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                else: 
+                   plt.show()
+
+            if 'lr' in history.history.keys():
+                plt.plot(history.history['lr'])
+                plt.title('Model Learning Rate')
+                plt.ylabel('Learning Rate')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Test'], loc='upper left')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                else: 
+                   plt.show()
 
             plt.plot(history.history['loss'])
             plt.plot(history.history['val_loss'])

@@ -290,14 +290,14 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("############### Saveing ###############")
 
+            print(type(history))
+            print(history.history.keys())
 
+            HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history)
             model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
-
-            print(type(history))
-            print(history.history.keys())
 
             if 'top_k_categorical_accuracy' in self._accurracy:
                 plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')

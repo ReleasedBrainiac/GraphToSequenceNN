@@ -1,5 +1,6 @@
 import sys, re
 from DatasetHandler.FileReader import Reader
+from DatasetHandler.ContentSupport import isNotNone
 
 class HistoryLoader():
     """
@@ -42,7 +43,7 @@ class HistoryLoader():
             :param path:str: path of the file containing the history
         """ 
         try:
-            self._path = path if not (path is None) else None
+            self._path = path if isNotNone(path) else None
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistoryLoader.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

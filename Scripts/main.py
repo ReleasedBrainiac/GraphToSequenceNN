@@ -5,7 +5,7 @@ import platform as pf
 import numpy as np
 import tensorflow as tf
 import keras
-from keras.callbacks import History, ReduceLROnPlateau, LearningRateScheduler, BaseLogger
+from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
 import matplotlib.pyplot as plt
 
 from time import gmtime, strftime
@@ -17,12 +17,15 @@ from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
 from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
+from Plotter.SaveHistory import HistorySaver
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
 #TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
 #TODO IN MA => Code => Why min and max cardinality
 #TODO IN MA => Code => https://keras.io/callbacks/ 
+#TODO IN MA => Code => https://github.com/GeekLiB/keras/blob/master/tests/keras/test_callbacks.py
+#TODO IN MA => Code => https://machinelearningmastery.com/diagnose-overfitting-underfitting-lstm-models/
 #TODO IN MA => Resource for MA and Code ~> https://stackoverflow.com/questions/32771786/predictions-using-a-keras-recurrent-neural-network-accuracy-is-always-1-0/32788454#32788454 
 #TODO IN MA => Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
 #TODO IN MA => 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
@@ -32,6 +35,9 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 #TODO Guide to finalize Tool => https://keras.io/models/model/#fit 
 #TODO Guide to finalize Tool => https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
 #TODO Guide to finalize Tool => https://keras.io/visualization/#training-history-visualization
+
+#TODO nice to use => https://stackoverflow.com/questions/45193744/keras-tensorflow-strange-results
+#TODO nice to use => https://www.tensorflow.org/guide/summaries_and_tensorboard
 
 class Graph2SeqInKeras():
     """
@@ -55,7 +61,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 4
+    EPOCHS:int = 2
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -270,8 +276,7 @@ class Graph2SeqInKeras():
             print("########### Starts Training ###########")
 
             base_lr = BaseLogger()
-            #schedule_lr = LearningRateScheduler(schedule=self.EPOCHS, verbose = self.VERBOSE)
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
 
             history = model.fit([datasets_nodes_embedding, edge_fw_look_up, edge_bw_look_up, vectorized_sequences], 
                                 vectorized_targets,
@@ -283,56 +288,58 @@ class Graph2SeqInKeras():
                                 callbacks=[base_lr, reduce_lr])
 
             print("#######################################\n")
-            print("############# Save Model ##############")
+            print("############### Saveing ###############")
+
 
             model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
+            print(type(history))
             print(history.history.keys())
 
             if 'top_k_categorical_accuracy' in self._accurracy:
-                plt.plot(history.history['top_k_categorical_accuracy'])
-                plt.plot(history.history['val_top_k_categorical_accuracy'])
+                plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
                 plt.title('Model Top k Categorical Accuracy')
                 plt.ylabel('Top k Categorical Accuracy')
                 plt.xlabel('Epoch')
-                plt.legend(['Train', 'Test'], loc='upper left')
+                plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS: 
                     self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
                 else: 
                    plt.show()
 
             if 'categorical_accuracy' in self._accurracy:
-                plt.plot(history.history['categorical_accuracy'])
-                plt.plot(history.history['val_categorical_accuracy'])
+                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
                 plt.title('Model Categorical Accuracy')
                 plt.ylabel('Categorical Accuracy')
                 plt.xlabel('Epoch')
-                plt.legend(['Train', 'Test'], loc='upper left')
+                plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS: 
                     self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
                 else: 
                    plt.show()
 
             if 'lr' in history.history.keys():
-                plt.plot(history.history['lr'])
+                plt.plot(history.history['lr'], color='green', label='learning rate')
                 plt.title('Model Learning Rate')
                 plt.ylabel('Learning Rate')
                 plt.xlabel('Epoch')
-                plt.legend(['Train', 'Test'], loc='upper left')
+                plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS: 
                     self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
                 else: 
                    plt.show()
 
-            plt.plot(history.history['loss'])
-            plt.plot(history.history['val_loss'])
+            plt.plot(history.history['loss'], color='blue', label='train')
+            plt.plot(history.history['val_loss'], color='orange', label='validation')
             plt.title('Model loss')
             plt.ylabel('Loss')
             plt.xlabel('Epoch')
-            plt.legend(['Train', 'Test'], loc='upper left')
+            plt.legend(['Train', 'Validation'], loc='upper right')
             if self.SAVE_PLOTS: 
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 

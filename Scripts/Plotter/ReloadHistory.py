@@ -49,6 +49,7 @@ class HistoryLoader():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    #TODO This method needs to be simplyfied
     def CollectContextFromLog(self):
         """
         This method collect the necessary informations from console logged history callback.

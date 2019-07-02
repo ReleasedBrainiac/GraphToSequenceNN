@@ -1,7 +1,7 @@
 import re
 import matplotlib.pyplot as plt
 from DatasetHandler.ContentSupport import isNotNone
-from Plotter.SAvePlots import PlotSaver
+from Plotter.SavePlots import PlotSaver
 
 class HistoryPlotter(object):
     """

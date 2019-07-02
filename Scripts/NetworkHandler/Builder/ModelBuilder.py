@@ -25,7 +25,7 @@ class ModelBuilder:
         => 2. https://machinelearningmastery.com/keras-functional-api-deep-learning/
     """
 
-    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int, batch_size:int = 1, input_is_2d:bool =True):
+    def __init__(self, input_enc_dim: int, edge_dim: int, input_dec_dim: int, batch_size:int = 1, input_is_2d:bool =False):
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
         and build the necessary input tensors for the network. 

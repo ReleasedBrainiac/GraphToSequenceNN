@@ -1,4 +1,5 @@
 import os, pickle
+import json
 from DatasetHandler.ContentSupport import isNotNone
 
 class HistorySaver():
@@ -26,7 +27,7 @@ class HistorySaver():
                     self._file_path = folder_path + path_seperator + name  
                     
                     if isNotNone(history):
-                        self.SaveKerasHistory(history)
+                        self.SaveKerasHistoryJson(history)
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistorySaver.Constructor]. Arguments:\n{1!r}"
@@ -51,9 +52,23 @@ class HistorySaver():
             :param history: the history
         """
         try:
-            with open(self._file_path, 'wb') as history_file:
+            with open(self._file_path+".txt", 'wb') as history_file:
                 pickle.dump(history.history, history_file)
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistorySaver.SaveKerasHistory]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def SaveKerasHistoryJson(self, history):
+        """
+        This method save a keras history to a file.
+            :param history: the history
+        """
+        try:
+            with open(self._file_path+".json", 'w') as f:
+                json.dump(history.history, f)
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistorySaver.SaveKerasHistoryJson]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)        

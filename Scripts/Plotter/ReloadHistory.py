@@ -19,7 +19,7 @@ class HistoryLoader():
     EPOCHE_REX:str = r'^({}[ ]+)([0-9]+[\/])([0-9]+)$'.format(EPOCH_FLAG)
     ETA_CLEAN_REX:str = r'({}[ :]+)([0-9s:]+[ -]+)'.format(ETA_FLAG)
     EPS_STEP_CLEAN_REX:str = r'(^ *[0-9\/ ]+\[[.=>]*\][ -]+)'
-    TIME_STEP_CLEAN_REX:str = r'([0-9]+s [0-9]+ms\/step[ -]+)'
+    TIME_STEP_CLEAN_REX:str = r'([0-9]+[ms]* [0-9]+[ms]*\/step[ -]+)'
     
     _sub_elements:list = ['loss', 'top_k_categorical_accuracy', 'categorical_accuracy']
     _sub_element_rex:str = r'(\b{}[: ]+)([0-9.]+)'
@@ -49,7 +49,41 @@ class HistoryLoader():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    #TODO This method needs to be simplyfied
+    def HandleBatchLines(self, line:str):
+        """
+        This method handles logged batch lines.
+            :param line:str: 
+        """   
+        try:
+            if re.search(self.ETA_CLEAN_REX, line):
+                line = re.sub(self.ETA_CLEAN_REX, '', line)
+                self._losses.append(re.search(self._sub_element_rex.format(self._sub_elements[0]),line).group(2))
+                self._top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[1]),line).group(2))
+                self._categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[2]),line).group(2))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryLoader.HandleBatchLines]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    def HandleEpochResultLines(self, line:str):
+        """
+        This method handles logged epoch end result lines.
+            :param line:str: 
+        """   
+        try:
+            if re.search(self.TIME_STEP_CLEAN_REX, line):
+                line = re.sub(self.TIME_STEP_CLEAN_REX, '', line)
+                self._losses.append(re.search(self._sub_element_rex.format(self._sub_elements[0]),line).group(2))
+                self._top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[1]),line).group(2))
+                self._categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[2]),line).group(2))
+                self._val_losses.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[0]),line).group(2))
+                self._val_top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[1]),line).group(2))
+                self._val_categorical_accuracies.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[2]),line).group(2))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryLoader.HandleEpochResultLines]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
     def CollectContextFromLog(self):
         """
         This method collect the necessary informations from console logged history callback.
@@ -68,27 +102,14 @@ class HistoryLoader():
             
                 if re.search(self.EPS_STEP_CLEAN_REX, line):
                     line = re.sub(self.EPS_STEP_CLEAN_REX, '', line)
-                    if re.search(self.ETA_CLEAN_REX, line):
-                        line = re.sub(self.ETA_CLEAN_REX, '', line)
-                        self._losses.append(re.search(self._sub_element_rex.format(self._sub_elements[0]),line).group(2))
-                        self._top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[1]),line).group(2))
-                        self._categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[2]),line).group(2))
-                        
-                    if re.search(self.TIME_STEP_CLEAN_REX, line):
-                        line = re.sub(self.TIME_STEP_CLEAN_REX, '', line)
-                        self._losses.append(re.search(self._sub_element_rex.format(self._sub_elements[0]),line).group(2))
-                        self._top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[1]),line).group(2))
-                        self._categorical_accuracies.append(re.search(self._sub_element_rex.format(self._sub_elements[2]),line).group(2))
 
-                        self._val_losses.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[0]),line).group(2))
-                        self._val_top_k_categorical_accuracies.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[1]),line).group(2))
-                        self._val_categorical_accuracies.append(re.search(self._sub_element_rex.format(self.VAL_EXTENDER + self._sub_elements[2]),line).group(2))
+                    self.HandleBatchLines(line)
+                    self.HandleEpochResultLines(line)
 
             equal_train_size:bool = (len(self._losses) == len(self._top_k_categorical_accuracies) == len(self._categorical_accuracies))
             correct_ratio:bool = ((self._train_samples * self._epochen) == len(self._losses))
             equal_val_size:bool = (len(self._val_losses) == len(self._val_top_k_categorical_accuracies) == len(self._val_categorical_accuracies) == self._epochen)
             self._collector_validation = equal_train_size and equal_val_size and correct_ratio
-
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistoryLoader.CollectContextFromLog]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

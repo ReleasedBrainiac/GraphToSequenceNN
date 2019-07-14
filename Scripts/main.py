@@ -38,6 +38,7 @@ from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 #TODO Guide to finalize Tool => https://keras.io/models/model/#fit 
 #TODO Guide to finalize Tool => https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
 #TODO Guide to finalize Tool => https://keras.io/visualization/#training-history-visualization
+#TODO Guide to finalize Tool => https://stackoverflow.com/questions/49910778/keras-sequence-to-sequence-model-loss-increases-without-bound
 
 #TODO nice to use => https://stackoverflow.com/questions/45193744/keras-tensorflow-strange-results
 #TODO nice to use => https://www.tensorflow.org/guide/summaries_and_tensorboard

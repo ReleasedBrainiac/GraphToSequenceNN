@@ -19,6 +19,7 @@ from DatasetHandler.FileWriter import Writer
 from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
+from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
@@ -63,7 +64,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 5
+    EPOCHS:int = 3
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -301,6 +302,13 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
+            plotter = HistoryPlotter(   model_description = None, 
+                                        path = self.MODEL_DESC, 
+                                        history = history)
+
+            plotter.PlotHistory()
+
+            '''
             if 'top_k_categorical_accuracy' in self._accurracy:
                 plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
                 plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
@@ -346,6 +354,7 @@ class Graph2SeqInKeras():
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
+            '''
 
             print("#######################################\n")
             print("######## Process End ########")

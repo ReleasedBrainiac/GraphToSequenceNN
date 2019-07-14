@@ -20,7 +20,7 @@ class HistoryPlotter(object):
     _val_acc_list:list = None
     _learning_rates:list = None
 
-    def __init__(self, model_description:str, path:str = None, history = None,save_it:bool = True, new_style:bool = True):
+    def __init__(self, model_description:str, path:str = None, history = None,save_it:bool = True, new_style:bool = False):
         """
         The class constructor. 
             :param model_description:str: something to name the image unique and is also the file name

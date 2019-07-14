@@ -260,7 +260,8 @@ class ModelBuilder:
                                         kernel_init: str ='glorot_uniform',
                                         act: activations = activations.relu,
                                         kernel_regularizer: regularizers =regularizers.l2(0.01),
-                                        activity_regularizer: regularizers =regularizers.l1(0.01),):
+                                        activity_regularizer: regularizers =regularizers.l1(0.01)
+                                        ):
         """
         This functions builds the node embedding to graph embedding sub model and is element of the encoder structure.
             :param forward_layer:Layer: previous forward layer
@@ -268,8 +269,8 @@ class ModelBuilder:
             :param hidden_dim:int: hidden dimension depends on the embedding dimension e.g. GloVe vector length used. [Default 100]
             :param kernel_init:str: kernel initializer [Default glorot_uniform]
             :param act:activations: activation function [Default relu]
-            :param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
-            :param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)] 
+            #:param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
+            #:param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)] 
         """
         try:
             AssertNotNone(forward_layer, 'forward_layer')

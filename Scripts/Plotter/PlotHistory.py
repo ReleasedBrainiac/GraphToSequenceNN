@@ -119,7 +119,6 @@ class HistoryPlotter(object):
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-
     def CollectFromHistory(self):
         if self._using_history:
             try:
@@ -185,7 +184,6 @@ class HistoryPlotter(object):
 
                 if self._save_it:
                     PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
-            
                 plt.show()
 
         except Exception as ex:
@@ -199,47 +197,55 @@ class HistoryPlotter(object):
         """   
         try:
             loss_figure = plt.figure(1) 
+            plt.suptitle('Model loss', fontsize=14, fontweight='bold')
+            plt.title(self.CalcResultLoss(history=self._history))
             plt.plot(self._history.history['loss'], color='blue', label='train')
             plt.plot(self._history.history['val_loss'], color='orange', label='validation')
-            plt.title('Model loss')
             plt.ylabel('Loss')
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Validation'], loc='upper right')
             if self._save_it: 
                 PlotSaver(self._model_description, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
+            loss_figure.clf()
 
             if 'top_k_categorical_accuracy' in self._history_keys:
                 acc_top_k_figure = plt.figure(2)
+                plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
+                plt.title(self.CalcResultAccuracy(history=self._history, metric='top_k_categorical_accuracy'))
                 plt.plot(self._history.history['top_k_categorical_accuracy'], color='blue', label='train')
                 plt.plot(self._history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
-                plt.title('Model Top k Categorical Accuracy')
                 plt.ylabel('Top k Categorical Accuracy')
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self._save_it:
                     PlotSaver(self._model_description, acc_top_k_figure).SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                acc_top_k_figure.clf()
 
             if 'categorical_accuracy' in self._history_keys:
                 acc_figure = plt.figure(3)
+                plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
+                plt.title(self.CalcResultAccuracy(history=self._history, metric='categorical_accuracy'))
                 plt.plot(self._history.history['categorical_accuracy'], color='blue', label='train')
                 plt.plot(self._history.history['val_categorical_accuracy'], color='orange', label='validation')
-                plt.title('Model Categorical Accuracy')
                 plt.ylabel('Categorical Accuracy')
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self._save_it: 
                     PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                acc_figure.clf()
 
 
             if 'lr' in self._history_keys:
                 lr_figure = plt.figure(4)
+                plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
+                plt.title(self.CalcResultLearnRate(history=self._history))
                 plt.plot(self._history.history['lr'], color='red', label='learning rate')
-                plt.title('Model Learning Rate')
                 plt.ylabel('Learning Rate')
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self._save_it: 
                     PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                lr_figure.clf()
 
             if not self._save_it: 
                 plt.show()
@@ -248,13 +254,38 @@ class HistoryPlotter(object):
             message = template.format(type(ex).__name__, ex.args)
             print(message)
     
-
-    #TODO missing implementation
-    def PlotHistoryFromLog(self):
+    def CalcResultAccuracy(self, history, metric:str = 'acc'):
+        """
+        This method show the train acc results.
+            :param history: history of the training
+        """   
         try:
-            print("PlotHistoryFromLog not implemented yet!")
-            pass
+            return "Training accuracy: %.2f%% / Validation accuracy: %.2f%%" % (100*history.history[metric][-1], 100*history.history['val_'+metric][-1])
         except Exception as ex:
-            template = "An exception of type {0} occurred in [HistoryPlotter.PlotHistoryFromLog]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [HistoryPlotter.CalcResultAccuracy]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def CalcResultLoss(self, history):
+        """
+        This method show the train loss results.
+            :param history: history of the training
+        """   
+        try:
+            return 'Training loss: '+ str(history.history['loss'][-1])[:-6] +' / Validation loss: ' + str(history.history['val_loss'][-1])[:-6]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryPlotter.CalcResultLoss]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def CalcResultLearnRate(self, history):
+        """
+        This method show the train learn rate.
+            :param history: history of the training
+        """   
+        try:
+            return 'Training Learn Rate: '+ str(history.history['lr'][-1])
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryPlotter.CalcResultLearnRate]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

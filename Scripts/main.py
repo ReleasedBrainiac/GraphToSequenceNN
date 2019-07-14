@@ -3,21 +3,23 @@ import os
 import sys
 import platform as pf
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
 from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
-import matplotlib.pyplot as plt
+
 
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted
+from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
 from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
+from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
@@ -61,7 +63,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 2
+    EPOCHS:int = 5
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -85,6 +87,7 @@ class Graph2SeqInKeras():
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
     _accurracy:list = ['categorical_accuracy']
+    _available_gpus = None
 
     # Run Switch
     MULTI_RUN = False
@@ -146,6 +149,7 @@ class Graph2SeqInKeras():
                 return False
 
             sys.stdout = FACLogger(self.FOLDERNAME, self.fname + "_Log")
+            self._available_gpus = KTFGPUHandler().GetAvailableGPUs()
 
             print("\n#######################################")
             print("######## Graph to Sequence ANN ########")
@@ -159,6 +163,7 @@ class Graph2SeqInKeras():
             print("Machine:\t\t=> ", pf.machine())
             print("Platform:\t\t=> ", pf.platform())
             print("CPU:\t\t\t=> ", pf.processor())
+            print("GPUs:\t\t\t=> ", self._available_gpus)
             print("Python Version:\t\t=> ", pf.python_version())
             print("Tensorflow version: \t=> ", tf.__version__)
             print("Keras version: \t\t=> ", keras.__version__, '\n')
@@ -289,9 +294,6 @@ class Graph2SeqInKeras():
 
             print("#######################################\n")
             print("############### Saveing ###############")
-
-            print(type(history))
-            print(history.history.keys())
 
             HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history)
             model.save_weights(self.MODEL_DESC+'_trained_weights.h5')

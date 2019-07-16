@@ -1,6 +1,6 @@
 import re
 import matplotlib.pyplot as plt
-from DatasetHandler.ContentSupport import isNotNone
+from DatasetHandler.ContentSupport import isNotNone, isNone
 from Plotter.SavePlots import PlotSaver
 
 class HistoryPlotter(object):
@@ -22,11 +22,14 @@ class HistoryPlotter(object):
     _learning_rates:list = None
     _epochs:int = 0
 
-    def __init__(self, model_description:str, path:str = None, history = None,save_it:bool = True, new_style:bool = False):
+    #TODO: File history plotting is not yet implemented
+
+    def __init__(self, model_description:str, path:str = None, history = None, save_it:bool = True, new_style:bool = False):
         """
         The class constructor. 
+        Attention: File history plotting is not yet implemented!
             :param model_description:str: something to name the image unique and is also the file name
-            :param path:str: path of the file containing the history
+            :param path:str: path of a file containing a history
             :param history: a history
             :param new_style:bool: save the plot instead of showing
             :param new_style:bool: desired matplot lib standard or new style
@@ -34,7 +37,7 @@ class HistoryPlotter(object):
         try:
             self._model_description = model_description if isNotNone(model_description) else 'undescribed_model'
 
-            if isNotNone(path):
+            if isNotNone(path) and isNone(history):
                 self._path:str = path 
                 self._using_history = False
 

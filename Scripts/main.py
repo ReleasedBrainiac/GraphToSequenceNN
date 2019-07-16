@@ -20,7 +20,6 @@ from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
-from Plotter.PlotBarChart import BarChart
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
@@ -229,7 +228,7 @@ class Graph2SeqInKeras():
                                 keep_edges=keep_edges,
                                 min_cardinality=self.MIN_NODE_CARDINALITY, 
                                 max_cardinality=self.MAX_NODE_CARDINALITY)
-                                
+
             datapairs = pipe.ProvideData()
             max_cardinality = pipe.max_observed_nodes_cardinality
             print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
@@ -303,59 +302,13 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
-            plotter = HistoryPlotter(   model_description = None, 
-                                        path = self.MODEL_DESC, 
-                                        history = history)
+            plotter = HistoryPlotter(   model_description = self.MODEL_DESC, 
+                                        path = None, 
+                                        history = history,
+                                        new_style = True)
 
             plotter.PlotHistory()
 
-            '''
-            if 'top_k_categorical_accuracy' in self._accurracy:
-                plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
-                plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
-                plt.title('Model Top k Categorical Accuracy')
-                plt.ylabel('Top k Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-                else: 
-                   plt.show()
-
-            if 'categorical_accuracy' in self._accurracy:
-                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
-                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
-                plt.title('Model Categorical Accuracy')
-                plt.ylabel('Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
-                else: 
-                   plt.show()
-
-            if 'lr' in history.history.keys():
-                plt.plot(history.history['lr'], color='green', label='learning rate')
-                plt.title('Model Learning Rate')
-                plt.ylabel('Learning Rate')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                else: 
-                   plt.show()
-
-            plt.plot(history.history['loss'], color='blue', label='train')
-            plt.plot(history.history['val_loss'], color='orange', label='validation')
-            plt.title('Model loss')
-            plt.ylabel('Loss')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Validation'], loc='upper right')
-            if self.SAVE_PLOTS: 
-                self.SavePyPlotToFile(extender='loss_epoch_plot')
-            else: 
-                plt.show()
-            '''
 
             print("#######################################\n")
             print("######## Process End ########")

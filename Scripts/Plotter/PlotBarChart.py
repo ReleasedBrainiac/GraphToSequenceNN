@@ -17,7 +17,7 @@ class BarChart(object):
                     y_label:str = 'Cardinalities', 
                     x_label:str = 'Occourences', 
                     path:str = None, 
-                    save_it:bool = False):
+                    save_it:bool = True):
         """
         The class constructor.
             :param dataset:dict: dataset as dict
@@ -53,18 +53,14 @@ class BarChart(object):
         This method print the bar chart.
         """
         try:
-            print("aaaaa")
             i_card_subtitle:str = self._short_title + " Interval: [" + str(self._min_card) + " , " + str(self._max_card) + "]"
             ds_keys = self._dataset.keys()
-
             cardinalities:list = []
             occourences:list = []
 
             for key in ds_keys:
                 cardinalities.append(key)
                 occourences.append(self._dataset[key])
-
-            print("baaaaaaaaaa")
 
             bc_fig = plt.figure()            
             plt.suptitle(self._title, fontsize=14, fontweight='bold')
@@ -76,7 +72,6 @@ class BarChart(object):
                 PlotSaver(self._path, bc_fig).SavePyPlotToFile(extender=self._title.lower() + '_bar_chart')
             else:
                 plt.show()
-
             bc_fig.clf()
         except Exception as ex:
             template = "An exception of type {0} occurred in [BarChart.Print]. Arguments:\n{1!r}"

@@ -22,6 +22,8 @@ from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 from sklearn.metrics import classification_report, accuracy_score
 
+from Plotter.SavePlots import PlotSaver
+
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
 #TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
@@ -344,13 +346,14 @@ class Graph2SeqInKeras():
             plt.xlabel('Epoch')
             plt.legend(['Train', 'Validation'], loc='upper right')
             if self.SAVE_PLOTS: 
-                self.SavePyPlotToFile(extender='loss_epoch_plot')
+                PlotSaver(self.MODEL_DESC, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
+                #self.SavePyPlotToFile(extender='loss_epoch_plot')
             else:
                 plt.show()
             #loss_figure.clf()
 
             if 'top_k_categorical_accuracy' in self._history_keys:
-                acc_top_k_figure = plt.figure(1)
+                acc_top_k_figure = plt.figure(2)
                 plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
                 plt.title(plotter.CalcResultAccuracy(history=history, metric='top_k_categorical_accuracy'))
                 plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
@@ -359,13 +362,14 @@ class Graph2SeqInKeras():
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS:
-                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                    PlotSaver(self.MODEL_DESC, acc_top_k_figure).SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                    #self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
                 else:
                     plt.show()
                 #acc_top_k_figure.close()
 
             if 'categorical_accuracy' in self._history_keys:
-                acc_figure = plt.figure(1)
+                acc_figure = plt.figure(3)
                 plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
                 plt.title(plotter.CalcResultAccuracy(history=history, metric='categorical_accuracy'))
                 plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
@@ -374,13 +378,14 @@ class Graph2SeqInKeras():
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                    PlotSaver(self.MODEL_DESC, acc_figure).SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                    #self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
                 else:
                     plt.show()
                 #acc_figure.close()
 
             if 'lr' in self._history_keys:
-                lr_figure = plt.figure(1)
+                lr_figure = plt.figure(4)
                 plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
                 plt.title(plotter.CalcResultLearnRate(history))
                 plt.plot(history.history['lr'], color='red', label='learning rate')
@@ -388,7 +393,8 @@ class Graph2SeqInKeras():
                 plt.xlabel('Epoch')
                 plt.legend(['Train', 'Validation'], loc='upper right')
                 if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                    PlotSaver(self.MODEL_DESC, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                    #self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
                 else:
                     plt.show()
                 #lr_figure.close()
@@ -428,7 +434,7 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
                 else: 
                    plt.show()
-                   
+
             plt.plot(history.history['loss'], color='blue', label='train')
             plt.plot(history.history['val_loss'], color='orange', label='validation')
             plt.title('Model loss')

@@ -20,6 +20,7 @@ from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
+from Plotter.PlotBarChart import BarChart
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
@@ -227,13 +228,12 @@ class Graph2SeqInKeras():
                                 show_feedback=is_show,
                                 keep_edges=keep_edges,
                                 min_cardinality=self.MIN_NODE_CARDINALITY, 
-                                max_cardinality=self.MAX_NODE_CARDINALITY
-                                )
+                                max_cardinality=self.MAX_NODE_CARDINALITY)
+                                
             datapairs = pipe.ProvideData()
             max_cardinality = pipe.max_observed_nodes_cardinality
-
             print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
-            pipe.ShowNodeCardinalityOccurences()
+            pipe.PlotCardinalities(self.MODEL_DESC)
             self.DatasetLookUpEqualization(datapairs, max_cardinality)
                 
 

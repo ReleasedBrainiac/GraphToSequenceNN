@@ -20,9 +20,7 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
-from sklearn.metrics import classification_report, accuracy_score
-
-from Plotter.SavePlots import PlotSaver
+from sklearn.metrics import classification_report
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
@@ -68,7 +66,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 1
+    EPOCHS:int = 3
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -458,7 +456,6 @@ class Graph2SeqInKeras():
             print("########### Predict  Results ##########")
 
             y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
-            print('Accuracy : ' + str(accuracy_score(test_y,y_pred)) + '\n')
 
             print("Classification Report")
             print(classification_report(test_y,y_pred,digits=5))   

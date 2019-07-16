@@ -336,6 +336,7 @@ class Graph2SeqInKeras():
                                         path = None, 
                                         history = history,
                                         new_style = False)
+            '''
 
             loss_figure = plt.figure(1) 
             plt.suptitle('Model loss', fontsize=14, fontweight='bold')
@@ -398,8 +399,9 @@ class Graph2SeqInKeras():
                 else:
                     plt.show()
                 #lr_figure.close()
-
             '''
+
+            
             if 'top_k_categorical_accuracy' in self._history_keys:
                 plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
                 plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
@@ -413,8 +415,8 @@ class Graph2SeqInKeras():
                    plt.show()
                    
             if 'categorical_accuracy' in self._history_keys:
-                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
-                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
+                plt.plot(history.history['categorical_accuracy'], color='green', label='train')
+                plt.plot(history.history['val_categorical_accuracy'], color='red', label='validation')
                 plt.title('Model Categorical Accuracy')
                 plt.ylabel('Categorical Accuracy')
                 plt.xlabel('Epoch')
@@ -445,7 +447,7 @@ class Graph2SeqInKeras():
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else: 
                 plt.show()
-            '''
+            
 
             print("#######################################\n")
             print("########### Predict  Results ##########")

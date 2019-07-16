@@ -31,6 +31,7 @@ from sklearn.metrics import classification_report
 #TODO IN MA => Code => https://machinelearningmastery.com/diagnose-overfitting-underfitting-lstm-models/
 #TODO IN MA => Resource for MA and Code ~> https://stackoverflow.com/questions/32771786/predictions-using-a-keras-recurrent-neural-network-accuracy-is-always-1-0/32788454#32788454 
 #TODO IN MA => Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
+#                                  ~> http://colah.github.io/posts/2015-08-Understanding-LSTMs/
 #TODO IN MA => 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
 #TODO IN MA => Kaggle Plot resource => https://www.kaggle.com/danbrice/keras-plot-history-full-report-and-grid-search 
 
@@ -90,7 +91,7 @@ class Graph2SeqInKeras():
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
 
-    _accurracy:list = ['categorical_accuracy']
+    _accurracy:list = ['categorical_accuracy', 'top_k_categorical_accuracy']
     _available_gpus = None
     _predict_percentage_split:float = 5.0
     _predict_split_value:int = -1
@@ -141,7 +142,6 @@ class Graph2SeqInKeras():
                 self.FOLDERNAME:str = "graph2seq_model_" + self.fname + "_DT_" + self.TIME_NOW + "/"
                 self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self.fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.GLOVE_VEC_SIZE) + "_DT_" + self.TIME_NOW + "_"
                 self.ExecuteSingle()
-
 
     def ExecuteSingle(self):
         """
@@ -306,8 +306,6 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("########### Starts Training ###########")
 
-
-
             base_lr = BaseLogger()
             reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
 
@@ -323,11 +321,6 @@ class Graph2SeqInKeras():
             self._history_keys = list(history.history.keys())
             print("History Keys: ", self._history_keys)
 
-            #print("#######################################\n")
-            #print("############### Saveing ###############")
-            #HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history)
-            #model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
-
             print("#######################################\n")
             print("######## Plot Training Results ########")
 
@@ -336,121 +329,7 @@ class Graph2SeqInKeras():
                                         history = history,
                                         new_style = False)
 
-            plotter.PlotHistory()
-
-            '''
-
-            loss_figure = plt.figure(1) 
-            plt.suptitle('Model loss', fontsize=14, fontweight='bold')
-            plt.title(plotter.CalcResultLoss(history=history))
-            plt.plot(history.history['loss'], color='blue', label='train')
-            plt.plot(history.history['val_loss'], color='orange', label='validation')
-            plt.ylabel('Loss')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Validation'], loc='upper right')
-            if self.SAVE_PLOTS: 
-                PlotSaver(self.MODEL_DESC, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
-                #self.SavePyPlotToFile(extender='loss_epoch_plot')
-            else:
-                plt.show()
-            #loss_figure.clf()
-
-            if 'top_k_categorical_accuracy' in self._history_keys:
-                acc_top_k_figure = plt.figure(2)
-                plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
-                plt.title(plotter.CalcResultAccuracy(history=history, metric='top_k_categorical_accuracy'))
-                plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
-                plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
-                plt.ylabel('Top k Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS:
-                    PlotSaver(self.MODEL_DESC, acc_top_k_figure).SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-                    #self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-                else:
-                    plt.show()
-                #acc_top_k_figure.close()
-
-            if 'categorical_accuracy' in self._history_keys:
-                acc_figure = plt.figure(3)
-                plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
-                plt.title(plotter.CalcResultAccuracy(history=history, metric='categorical_accuracy'))
-                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
-                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
-                plt.ylabel('Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    PlotSaver(self.MODEL_DESC, acc_figure).SavePyPlotToFile(extender='categoriacal_epoch_plot')
-                    #self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
-                else:
-                    plt.show()
-                #acc_figure.close()
-
-            if 'lr' in self._history_keys:
-                lr_figure = plt.figure(4)
-                plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
-                plt.title(plotter.CalcResultLearnRate(history))
-                plt.plot(history.history['lr'], color='red', label='learning rate')
-                plt.ylabel('Learning Rate')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    PlotSaver(self.MODEL_DESC, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                    #self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                else:
-                    plt.show()
-                #lr_figure.close()
-            '''
-
-            '''
-            if 'top_k_categorical_accuracy' in self._history_keys:
-                plt.plot(history.history['top_k_categorical_accuracy'])
-                plt.plot(history.history['val_top_k_categorical_accuracy'])
-                plt.title('Model Top k Categorical Accuracy')
-                plt.ylabel('Top k Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-                else: 
-                   plt.show()
-                   
-            if 'categorical_accuracy' in self._history_keys:
-                plt.plot(history.history['categorical_accuracy'])
-                plt.plot(history.history['val_categorical_accuracy'])
-                plt.title('Model Categorical Accuracy')
-                plt.ylabel('Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
-                else: 
-                   plt.show()
-
-            if 'lr' in self._history_keys:
-                plt.plot(history.history['lr'])
-                plt.title('Model Learning Rate')
-                plt.ylabel('Learning Rate')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self.SAVE_PLOTS: 
-                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                else: 
-                   plt.show()
-
-            plt.plot(history.history['loss'])
-            plt.plot(history.history['val_loss'])
-            plt.title('Model loss')
-            plt.ylabel('Loss')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Validation'], loc='upper right')
-            if self.SAVE_PLOTS: 
-                self.SavePyPlotToFile(extender='loss_epoch_plot')
-            else: 
-                plt.show()
-            '''
-            
+            plotter.PlotHistory()           
 
             print("#######################################\n")
             print("########### Predict  Results ##########")
@@ -458,6 +337,8 @@ class Graph2SeqInKeras():
             y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
 
             print("Classification Report")
+            print(test_y[0])
+            print(y_pred[0])
             print(classification_report(test_y,y_pred,digits=5))   
 
             print("#######################################\n")

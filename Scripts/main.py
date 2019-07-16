@@ -319,11 +319,10 @@ class Graph2SeqInKeras():
                                 validation_split=self.VALIDATION_SPLIT,
                                 callbacks=[base_lr, reduce_lr])
 
-            print("#######################################\n")
-            print("############### Saveing ###############")
-
-            HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history.history)
-            model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
+            #print("#######################################\n")
+            #print("############### Saveing ###############")
+            #HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history)
+            #model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
@@ -333,7 +332,109 @@ class Graph2SeqInKeras():
                                         history = history,
                                         new_style = False)
 
-            plotter.PlotHistory()
+            loss_figure = plt.figure(1) 
+            plt.suptitle('Model loss', fontsize=14, fontweight='bold')
+            plt.title(plotter.CalcResultLoss(history=history))
+            plt.plot(history.history['loss'], color='blue', label='train')
+            plt.plot(history.history['val_loss'], color='orange', label='validation')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Validation'], loc='upper right')
+            if self.SAVE_PLOTS: 
+                self.SavePyPlotToFile(extender='loss_epoch_plot')
+            else:
+                plt.show()
+            loss_figure.clf()
+
+            if 'top_k_categorical_accuracy' in self._history_keys:
+                acc_top_k_figure = plt.figure(1)
+                plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
+                plt.title(plotter.CalcResultAccuracy(history=history, metric='top_k_categorical_accuracy'))
+                plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
+                plt.ylabel('Top k Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS:
+                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                else:
+                    plt.show()
+                acc_top_k_figure.clf()
+
+            if 'categorical_accuracy' in self._history_keys:
+                acc_figure = plt.figure(1)
+                plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
+                plt.title(plotter.CalcResultAccuracy(history=history, metric='categorical_accuracy'))
+                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
+                plt.ylabel('Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                else:
+                    plt.show()
+                acc_figure.clf()
+
+            if 'lr' in self._history_keys:
+                lr_figure = plt.figure(1)
+                plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
+                plt.title(plotter.CalcResultLearnRate(history))
+                plt.plot(history.history['lr'], color='red', label='learning rate')
+                plt.ylabel('Learning Rate')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                else:
+                    plt.show()
+                lr_figure.clf()
+
+            '''
+            if 'top_k_categorical_accuracy' in self._accurracy:
+                plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
+                plt.title('Model Top k Categorical Accuracy')
+                plt.ylabel('Top k Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                else: 
+                   plt.show()
+                   
+            if 'categorical_accuracy' in self._accurracy:
+                plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
+                plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
+                plt.title('Model Categorical Accuracy')
+                plt.ylabel('Categorical Accuracy')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                else: 
+                   plt.show()
+            if 'lr' in history.history.keys():
+                plt.plot(history.history['lr'], color='green', label='learning rate')
+                plt.title('Model Learning Rate')
+                plt.ylabel('Learning Rate')
+                plt.xlabel('Epoch')
+                plt.legend(['Train', 'Validation'], loc='upper right')
+                if self.SAVE_PLOTS: 
+                    self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                else: 
+                   plt.show()
+            plt.plot(history.history['loss'], color='blue', label='train')
+            plt.plot(history.history['val_loss'], color='orange', label='validation')
+            plt.title('Model loss')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Validation'], loc='upper right')
+            if self.SAVE_PLOTS: 
+                self.SavePyPlotToFile(extender='loss_epoch_plot')
+            else: 
+                plt.show()
+            '''
 
             print("#######################################\n")
             print("########### Predict  Results ##########")

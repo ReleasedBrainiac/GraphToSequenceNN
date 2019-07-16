@@ -347,7 +347,7 @@ class Graph2SeqInKeras():
                 self.SavePyPlotToFile(extender='loss_epoch_plot')
             else:
                 plt.show()
-            loss_figure.clf()
+            #loss_figure.clf()
 
             if 'top_k_categorical_accuracy' in self._history_keys:
                 acc_top_k_figure = plt.figure(1)
@@ -362,7 +362,7 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
                 else:
                     plt.show()
-                acc_top_k_figure.clf()
+                #acc_top_k_figure.close()
 
             if 'categorical_accuracy' in self._history_keys:
                 acc_figure = plt.figure(1)
@@ -377,7 +377,7 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
                 else:
                     plt.show()
-                acc_figure.clf()
+                #acc_figure.close()
 
             if 'lr' in self._history_keys:
                 lr_figure = plt.figure(1)
@@ -391,10 +391,10 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
                 else:
                     plt.show()
-                lr_figure.clf()
+                #lr_figure.close()
 
             '''
-            if 'top_k_categorical_accuracy' in self._accurracy:
+            if 'top_k_categorical_accuracy' in self._history_keys:
                 plt.plot(history.history['top_k_categorical_accuracy'], color='blue', label='train')
                 plt.plot(history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
                 plt.title('Model Top k Categorical Accuracy')
@@ -406,7 +406,7 @@ class Graph2SeqInKeras():
                 else: 
                    plt.show()
                    
-            if 'categorical_accuracy' in self._accurracy:
+            if 'categorical_accuracy' in self._history_keys:
                 plt.plot(history.history['categorical_accuracy'], color='blue', label='train')
                 plt.plot(history.history['val_categorical_accuracy'], color='orange', label='validation')
                 plt.title('Model Categorical Accuracy')
@@ -417,7 +417,8 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='categoriacal_epoch_plot')
                 else: 
                    plt.show()
-            if 'lr' in history.history.keys():
+
+            if 'lr' in self._history_keys:
                 plt.plot(history.history['lr'], color='green', label='learning rate')
                 plt.title('Model Learning Rate')
                 plt.ylabel('Learning Rate')
@@ -427,6 +428,7 @@ class Graph2SeqInKeras():
                     self.SavePyPlotToFile(extender='learning_rate_epoch_plot')
                 else: 
                    plt.show()
+                   
             plt.plot(history.history['loss'], color='blue', label='train')
             plt.plot(history.history['val_loss'], color='orange', label='validation')
             plt.title('Model loss')
@@ -442,7 +444,7 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("########### Predict  Results ##########")
 
-            y_pred = model.predict(test_x)
+            y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
             print('Accuracy : ' + str(accuracy_score(test_y,y_pred)) + '\n')
 
             print("Classification Report")

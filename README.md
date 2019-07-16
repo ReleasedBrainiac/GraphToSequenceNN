@@ -17,6 +17,7 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 - Graphviz Version:     0.8.4 => https://pypi.org/project/graphviz/
 - H5PY                        => http://docs.h5py.org/en/latest/build.html
 - Matplotlib            1.1.0 => https://matplotlib.org/faq/installing_faq.html
+- Sklearn                     => https://scikit-learn.org/stable/install.html
 
 ## Usage
 

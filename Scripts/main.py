@@ -8,11 +8,10 @@ import tensorflow as tf
 import keras
 from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
 
-
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone
+from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -21,6 +20,7 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
+from sklearn.metrics import classification_report, accuracy_score
 
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
@@ -32,6 +32,7 @@ from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 #TODO IN MA => Resource for MA and Code ~> https://stackoverflow.com/questions/32771786/predictions-using-a-keras-recurrent-neural-network-accuracy-is-always-1-0/32788454#32788454 
 #TODO IN MA => Best LSTM resources ~> https://www.dlology.com/blog/how-to-use-return_state-or-return_sequences-in-keras/
 #TODO IN MA => 2nd best LSTM resource ~> https://adventuresinmachinelearning.com/keras-lstm-tutorial/
+#TODO IN MA => Kaggle Plot resource => https://www.kaggle.com/danbrice/keras-plot-history-full-report-and-grid-search 
 
 #TODO Guide to finalize Tool => https://keras.io/examples/lstm_stateful/
 #TODO Guide to finalize Tool => https://machinelearningmastery.com/diagnose-overfitting-underfitting-lstm-models/
@@ -65,7 +66,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 3
+    EPOCHS:int = 1
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -88,8 +89,12 @@ class Graph2SeqInKeras():
     MAX_NODE_CARDINALITY:int = 48
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
+
     _accurracy:list = ['categorical_accuracy']
     _available_gpus = None
+    _predict_percentage_split:float = 5.0
+    _predict_split_value:int = -1
+    _dataset_size:int = -1
 
     # Run Switch
     MULTI_RUN = False
@@ -231,7 +236,9 @@ class Graph2SeqInKeras():
 
             datapairs = pipe.ProvideData()
             max_cardinality = pipe.max_observed_nodes_cardinality
-            print('Found Datapairs:\n\t=> [', len(datapairs), '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
+            self._dataset_size = len(datapairs)
+            self._predict_split_value = self.TestSplitSize(self._dataset_size, self._predict_percentage_split)
+            print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
             pipe.PlotCardinalities(self.MODEL_DESC)
             self.DatasetLookUpEqualization(datapairs, max_cardinality)
                 
@@ -258,7 +265,24 @@ class Graph2SeqInKeras():
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
-                
+
+            print("#######################################\n")
+            print("#### Prepare Train and Predictset #####")
+
+            train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
+                        edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
+                        edge_bw_look_up[:self._dataset_size - self._predict_split_value], 
+                        vectorized_sequences[:self._dataset_size - self._predict_split_value]]
+
+            train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
+            
+            test_x = [  datasets_nodes_embedding[self._dataset_size - self._predict_split_value:], 
+                        edge_fw_look_up[self._dataset_size - self._predict_split_value:], 
+                        edge_bw_look_up[self._dataset_size - self._predict_split_value:], 
+                        vectorized_sequences[self._dataset_size - self._predict_split_value:]]
+
+            test_y = vectorized_targets[self._dataset_size - self._predict_split_value:]
+
             print("#######################################\n")
             print("########## Construct Network ##########")
 
@@ -281,11 +305,13 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("########### Starts Training ###########")
 
+
+
             base_lr = BaseLogger()
             reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
 
-            history = model.fit([datasets_nodes_embedding, edge_fw_look_up, edge_bw_look_up, vectorized_sequences], 
-                                vectorized_targets,
+            history = model.fit(train_x, 
+                                train_y,
                                 batch_size = self.BATCH_SIZE,
                                 epochs=self.EPOCHS, 
                                 verbose=self.VERBOSE, 
@@ -296,7 +322,7 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("############### Saveing ###############")
 
-            HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history)
+            HistorySaver(folder_path=self.FOLDERNAME, name='history', history=history.history)
             model.save_weights(self.MODEL_DESC+'_trained_weights.h5')
 
             print("#######################################\n")
@@ -305,10 +331,18 @@ class Graph2SeqInKeras():
             plotter = HistoryPlotter(   model_description = self.MODEL_DESC, 
                                         path = None, 
                                         history = history,
-                                        new_style = True)
+                                        new_style = False)
 
             plotter.PlotHistory()
 
+            print("#######################################\n")
+            print("########### Predict  Results ##########")
+
+            y_pred = model.predict(test_x)
+            print('Accuracy : ' + str(accuracy_score(test_y,y_pred)) + '\n')
+
+            print("Classification Report")
+            print(classification_report(test_y,y_pred,digits=5))   
 
             print("#######################################\n")
             print("######## Process End ########")
@@ -403,6 +437,22 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)
+
+    def TestSplitSize(self, dataset_size:int, split_percentage:float):
+        """
+        This method return a number for the size of desired test samples from dataset by a given percentage.
+            :param dataset_size:int: size of the whole datset
+            :param split_percentage:float: desired test size percentage from dataset
+        """   
+        try:
+            if isNumber(dataset_size) and isNumber(split_percentage):
+                return round((dataset_size * split_percentage)/100.0)
+            else:
+                return -1
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.SplitData]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
 if __name__ == "__main__":
     Graph2SeqInKeras().Execute()

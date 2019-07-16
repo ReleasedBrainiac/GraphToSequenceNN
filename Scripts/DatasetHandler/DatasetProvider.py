@@ -7,6 +7,7 @@ from Configurable.ProjectConstants import Constants
 from TreeHandler.TreeParser import TParser
 from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
 from AMRHandler.AMRCleaner import Cleaner
+from Plotter.PlotBarChart import BarChart
 
 
 class DatasetPipeline:
@@ -300,7 +301,7 @@ class DatasetPipeline:
                         min_card = self.min_cardinality,
                         max_card = self.max_cardinality, 
                         path = path)
-            return
+            return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.PlotCardinalities]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

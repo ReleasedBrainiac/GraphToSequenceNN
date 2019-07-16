@@ -289,3 +289,19 @@ class DatasetPipeline:
             template = "An exception of type {0} occurred in [DatasetProvider.ShowNodeCardinalityOccurences]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def PlotCardinalities(self, path:str = None):
+        """
+        This method plot the cardinalities.
+            :param path:str: path combined with filename for file image storing
+        """
+        try:
+            BarChart(   dataset = self.count_graph_node_cardinalities_occourences, 
+                        min_card = self.min_cardinality,
+                        max_card = self.max_cardinality, 
+                        path = path)
+            return
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.PlotCardinalities]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)

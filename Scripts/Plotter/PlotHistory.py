@@ -31,7 +31,7 @@ class HistoryPlotter(object):
             :param model_description:str: something to name the image unique and is also the file name
             :param path:str: path of a file containing a history
             :param history: a history
-            :param new_style:bool: save the plot instead of showing
+            :param save_it:bool: save the plot instead of showing
             :param new_style:bool: desired matplot lib standard or new style
         """ 
         try:
@@ -47,12 +47,7 @@ class HistoryPlotter(object):
                 self._history_keys_list = list(self._history_keys)
                 self._using_history = True
 
-                if len(self._losses) == 0:
-                    print('Loss is missing in history')
-                    return 
-                else:
-                    self._epochs = range(1,len(self._history.history[self._losses[0]]) + 1)
-
+            
             self._new_style:bool = new_style
             self._save_it:bool = save_it
         except Exception as ex:
@@ -67,6 +62,7 @@ class HistoryPlotter(object):
         try:
             if self._using_history:
                 if self._new_style:
+                    self.CollectFromHistory()
                     self.DirectPlotHistory()
                 else:
                     self.OldPlotHistory()
@@ -105,7 +101,16 @@ class HistoryPlotter(object):
             loss_val:str = 'loss'
             if loss_val in self._history_keys:
                 self._losses = [s for s in self._history_keys if (loss_val == s)]
-                self._val_losses = [s for s in self._history_keys ('val'+loss_val in s)]
+
+                
+
+                self._val_losses = [s for s in self._history_keys if ('val'+loss_val in s)]
+                self._epochs = len(self._history.epoch)
+
+                if len(self._losses) == 0 or len(self._val_losses) == 0:
+                    print('Loss is missing in history')
+                    return 
+
                 if isNotNone(self._losses) and isNotNone(self._val_losses):
                     self._history_keys_list.remove(loss_val)
                     self._history_keys_list.remove('val_'+loss_val)
@@ -150,6 +155,8 @@ class HistoryPlotter(object):
         This method helps to plot a keras history containing losses, accuracy and possibly least learning rates.
         """   
         try:
+            ## Collect Stuff
+
             ## Loss
             self.AccOrLossPlot(fig_num = 1, 
                             title = 'Model loss', 

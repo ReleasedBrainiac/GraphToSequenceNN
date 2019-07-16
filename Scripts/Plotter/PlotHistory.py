@@ -13,12 +13,14 @@ class HistoryPlotter(object):
     _history = None
     _history_keys:dict = None
     _history_keys_list:list = None
-
     _losses:list = None
     _val_losses:list = None
-    _acc_list:list = None
-    _val_acc_list:list = None
+    _acc_stdcc_list:list = None
+    _val_acc_stdcc_list:list = None
+    _acc_topkcc_list:list = None
+    _val_acc_topkcc_list:list = None
     _learning_rates:list = None
+    _epochs:int = 0
 
     def __init__(self, model_description:str, path:str = None, history = None,save_it:bool = True, new_style:bool = False):
         """
@@ -33,7 +35,7 @@ class HistoryPlotter(object):
             self._model_description = model_description if isNotNone(model_description) else 'undescribed_model'
 
             if isNotNone(path):
-                self._path = path 
+                self._path:str = path 
                 self._using_history = False
 
             if isNotNone(history):
@@ -41,6 +43,12 @@ class HistoryPlotter(object):
                 self._history_keys = history.history.keys()
                 self._history_keys_list = list(self._history_keys)
                 self._using_history = True
+
+                if len(self._losses) == 0:
+                    print('Loss is missing in history')
+                    return 
+                else:
+                    self._epochs = range(1,len(self._history.history[self._losses[0]]) + 1)
 
             self._new_style:bool = new_style
             self._save_it:bool = save_it
@@ -59,24 +67,25 @@ class HistoryPlotter(object):
                     self.DirectPlotHistory()
                 else:
                     self.OldPlotHistory()
-            else:
-                self.PlotHistoryFromLog()
+            #else:
+            #    self.PlotHistoryFromLog()
         except Exception as ex:
-            template = "An exception of type {0} occurred in [HistoryPlotter.CollectFromHistory]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [HistoryPlotter.PlotHistory]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             
-    def CollectAccFromHistory(self, name:str):
+    def CollectAccFromHistory(self, name:str, train_val_list:list):
         """
-         This method collect the accuracy data from the history.
+         This method collect the accuracy data from the history into 2 plceholder lists.
             :param name:str: name of the used acc metric
+            :param train_val_list:list: 2 placeholder lists with order 0 = train and 1 = validation
         """   
         try:
             name = re.sub('val_', '', name)
             if name in self._history_keys:
-                self._acc_list = [s for s in self._history_keys if (name == s)]
-                self._val_acc_list = [s for s in self._history_keys if ('val_'+name == s)]
-                if isNotNone(self._acc_list) and isNotNone(self._val_acc_list):
+                train_val_list[0] = [s for s in self._history_keys if (name == s)]
+                train_val_list[1] = [s for s in self._history_keys if ('val_'+name == s)]
+                if isNotNone(train_val_list[0]) and isNotNone(train_val_list[1]):
                     self._history_keys_list.remove(name)
                     self._history_keys_list.remove('val_'+name)
                     print("Found accuracy metrics in history!")
@@ -124,7 +133,8 @@ class HistoryPlotter(object):
             try:
                 self.CollectLossFromHistory()
                 self.CollectLearningRatesFromHistory()
-                self.CollectAccFromHistory(name=self._history_keys_list[0])
+                self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_stdcc_list, self._val_acc_stdcc_list])
+                self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_topkcc_list, self._val_acc_topkcc_list])
             except Exception as ex:
                 template = "An exception of type {0} occurred in [HistoryPlotter.CollectFromHistory]. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
@@ -137,54 +147,86 @@ class HistoryPlotter(object):
         This method helps to plot a keras history containing losses, accuracy and possibly least learning rates.
         """   
         try:
-            if len(self._losses) == 0:
-                print('Loss is missing in history')
-                return 
-
-            epochs = range(1,len(self._history.history[self._losses[0]]) + 1)
-
             ## Loss
-            loss_figure = plt.figure(1)
-            for l in self._losses:
-                plt.plot(epochs, self._history.history[l], color='b', label='Training loss (' + str(str(format(self._history.history[l][-1],'.5f'))+')'))
-            for l in self._val_losses:
-                plt.plot(epochs, self._history.history[l], color='g', label='Validation loss (' + str(str(format(self._history.history[l][-1],'.5f'))+')'))
+            self.AccOrLossPlot(fig_num = 1, 
+                            title = 'Model loss', 
+                            metric = 'loss', 
+                            axis_labels = ['train', 'validation'], 
+                            history_labels = ['Loss', 'Epoch'], 
+                            extender = 'loss_epoch_plot',
+                            train_val_lists = [self._losses, self._val_losses])
 
-            plt.title('Loss')
-            plt.xlabel('Epochs')
-            plt.ylabel('Loss')
-            plt.legend()
-            
-            if self._save_it:
-                    PlotSaver(self._model_description, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
+            #loss_figure = plt.figure(1)
+            #for l in self._losses: plt.plot(self._epochs, self._history.history[l], color='b', label='Training loss (' + str(str(format(self._history.history[l][-1],'.5f'))+')'))
+            #for l in self._val_losses: plt.plot(self._epochs, self._history.history[l], color='g', label='Validation loss (' + str(str(format(self._history.history[l][-1],'.5f'))+')'))
+            #plt.title('Loss')
+            #plt.xlabel('Epochs')
+            #plt.ylabel('Loss')
+            #plt.legend()
+            #if self._save_it:
+            #    PlotSaver(self._model_description, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
 
-            ## Accuracy
-            acc_figure = plt.figure(2)
-            for l in self._acc_list:
-                plt.plot(epochs, self._history.history[l], color='b', label='Training accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
-            for l in self._val_acc_list:    
-                plt.plot(epochs, self._history.history[l], color='g', label='Validation accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
+            ## Top k Categorical Crossentropy
+            if ('top_k_categorical_accuracy' in self._history_keys) and isNotNone(self._acc_topkcc_list) and isNotNone(self._val_acc_topkcc_list):
+                self.AccOrLossPlot(fig_num = 2, 
+                                title = 'Model Top k Categorical Accuracy', 
+                                metric = 'top_k_categorical_accuracy', 
+                                axis_labels = ['train', 'validation'], 
+                                history_labels = ['Top k Categorical Accuracy', 'Epoch'], 
+                                extender = 'top_k_categoriacal_epoch_plot',
+                                train_val_lists = [self._acc_topkcc_list, self._val_acc_topkcc_list])
 
-            plt.title('Accuracy')
-            plt.xlabel('Epochs')
-            plt.ylabel('Accuracy')
-            plt.legend()
+                #acc_figure = plt.figure(2)
+                #for l in self._acc_stdcc_list: plt.plot(self._epochs, self._history.history[l], color='b', label='Training accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                #for l in self._val_acc_stdcc_list: plt.plot(self._epochs, self._history.history[l], color='g', label='Validation accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                #plt.xlabel('Epochs')
+                #plt.ylabel('Accuracy')
+                #plt.legend()
+                #
+                #if self._save_it:
+                #    PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='accuracy_epoch_plots')
+                #else:
+                #    plt.show()
+                #    acc_figure.clf()
 
-            if self._save_it:
-                    PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='accuracy_epoch_plots')
+            ## Categorical Crossentropy
+            if 'categorical_accuracy' in self._history_keys and isNotNone(self._acc_stdcc_list) and isNotNone(self._val_acc_stdcc_list):
+                self.AccOrLossPlot(fig_num = 3, 
+                                title = 'Model Categorical Accuracy', 
+                                metric = 'categorical_accuracy', 
+                                axis_labels = ['train', 'validation'], 
+                                history_labels = ['Categorical Accuracy', 'Epoch'], 
+                                extender = 'categoriacal_epoch_plot',
+                                train_val_lists = [self._acc_stdcc_list, self._val_acc_stdcc_list])
 
+                #acc_figure = plt.figure(2)
+                #for l in self._acc_stdcc_list: plt.plot(self._epochs, self._history.history[l], color='b', label='Training accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                #for l in self._val_acc_stdcc_list: plt.plot(self._epochs, self._history.history[l], color='g', label='Validation accuracy (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                #plt.ylabel('Categorical Accuracy')
+                #plt.xlabel('Epoch')
+                #plt.legend(['Train', 'Validation'], loc='upper right')
+                #if self._save_it:
+                #    PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='accuracy_epoch_plots')
+                #else:
+                #    plt.show()
+                #    acc_figure.clf()
+                
             if 'lr' in self._history_keys and isNotNone(self._learning_rates):
-                lr_figure = plt.figure(3)
-                for l in self._learning_rates:
-                    plt.plot(epochs, self._history.history[l], color='r', label='Learning Rate (' + str(format(self._history.history[l][-1],'.5f'))+')')
-                plt.title('Learning Rate')
-                plt.xlabel('Epochs')
-                plt.ylabel('Rate')
-                plt.legend()
+                self.LearningPlot(  fig_num = 4,
+                                    title = 'Model Learning Rate')
 
-                if self._save_it:
-                    PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                plt.show()
+                #lr_figure = plt.figure(4)
+                #plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
+                #plt.title(self.CalcResultLearnRate(history=self._history))
+                #for l in self._learning_rates: plt.plot(self._epochs, self._history.history[l], color='r', label='Learning Rate (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                #plt.ylabel('Learning Rate')
+                #plt.xlabel('Epoch')
+                #plt.legend(['Train', 'Validation'], loc='upper right')
+                #if self._save_it:
+                #    PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                #else:
+                #    plt.show()
+                #lr_figure.clf()
 
         except Exception as ex:
                 template = "An exception of type {0} occurred in [HistoryPlotter.DirectPlotHistory]. Arguments:\n{1!r}"
@@ -196,64 +238,165 @@ class HistoryPlotter(object):
         This method plot the history in the old way.
         """   
         try:
-            loss_figure = plt.figure(1) 
-            plt.suptitle('Model loss', fontsize=14, fontweight='bold')
-            plt.title(self.CalcResultLoss(history=self._history))
-            plt.plot(self._history.history['loss'], color='blue', label='train')
-            plt.plot(self._history.history['val_loss'], color='orange', label='validation')
-            plt.ylabel('Loss')
-            plt.xlabel('Epoch')
-            plt.legend(['Train', 'Validation'], loc='upper right')
-            if self._save_it: 
-                PlotSaver(self._model_description, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
-            loss_figure.clf()
+            self.AccOrLossPlot(fig_num = 1, 
+                            title = 'Model loss', 
+                            metric = 'loss', 
+                            axis_labels = ['train', 'validation'], 
+                            history_labels = ['Loss', 'Epoch'], 
+                            extender = 'loss_epoch_plot')
+
+            #loss_figure = plt.figure(1) 
+            #plt.suptitle('Model loss', fontsize=14, fontweight='bold')
+            #plt.title(self.CalcResultLoss(history=self._history))
+            #plt.plot(self._history.history['loss'], color='blue', label='train')
+            #plt.plot(self._history.history['val_loss'], color='orange', label='validation')
+            #plt.ylabel('Loss')
+            #plt.xlabel('Epoch')
+            #plt.legend(['Train', 'Validation'], loc='upper right')
+            #if self._save_it: 
+            #    PlotSaver(self._model_description, loss_figure).SavePyPlotToFile(extender='loss_epoch_plot')
+            #else:
+            #    plt.show()
+            #loss_figure.clf()
 
             if 'top_k_categorical_accuracy' in self._history_keys:
-                acc_top_k_figure = plt.figure(2)
-                plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
-                plt.title(self.CalcResultAccuracy(history=self._history, metric='top_k_categorical_accuracy'))
-                plt.plot(self._history.history['top_k_categorical_accuracy'], color='blue', label='train')
-                plt.plot(self._history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
-                plt.ylabel('Top k Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self._save_it:
-                    PlotSaver(self._model_description, acc_top_k_figure).SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
-                acc_top_k_figure.clf()
+                self.AccOrLossPlot(fig_num = 2, 
+                                title = 'Model Top k Categorical Accuracy', 
+                                metric = 'top_k_categorical_accuracy', 
+                                axis_labels = ['train', 'validation'], 
+                                history_labels = ['Top k Categorical Accuracy', 'Epoch'], 
+                                extender = 'top_k_categoriacal_epoch_plot')
+
+
+                #acc_top_k_figure = plt.figure(2)
+                #plt.suptitle('Model Top k Categorical Accuracy', fontsize=14, fontweight='bold')
+                #plt.title(self.CalcResultAccuracy(history=self._history, metric='top_k_categorical_accuracy'))
+                #plt.plot(self._history.history['top_k_categorical_accuracy'], color='blue', label='train')
+                #plt.plot(self._history.history['val_top_k_categorical_accuracy'], color='orange', label='validation')
+                #plt.ylabel('Top k Categorical Accuracy')
+                #plt.xlabel('Epoch')
+                #plt.legend(['Train', 'Validation'], loc='upper right')
+                #if self._save_it:
+                #    PlotSaver(self._model_description, acc_top_k_figure).SavePyPlotToFile(extender='top_k_categoriacal_epoch_plot')
+                #else:
+                #    plt.show()
+                #acc_top_k_figure.clf()
 
             if 'categorical_accuracy' in self._history_keys:
-                acc_figure = plt.figure(3)
-                plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
-                plt.title(self.CalcResultAccuracy(history=self._history, metric='categorical_accuracy'))
-                plt.plot(self._history.history['categorical_accuracy'], color='blue', label='train')
-                plt.plot(self._history.history['val_categorical_accuracy'], color='orange', label='validation')
-                plt.ylabel('Categorical Accuracy')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self._save_it: 
-                    PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='categoriacal_epoch_plot')
-                acc_figure.clf()
+                self.AccOrLossPlot(fig_num = 3, 
+                                title = 'Model Categorical Accuracy', 
+                                metric = 'categorical_accuracy', 
+                                axis_labels = ['train', 'validation'], 
+                                history_labels = ['Categorical Accuracy', 'Epoch'], 
+                                extender = 'categoriacal_epoch_plot')
 
+                #acc_figure = plt.figure(3)
+                #plt.suptitle('Model Categorical Accuracy', fontsize=14, fontweight='bold')
+                #plt.title(self.CalcResultAccuracy(history=self._history, metric='categorical_accuracy'))
+                #plt.plot(self._history.history['categorical_accuracy'], color='blue', label='train')
+                #plt.plot(self._history.history['val_categorical_accuracy'], color='orange', label='validation')
+                #plt.ylabel('Categorical Accuracy')
+                #plt.xlabel('Epoch')
+                #plt.legend(['Train', 'Validation'], loc='upper right')
+                #if self._save_it: 
+                #    PlotSaver(self._model_description, acc_figure).SavePyPlotToFile(extender='categoriacal_epoch_plot')
+                #else:
+                #    plt.show()
+                #acc_figure.clf()
 
             if 'lr' in self._history_keys:
-                lr_figure = plt.figure(4)
-                plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
-                plt.title(self.CalcResultLearnRate(history=self._history))
-                plt.plot(self._history.history['lr'], color='red', label='learning rate')
-                plt.ylabel('Learning Rate')
-                plt.xlabel('Epoch')
-                plt.legend(['Train', 'Validation'], loc='upper right')
-                if self._save_it: 
-                    PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
-                lr_figure.clf()
+                self.LearningPlot(  fig_num = 4,
+                                    title = 'Model Learning Rate')
 
-            if not self._save_it: 
-                plt.show()
+                #lr_figure = plt.figure(4)
+                #plt.suptitle('Model Learning Rate', fontsize=14, fontweight='bold')
+                #plt.title(self.CalcResultLearnRate(history=self._history))
+                #plt.plot(self._history.history['lr'], color='red', label='learning rate')
+                #plt.ylabel('Learning Rate')
+                #plt.xlabel('Epoch')
+                #plt.legend(['Train', 'Validation'], loc='upper right')
+                #if self._save_it: 
+                #    PlotSaver(self._model_description, lr_figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
+                #else:
+                #    plt.show()
+                #lr_figure.clf()
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistoryPlotter.OldPlotHistory]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
     
+    def AccOrLossPlot(self, fig_num:int, title:str, metric:str, axis_labels:list = ['train', 'validation'], history_labels:list = ['Metric', 'Epoch'], extender:str = '_epoch_plot', train_val_lists:list = None):
+        """
+        This method wrapp the plot creation for a single metric of the keras train history.
+            :param fig_num:int: figure number
+            :param title:str: figure title
+            :param metric:str: desired metric
+            :param axis_labels:list: axis labels 
+            :param history_labels:list: history labels
+            :param extender:str: plot file name extender
+            :param train_val_lists:list: a list containing the train and validation list of a defined metric
+        """
+        try:
+            figure = plt.figure(fig_num)
+            plt.suptitle(title, fontsize=14, fontweight='bold')
+
+            if metric == 'loss': plt.title(self.CalcResultLoss(history=self._history))
+            else: plt.title(self.CalcResultAccuracy(history=self._history, metric=metric))
+
+            if not self._new_style:
+                plt.plot(self._history.history[metric], color='blue', label=axis_labels[0])
+                plt.plot(self._history.history['val_' + metric], color='orange', label=axis_labels[1])
+            else:
+                if (train_val_lists != None) and (len(train_val_lists) == 2):
+                    for l in train_val_lists[0]: plt.plot(self._epochs, self._history.history[l], color='b', label='Training ' + metric + ' (' + str(format(self._history.history[l][-1],'.5f'))+')')
+                    for l in train_val_lists[1]: plt.plot(self._epochs, self._history.history[l], color='g', label='Validation ' + metric + ' (' + str(format(self._history.history[l][-1],'.5f'))+')')
+
+            plt.ylabel(history_labels[0])
+            plt.xlabel(history_labels[1])
+            plt.legend(axis_labels, loc='upper right')
+            if self._save_it: 
+                PlotSaver(self._model_description, figure).SavePyPlotToFile(extender=extender)
+            else:
+                plt.show()
+            figure.clf()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryPlotter.AccOrLossPlot]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def LearningPlot(self, fig_num:int, title:str = 'Model Learning Rate', metric:str = 'lr', axis_labels:list = ['train', 'validation'], history_labels:list = ['Learning Rate', 'Epoch'], extender:str = 'learning_rate_epoch_plot'):
+        """
+        This method plot a the single learning rate curve.
+            :param fig_num:int: figure number
+            :param title:str: figure title
+            :param metric:str: desired metric
+            :param axis_labels:list: axis labels 
+            :param history_labels:list: history labels
+            :param extender:str: plot file name extender
+        """
+        try:
+            figure = plt.figure(fig_num)
+            plt.suptitle(title, fontsize=14, fontweight='bold')
+            plt.title(self.CalcResultLearnRate(history=self._history))
+
+            if not self._new_style:
+                for l in self._learning_rates: plt.plot(self._epochs, self._history.history[l], color='r', label='Learning Rate (' + str(format(self._history.history[l][-1],'.5f'))+')')
+            else:
+                plt.plot(self._history.history[metric], color='red', label='learning rate')
+
+            plt.ylabel(history_labels[0])
+            plt.xlabel(history_labels[1])
+            plt.legend(axis_labels, loc='upper right')
+            if self._save_it: 
+                PlotSaver(self._model_description, figure).SavePyPlotToFile(extender='learning_rate_epoch_plot')
+            else:
+                plt.show()
+            figure.clf()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [HistoryPlotter.LearningPlot]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
     def CalcResultAccuracy(self, history, metric:str = 'acc'):
         """
         This method show the train acc results.
@@ -289,3 +432,4 @@ class HistoryPlotter(object):
             template = "An exception of type {0} occurred in [HistoryPlotter.CalcResultLearnRate]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+

@@ -95,6 +95,7 @@ class Graph2SeqInKeras():
     _predict_percentage_split:float = 5.0
     _predict_split_value:int = -1
     _dataset_size:int = -1
+    _history_keys:list = None
 
     # Run Switch
     MULTI_RUN = False
@@ -318,6 +319,8 @@ class Graph2SeqInKeras():
                                 shuffle=self.SHUFFLE_DATASET,
                                 validation_split=self.VALIDATION_SPLIT,
                                 callbacks=[base_lr, reduce_lr])
+
+            self._history_keys = list(history.history.keys())
 
             #print("#######################################\n")
             #print("############### Saveing ###############")

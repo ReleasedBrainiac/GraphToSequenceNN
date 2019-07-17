@@ -335,11 +335,12 @@ class Graph2SeqInKeras():
             print("########### Predict  Results ##########")
 
             y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
+            y_classes = y_pred.argmax(axis=-1)
 
             print("Classification Report")
             print(test_y[0])
-            print(y_pred[0])
-            print(classification_report(test_y,y_pred,digits=5))   
+            print(y_classes[0])
+            print(classification_report(test_y,y_classes,digits=5))   
 
             print("#######################################\n")
             print("######## Process End ########")

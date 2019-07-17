@@ -3,6 +3,7 @@ import os
 import sys
 import platform as pf
 import numpy as np
+from numpy import array_equal
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
@@ -67,7 +68,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 3
+    EPOCHS:int = 2
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -99,7 +100,7 @@ class Graph2SeqInKeras():
     _history_keys:list = None
 
     # Run Switch
-    MULTI_RUN = False
+    MULTI_RUN = True
 
     # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -108,10 +109,9 @@ class Graph2SeqInKeras():
 
     # Multi Run Setup!
     datasets = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
-    multi_epochs = [1, 4, 6, 1, 4, 6]
-    multi_hops = [7, 4, 5, 7, 4, 5]
+    multi_epochs = [10, 15, 20, 10, 15, 20]
+    multi_hops = [4, 5, 7, 4, 5, 7]
     multi_val_split = [0.2, 0.2, 0.80, 0.2, 0.2, 0.80]
-    multi_acc = [['top_k_categorical_accuracy'], ['top_k_categorical_accuracy'], ['top_k_categorical_accuracy'], ['categorical_accuracy'], ['categorical_accuracy'], ['categorical_accuracy']]
     runs:int = len(multi_epochs)
 
 
@@ -132,7 +132,7 @@ class Graph2SeqInKeras():
                 sys.stdout.flush()
 
                 # Set network changes
-                self._accurracy = self.multi_acc[run]
+                #self._accurracy = self.multi_acc[run]
                 self.EPOCHS = self.multi_epochs[run]
                 self.HOP_STEPS = self.multi_hops[run]
                 self.VALIDATION_SPLIT = self.multi_val_split[run]
@@ -330,17 +330,17 @@ class Graph2SeqInKeras():
                                         new_style = False)
 
             plotter.PlotHistory()           
-
             print("#######################################\n")
             print("########### Predict  Results ##########")
 
             y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
-            y_classes = y_pred.argmax(axis=-1)
+            y_classes = y_pred.round()
 
-            print("Classification Report")
-            print(test_y[0])
-            print(y_classes[0])
-            print(classification_report(test_y,y_classes,digits=5))   
+            correct:int = 0
+            for i in range(self._predict_split_value):
+                if array_equal(test_y[i], y_classes[i]):
+                    correct += 1
+            print('Prediction Accuracy: %.2f%%' % (float(correct)/float(self._predict_split_value)*100.0))
 
             print("#######################################\n")
             print("######## Process End ########")

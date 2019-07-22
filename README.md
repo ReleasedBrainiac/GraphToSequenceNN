@@ -54,7 +54,7 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 ## [AMR Parser] What's expeled from AMR string?
  
 Replaced all base word extensions 
-  1. "do-01" => "d0"
+  1. "do-01" => "do"
 
 Replaced all not alphanumeric qualified strings "" 
   1. "Ocean" => kept

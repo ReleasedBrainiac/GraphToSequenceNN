@@ -9,8 +9,8 @@ This is caused by the differnt interpretation of the paper.
 
 ## The Setup (necessary libraries!)
 
-- Python version:       3.6.5 => https://www.python.org/downloads/release/python-365/
-- Tensorflow Version:   1.10.0 => https://www.tensorflow.org/ [For GPU or CPU]
+- Python version:       3.6.5 => https://www.python.org/downloads/release/python-365/ (v.3.6.5 and above)
+- Tensorflow Version:  1.12.0 => https://www.tensorflow.org/ [For GPU or CPU] (v1.12. and above)
 - Keras Version:        2.2.2 => https://keras.io/
 - Anytree Version:      2.4.3 => https://pypi.org/project/anytree/
 - Ordereddict Version:  1.1   => https://pypi.org/project/ordereddict/

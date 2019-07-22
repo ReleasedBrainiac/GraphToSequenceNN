@@ -3,10 +3,11 @@ import os
 import sys
 import platform as pf
 import numpy as np
-from numpy import array_equal
+from numpy import array_equal, argmax
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
+from keras import activations
 from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
 
 from time import gmtime, strftime
@@ -21,8 +22,9 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
-from sklearn.metrics import classification_report
 
+#TODO IN MA => Next Level 1 => https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
+#TODO IN MA => Next Level 2 => http://proceedings.mlr.press/v48/niepert16.pdf
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
 #TODO IN MA => Ausblick => https://github.com/keras-team/keras/issues/4962
 #TODO IN MA => Code => Expansion of edge matrices why? => Layers weights!
@@ -68,11 +70,11 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 2
+    EPOCHS:int = 5
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
-    DATASET_NAME:str = 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt'
+    DATASET_NAME:str =  'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt'
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
@@ -100,7 +102,7 @@ class Graph2SeqInKeras():
     _history_keys:list = None
 
     # Run Switch
-    MULTI_RUN = True
+    MULTI_RUN = False
 
     # Single Run
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -236,7 +238,7 @@ class Graph2SeqInKeras():
                                 max_cardinality=self.MAX_NODE_CARDINALITY)
 
             datapairs = pipe.ProvideData()
-            max_cardinality = pipe.max_observed_nodes_cardinality
+            max_cardinality = pipe._max_observed_nodes_cardinality
             self._dataset_size = len(datapairs)
             self._predict_split_value = self.TestSplitSize(self._dataset_size, self._predict_percentage_split)
             print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
@@ -248,20 +250,29 @@ class Graph2SeqInKeras():
             print("######## Glove Embedding Layer ########")
             glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
                                                                 vocab_size=in_vocab_size,
-                                                                max_sequence_length=pipe.max_sentences,
+                                                                max_sequence_length=pipe._max_words_sentences,
                                                                 show_feedback=True)
             _, _, edge_fw_look_up, edge_bw_look_up, vectorized_sequences, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
             
+            #TODO make vectorized_targets => to_categorical
+            #TODO then softmax against it
+            #TODO make lookup dict to_categorical => vectorized_targets
+            #TODO make vectorized_targets => Number2Words
+            #TODO maybe TADA!
+
+            #TODO maybe add BahdanauAttention
+
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 
                                                 tokenizer=glove_dataset_processor,
-                                                max_sequence_length=pipe.max_sentences,
+                                                max_sequence_length=pipe._max_words_sentences,
                                                 glove_file_path=self.GLOVE, 
                                                 output_dim=out_dim_emb, 
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+
+            print("Out_Sequence: ", vectorized_targets[0])
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
@@ -289,12 +300,12 @@ class Graph2SeqInKeras():
 
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
-                                    input_dec_dim=pipe.max_sentences,
+                                    input_dec_dim=pipe._max_words_sentences,
                                     batch_size=self.BATCH_SIZE)
 
-            _, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
+            encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
-            model = builder.BuildGraphEmbeddingDecoder( embedding_layer=glove_embedding_layer(builder.get_decoder_inputs()),
+            model = builder.BuildGraphEmbeddingDecoder( encoder=encoder,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
@@ -333,12 +344,13 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("########### Predict  Results ##########")
 
-            y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE)
-            y_classes = y_pred.round()
+            y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE, verbose=0)
 
             correct:int = 0
-            for i in range(self._predict_split_value):
-                if array_equal(test_y[i], y_classes[i]):
+            for i in range(len(y_pred)):
+                print("Test: ", test_y[i])
+                print("Pred: ",  y_pred[i])
+                if array_equal(test_y[i], y_pred[i]):
                     correct += 1
             print('Prediction Accuracy: %.2f%%' % (float(correct)/float(self._predict_split_value)*100.0))
 
@@ -451,6 +463,7 @@ class Graph2SeqInKeras():
             template = "An exception of type {0} occurred in [Main.SplitData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
 
 if __name__ == "__main__":
     Graph2SeqInKeras().Execute()

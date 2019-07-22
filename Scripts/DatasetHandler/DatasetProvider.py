@@ -49,26 +49,27 @@ class DatasetPipeline:
             :param max_cardinality:int: define max range for the node matrix representation 
         """   
         try:
-            self.constants = Constants()
-            self.look_up_extension_replace_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
-            self.extension_dict =  Reader(path=self.look_up_extension_replace_path, seperator_regex=self.constants.MAPPING_SPLIT_REGEX).LineReadContent()
-            self.in_path = setOrDefault(in_path, self.constants.TYP_ERROR, isStr(in_path))
-            self.dataset_drop_outs = 0
-            self.max_sentences = 0
-            self.max_semantics = 0
-            self.max_observed_nodes_cardinality = 0
-            self.set_unique_graph_node_cardinalities = set()
-            self.list_graph_node_cardinalities = []
-            self.count_graph_node_cardinalities_occourences = dict()
-            self.is_showing_feedback = show_feedback
-            self.is_saving = False
-            self.is_keeping_edges = keep_edges
-            self.as_amr = False
-            self.out_path_extender = output_path_extender
-            self.restriction_sentence = setOrDefault(max_length, -1, isInt(max_length))
-            self.restriction_semantic = -1 if (max_length < 0)  else (2 * self.restriction_sentence)
-            self.min_cardinality = min_cardinality if (min_cardinality > 2) else 3
-            self.max_cardinality = max_cardinality if (max_cardinality >= min_cardinality) else 100
+            self._constants = Constants()
+            self._look_up_ext_rep_path = './Datasets/LookUpAMR/supported_amr_internal_nodes_lookup.txt'
+            self._extension_dict =  Reader(path=self._look_up_ext_rep_path, seperator_regex=self._constants.MAPPING_SPLIT_REGEX).LineReadContent()
+            self._in_path = setOrDefault(in_path, self._constants.TYP_ERROR, isStr(in_path))
+            self._dataset_drop_outs = 0
+            self._max_chars_sentences = 0
+            self._max_words_sentences = 0
+            self._max_chars_semantics = 0
+            self._max_observed_nodes_cardinality = 0
+            self._unique_graph_node_cardinalities = set()
+            self._graph_node_cardinalities_list = []
+            self._count_graph_node_cards_occs = dict()
+            self._is_showing_feedback = show_feedback
+            self._is_saving = False
+            self._is_keeping_edges = keep_edges
+            self._as_amr = False
+            self._out_path_extender = output_path_extender
+            self._restriction_chars_sentence = setOrDefault(max_length, -1, isInt(max_length))
+            self._restriction_chars_semantic = -1 if (max_length < 0)  else (2 * self._restriction_chars_sentence)
+            self._min_cardinality = min_cardinality if (min_cardinality > 2) else 3
+            self._max_cardinality = max_cardinality if (max_cardinality >= min_cardinality) else 100
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -94,12 +95,12 @@ class DatasetPipeline:
             :param semantic:str: raw semantic input
         """
         try:
-            cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_edges=self._is_keeping_edges)
             if cleaner.isCleaned:
-                self.extension_dict = cleaner.extension_dict
-                return '#'+self.constants.SEMANTIC_DELIM+' \n'+cleaner.cleaned_context+'\n'+'\n'
+                self._extension_dict = cleaner.extension_dict
+                return '#'+self._constants.SEMANTIC_DELIM+' \n'+cleaner.cleaned_context+'\n'+'\n'
             else:
-                self.dataset_drop_outs += 1
+                self._dataset_drop_outs += 1
                 return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrSemanticString]. Arguments:\n{1!r}"
@@ -112,7 +113,7 @@ class DatasetPipeline:
             :param semantic:str: semantic string
         """
         try:
-            return TParser(semantic, self.is_showing_feedback, self.is_saving).Execute()
+            return TParser(semantic, self._is_showing_feedback, self._is_saving).Execute()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -124,7 +125,7 @@ class DatasetPipeline:
             :param semantic:str: semantic string
         """   
         try:
-            return MParser(context=semantic, show_feedback=self.is_showing_feedback).Execute()
+            return MParser(context=semantic, show_feedback=self._is_showing_feedback).Execute()
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeMatrices]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -137,10 +138,10 @@ class DatasetPipeline:
             :param data_pair:list: amr data pair
         """
         try:
-            sentence = self.RemoveEnclosingAngleBracket(self.constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
+            sentence = self.RemoveEnclosingAngleBracket(self._constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
             semantic = self.ForgeAmrSemanticString(data_pair[1])
 
-            if(not self.as_amr): semantic = self.ForgeMatrices(semantic)
+            if(not self._as_amr): semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]
@@ -159,18 +160,20 @@ class DatasetPipeline:
             :param data_pairs:list: array of amr data pairs
         """
         try:
-            self.max_sentences = 0
+            self._max_chars_sentences = 0
             dataset_pairs_sent_sem = []
             for pair in data_pairs: 
                 data_pair = self.CollectDatasetPair(pair)
                 if isNotNone(data_pair):
-                    if(not self.as_amr):
+                    if(not self._as_amr):
                         edges_dim = data_pair[1][0][0].shape[0]
 
-                        if (self.min_cardinality <= edges_dim and edges_dim <= self.max_cardinality):
+                        if (self._min_cardinality <= edges_dim and edges_dim <= self._max_cardinality):
                             self.CollectCardinalities(edges_dim)
 
-                            if (self.max_sentences < len(data_pair[0])): self.max_sentences = len(data_pair[0])
+                            if (self._max_chars_sentences < len(data_pair[0])): self._max_chars_sentences = len(data_pair[0])
+                            if (self._max_words_sentences < len(data_pair[0].split(" "))): self._max_words_sentences = len(data_pair[0].split(" "))
+
                             dataset_pairs_sent_sem.append(data_pair)
                     else:
                         dataset_pairs_sent_sem.append(data_pair)
@@ -186,9 +189,9 @@ class DatasetPipeline:
             :param edge_dim:int: given cardinality
         """   
         try:
-            self.list_graph_node_cardinalities.append(edge_dim)
-            self.set_unique_graph_node_cardinalities.add(edge_dim)
-            self.max_observed_nodes_cardinality = max(self.max_observed_nodes_cardinality, edge_dim)
+            self._graph_node_cardinalities_list.append(edge_dim)
+            self._unique_graph_node_cardinalities.add(edge_dim)
+            self._max_observed_nodes_cardinality = max(self._max_observed_nodes_cardinality, edge_dim)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectCardinalities]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -199,8 +202,8 @@ class DatasetPipeline:
         This function collects all node cardinality occurences.
         """   
         try:
-            for key in self.set_unique_graph_node_cardinalities:
-                self.count_graph_node_cardinalities_occourences[key] = self.list_graph_node_cardinalities.count(key)
+            for key in self._unique_graph_node_cardinalities:
+                self._count_graph_node_cards_occs[key] = self._graph_node_cardinalities_list.count(key)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectCardinalityOccurences]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -219,25 +222,25 @@ class DatasetPipeline:
             Return: List[sentence, semantics]
         """
         try:
-            dataset = Reader(self.in_path).GroupReadAMR()
+            dataset = Reader(self._in_path).GroupReadAMR()
             dataset=dataset[1:len(dataset)]
             sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
-                                                                    sentence_restriction=self.restriction_sentence, 
-                                                                    semantics_restriction=self.restriction_semantic).Extract()
+                                                                    sentence_restriction=self._restriction_chars_sentence, 
+                                                                    semantics_restriction=self._restriction_chars_semantic).Extract()
             mean_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
             mean_semantics = CalculateMeanValue(str_lengths=semantic_lengths)
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
-            if (not self.as_amr): self.CollectCardinalityOccurences()
+            if (not self._as_amr): self.CollectCardinalityOccurences()
 
             print('\n~~~~~~~~~~~~~ Cleaning AMR ~~~~~~~~~~~~')
-            print('[Size Restriction]:\t Sentence =', self.restriction_sentence, '| Semantic = ', self.restriction_semantic)
+            print('[Size Restriction]:\t Sentence =', self._restriction_chars_sentence, '| Semantic = ', self._restriction_chars_semantic)
             print('[Size Mean]:\t\t Sentences =', mean_sentences, '| Semantics = ', mean_semantics)
-            print('[Size Max]:\t\t Sentences =', self.max_sentences)
+            print('[Size Max Chars]:\t\t Sentences =', self._max_chars_sentences)
             print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
-            print('[Extensions]:\t\t', len(self.extension_dict))
-            print('[Path]:\t\t\t', self.in_path)
-            print('[Dropouts]:\t\t', self.dataset_drop_outs)
+            print('[Extensions]:\t\t', len(self._extension_dict))
+            print('[Path]:\t\t\t', self._in_path)
+            print('[Dropouts]:\t\t', self._dataset_drop_outs)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return data_pairs
@@ -253,10 +256,10 @@ class DatasetPipeline:
         """
         try:
             
-            self.as_amr = as_amr
-            self.is_saving = True
-            writer = Writer(self.in_path, 
-                            self.out_path_extender, 
+            self._as_amr = as_amr
+            self._is_saving = True
+            writer = Writer(self._in_path, 
+                            self._out_path_extender, 
                             self.Pipeline())
             return None
         except Exception as ex:
@@ -269,7 +272,7 @@ class DatasetPipeline:
         This function calls the Pipeline and return the cleaned dataset for ANN usage.
         """
         try:
-            self.is_saving = False
+            self._is_saving = False
             datapairs = self.Pipeline()
             print('Result structure:\n\t=> [Sentence, EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
             return datapairs
@@ -284,8 +287,8 @@ class DatasetPipeline:
         """
         try:
             print('Graph Node Cardinality Occourences:')
-            for key in self.count_graph_node_cardinalities_occourences.keys():
-                print("\t=> [", key, "] =",self.count_graph_node_cardinalities_occourences[key], "times")
+            for key in self._count_graph_node_cards_occs.keys():
+                print("\t=> [", key, "] =",self._count_graph_node_cards_occs[key], "times")
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ShowNodeCardinalityOccurences]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -297,9 +300,9 @@ class DatasetPipeline:
             :param path:str: path combined with filename for file image storing
         """
         try:
-            BarChart(   dataset = self.count_graph_node_cardinalities_occourences, 
-                        min_card = self.min_cardinality,
-                        max_card = self.max_cardinality, 
+            BarChart(   dataset = self._count_graph_node_cards_occs, 
+                        min_card = self._min_cardinality,
+                        max_card = self._max_cardinality, 
                         path = path)
             return None
         except Exception as ex:

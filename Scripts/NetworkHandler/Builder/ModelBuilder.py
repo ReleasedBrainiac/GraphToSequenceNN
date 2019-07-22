@@ -4,6 +4,7 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
+from keras.optimizers import RMSprop
 from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
@@ -172,7 +173,7 @@ class ModelBuilder:
                             training:bool =False,
                             units =0,
                             batch_size =1,
-                            act:str ='tanh', 
+                            act:str ='sigmoid', 
                             rec_act:str ='hard_sigmoid', 
                             use_bias:bool =True, 
                             kernel_initializer:str ='glorot_uniform', 
@@ -236,18 +237,15 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def BuildDecoderPrediction(self, previous_layer:Layer, units:int, act:activations, sentences_dim:int):
+    def BuildDecoderPrediction(self, previous_layer:Layer, act:activations = activations.softmax):
         """
         This function build the prediction part of the decoder.
             :param previous_layer:Layer: previous layer (e.g. lstm)
-            :param units:int: units for the next dense layer (in this case the word vector features count)
             :param act:activations: the dense layers activations
-            :param sentences_dim:int: the sentence embedding features count
         """   
         try:
-            #word_emd_down_size = Dense(units=units, activation=act, name='word_emb_down_sample')(previous_layer)
             flatten = Flatten(name='reduce_dimension')(previous_layer)
-            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(flatten)
+            return Dense(units=self.input_dec_dim, activation='relu', name='dense_predict')(flatten)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -349,30 +347,24 @@ class ModelBuilder:
             print(message) 
 
     def BuildGraphEmbeddingDecoder( self,
-                                    embedding_layer: Embedding,
+                                    encoder: Layer,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
                                     act:activations = activations.softmax):
         """
         This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
-            :param embedding_layer:Embedding: given embedding layer
+            :param encoder:Layer: given encoder out layer
             :param prev_memory_state:Layer: previous layer mem state
             :param prev_carry_state:Layer: previous layer carry state
             :param act:activations: layers activation function [Default Softmax]
         """
         try:
-            AssertIsKerasTensor(embedding_layer)
+            AssertIsKerasTensor(encoder)
             AssertIsKerasTensor(prev_memory_state)
             AssertIsKerasTensor(prev_carry_state)
-
-            emb_shape = embedding_layer.shape
-            emb_shape_len = len(emb_shape)
-            word_emb_dim = int(emb_shape[emb_shape_len-1])
-            sentence_dim = int(emb_shape[emb_shape_len-2])
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-
-            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=embedding_layer, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size)
-            return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, units=word_emb_dim, act=act, sentences_dim=sentence_dim)
+            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size)
+            return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -397,7 +389,7 @@ class ModelBuilder:
                      model:training.Model, 
                      loss:str ='categorical_crossentropy', 
                      optimizer:str ='rmsprop', 
-                     metrics:list =['top_k_categorical_accuracy', 'categorical_accuracy']):
+                     metrics:list =['top_k_categorical_accuracy:', 'categorical_accuracy']):
         """
         This function compiles the training model.
             :param model:training.Model: the training model
@@ -406,6 +398,9 @@ class ModelBuilder:
             :param metrics:list: list of strings of possible metrics [Keras definition]
         """   
         try:
+            if optimizer == 'rmsprop':
+                optimizer = RMSprop(lr=0.001)
+
             model.compile(  loss=loss,
                             optimizer=optimizer,
                             metrics=metrics)

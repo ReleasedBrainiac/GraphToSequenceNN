@@ -3,8 +3,9 @@
 This Repo provides a Graph2Sequnce for Keras implementation. It will provide an example of Graph2Sequence encoding and decoding. The idea behind the Graph2Sequence is based on https://arxiv.org/abs/1804.00823. In this implementation I try to encode the complex datasets from https://amr.isi.edu/ (Abstract Meaning Representation). 
 
 The IBM Research Team implemted a tensorflow Graph2Sequence model with attention => https://github.com/IBM/Graph2Seq !
-There are hughe differences between our models structures and used functions and implementations.
-This is caused by the differnt interpretation of the paper and my goal to strictly implement the paper as much as possible.
+
+There are differences between our models structures and used functions and implementations.
+This is caused by the differnt interpretation of the paper.
 
 ## The Setup (necessary libraries!)
 

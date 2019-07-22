@@ -1,4 +1,4 @@
-# GraphToSequenceNN [In Progress] 
+# GraphToSequenceNN 
 
 This Repo provides a Graph2Sequnce for Keras implementation. It will provide an example of Graph2Sequence encoding and decoding. The idea behind the Graph2Sequence is based on https://arxiv.org/abs/1804.00823. In this implementation I try to encode the complex datasets from https://amr.isi.edu/ (Abstract Meaning Representation). 
 
@@ -21,57 +21,71 @@ This is caused by the differnt interpretation of the paper and my goal to strict
 
 ## Usage
 
-### Execution:
 1. download and unpack the 'The Little Prince' corpus from https://amr.isi.edu/download.html. 
-2. change the global values in the "main.py" as you desired (at least provide the dataset path)
-3. open you desired command line, powershell or bash
-4. execute "python your_path_to/main.py"
-5. see the magic
+2. download and unpack your desired GloVe pretrained word vectors https://nlp.stanford.edu/projects/glove/
+3. change the global values in the "main.py" as you desired (at least provide the dataset and glove path)
+4. open you desired command line, terminal, powershell, bash or etc.
+5. execute "python your_path_to/main.py"
+6. see the magic
 
 ### Attention: 
-- Change "STORE_STDOUT" to False to see console reports... otherwise they gonna be stored in a file and the console will be empty until the process is done!
+- The console output will be logged completely and also shown. SET model.fit param verbose to 0 to reduce the log file size! 
 
-## Current developement status
+## Developement 
+
+### Status
 - Tool is Finished
 
-## Resources
+### Resources
 - I used the following ressource for lookup the table replacement.
         => https://www.thesaurus.com/browse/clean%20out?s=t 
 - Try Catch Style/Code Source:
         => https://stackoverflow.com/questions/9823936/python-how-do-i-know-what-type-of-exception-occurred
 
-## Tools
+- Additional resource can be found in the code files headings! (To much for the Readme...)
+
+### Tools
 - Live Regex Online Tool => https://regex101.com/r/U7SV1y/1/ 
 - Visual Studio Code + Extensions
 
-## Questions
+### Questions
 - [?]  Is GloVe able to encode "New Zealand", "North_Pole" or other definitions
 
 ## [AMR Parser] What's expeled from AMR string?
  
-1. Replaced all base word extensions 
-        1. "do-01" => "d0"
-2. Replaced all not alphanumeric qualified strings "" 
-        1. "Ocean" => kept
-        2. "19:35" => expelled
-3. Replaced polaritity "-" with a new node 
-        1. => {"N0T": "not"}
-4. Replaced words with a look up listcontaining words with a close meaning
-        1. "littly-by-little" => "gradually"
-        2. "amr-unknown" => "?"
-5. Replaced all options ":opx 'Zealand'" with a new node 
-        1. => {"NSLx": "Zealand"}
-6. Expelled all signs which not match alpahnumeric, whitespacing, "/" and round parenthesis
+Replaced all base word extensions 
+  1. "do-01" => "d0"
+
+Replaced all not alphanumeric qualified strings "" 
+  1. "Ocean" => kept
+  2. "19:35" => expelled
+
+Replaced polaritity "-" with a new node 
+  1. {"N0T": "not"}
+
+Replaced words with a look up listcontaining words with a close meaning
+  1. "littly-by-little" => "gradually"
+  2. "amr-unknown" => "?"
+
+Replaced all options ":opx 'Zealand'" with a new node 
+  1. {"NSLx": "Zealand"}
+
+Expelled all signs which not match alpahnumeric, whitespacing, "/" and round parenthesis
+
 
 ## [GloVe Dataset Parser] What's changed for the process?
-
-1. Removed ['#::snt ', '" ',' "'] and replaced '- -' with '-' in the sentences
+In the sentences:
+  1. Removed ['#::snt ', '" ',' "'] 
+  2. Replaced '- -' with '-'
 
 [THE RESULT] is a cleaned AMR string which i gonna use for to create a node embedding with GloVe.
 
 ## [Bugs]
 
-1. It isn't possible to extend the batch_size > 1 [Fix status => PAUSED]
-2. For python 3.6.5 saving the whole model throws an key argument error [Fix status => IGNORED]
-        1. Currently saving weights is possible
+It isn't possible to extend the batch_size > 1 
+  * [Fix status => PAUSED]
+
+For python 3.6.5 saving the whole model throws an key argument error 
+  * [Fix status => IGNORED]
+  * [POSSIBLE] Saving weights
                                           

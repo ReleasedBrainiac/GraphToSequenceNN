@@ -78,6 +78,7 @@ Expelled all signs which not match alpahnumeric, whitespacing, "/" and round par
 In the sentences:
   1. Removed ['#::snt ', '" ',' "'] 
   2. Replaced '- -' with '-'
+  3. Remove '_' means [international_monetary_fund] will be [internationalmonetaryfund]
 
 [THE RESULT] is a cleaned AMR string which i gonna use for to create a node embedding with GloVe.
 

@@ -45,3 +45,5 @@ class Constants():
 
     ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z]+)'
     UNENCLOSED_ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z0-9+\-]+)'
+    UNENCLOSED_ARGS_MULTIWORD_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z0-9+\-_]+)'
+    MISSING_CAPTURED_NEG_REGEX = r'\B( - )'

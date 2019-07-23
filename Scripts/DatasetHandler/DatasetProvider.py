@@ -94,12 +94,12 @@ class DatasetPipeline:
             :param semantic:str: raw semantic input
         """
         try:
-            cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges)
+            node_parenthesis = ['(',')'] if ('(' in semantic and ')' in semantic) else None
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges, node_parenthesis=node_parenthesis)
             if cleaner.isCleaned:
                 self.extension_dict = cleaner.extension_dict
                 return '#'+self.constants.SEMANTIC_DELIM+' \n'+cleaner.cleaned_context+'\n'+'\n'
             else:
-                self.dataset_drop_outs += 1
                 return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrSemanticString]. Arguments:\n{1!r}"
@@ -136,11 +136,13 @@ class DatasetPipeline:
         ATTENTION: [as_amr = true] does not support conversion with ConvertToTensorMatrices!
             :param data_pair:list: amr data pair
         """
-        try:
-            sentence = self.RemoveEnclosingAngleBracket(self.constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
-            semantic = self.ForgeAmrSemanticString(data_pair[1])
+        try:          
+            semantic:str = self.EncloseWrongFormattedAMR(data_pair[1])
+            sentence:str = self.RemoveEnclosingAngleBracket(self.constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
+            semantic = self.ForgeAmrSemanticString(semantic)
 
-            if(not self.as_amr): semantic = self.ForgeMatrices(semantic)
+            if(not self.as_amr): 
+                semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
                 return [sentence, semantic]
@@ -219,11 +221,21 @@ class DatasetPipeline:
             Return: List[sentence, semantics]
         """
         try:
-            dataset = Reader(self.in_path).GroupReadAMR()
-            dataset=dataset[1:len(dataset)]
-            sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
-                                                                    sentence_restriction=self.restriction_sentence, 
-                                                                    semantics_restriction=self.restriction_semantic).Extract()
+            dataset = None
+            sentence_lengths:list = None
+            semantic_lengths:list = None
+            pairs:list = None
+            reader = Reader(self.in_path)
+
+            if ".txt" in self.in_path:
+                dataset = reader.GroupReadAMR()
+                dataset=dataset[1:len(dataset)]
+                sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
+                                                                        sentence_restriction=self.restriction_sentence, 
+                                                                        semantics_restriction=self.restriction_semantic).Extract()
+            else:
+                sentence_lengths, semantic_lengths, pairs = reader.LoadJson()
+            
             mean_sentences = CalculateMeanValue(str_lengths=sentence_lengths)
             mean_semantics = CalculateMeanValue(str_lengths=semantic_lengths)
             data_pairs = self.CollectAllDatasetPairs(pairs)
@@ -304,5 +316,30 @@ class DatasetPipeline:
             return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.PlotCardinalities]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+
+    def EncloseWrongFormattedAMR(self, amr:str):
+        """
+        This method return a correct enclosed amr string.
+            :param amr:str: input amr
+        """   
+        try: 
+            left_side = (not '(' is amr[0])
+            right_side = (not ')' is amr[-1])
+
+            if left_side or right_side:
+                if amr.count('(') == amr.count(')'):
+                    amr = '( ' + amr + ' )'
+                else:
+                    if left_side:
+                        amr = '( ' + amr
+                    else: 
+                        amr = amr + ' )'
+
+            return amr
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [DatasetProvider.EncloseWrongFormattedAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

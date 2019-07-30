@@ -1,7 +1,10 @@
 *.pyc
 *.ouput
+*.gz
+*.json
 /.vs
 **/.vscode/
 **/__pycache__/
 **/.ipynb_checkpoints/
 **/GloVeWordVectors/
+**/Datasets/

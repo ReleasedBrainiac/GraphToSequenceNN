@@ -1,5 +1,5 @@
 import re
-from DatasetHandler.ContentSupport import isInStr, isNotNone, isStr, isDict
+from DatasetHandler.ContentSupport import isInStr, isNotNone, isStr, isDict, isNone
 from DatasetHandler.ContentSupport import hasContent
 from Configurable.ProjectConstants import Constants
 
@@ -39,10 +39,11 @@ class Cleaner:
                 self.hasExtentsionsDict = True
                 self.extension_dict = input_extension_dict
                 self.extension_keys_dict = self.extension_dict.keys()
-
-            if len(node_parenthesis) >= 2: self.node_parenthesis = node_parenthesis
+            if isNotNone(node_parenthesis):
+                self.node_parenthesis = node_parenthesis
                 
-            if(self.hasContext): self.GenerateCleanAMR()
+            if(self.hasContext): 
+                self.GenerateCleanAMR()
         except Exception as ex:
             template = "An exception of type {0} occurred in [AMRCleaner.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -60,6 +61,19 @@ class Cleaner:
         else:
             return False
 
+    def HasUnenclosedPolarity(self, in_context:str =''):
+        """
+        This function check for missing enclosings of polarities.
+            :param in_context:str: given string
+        """
+        if isStr(in_context) and len(in_context) > 0:
+            return self.constants.POLARITY in in_context
+        elif self.hasContext:
+            return self.constants.POLARITY in self.context
+        else:
+            return False
+
+
     def HasQuotation(self, in_context:str =''):
         """
         This function checks a string contains quotation characters.
@@ -72,15 +86,17 @@ class Cleaner:
         else:
             return False
     
-    def HasParenthesis(self, in_context:str =''):
+    def IsParentheticalWellFormed(self, in_context:str =''):
         """
         This function checks a string contains parenthesis characters.
             :param in_context:str: given string
         """
+        in_context = self.context if self.hasContext else in_context
+
         if isStr(in_context) and len(in_context) > 0:
-            return self.node_parenthesis[0] in in_context and self.node_parenthesis[1] in in_context
-        elif self.hasContext:
-            return self.node_parenthesis[0] in self.context and self.node_parenthesis[1] in self.context
+            left_exists:bool = True if (self.node_parenthesis[0] in in_context) else False
+            right_exists:bool = True if (self.node_parenthesis[1] in in_context) else False
+            return (left_exists == right_exists)
         else:
             return False
 
@@ -169,7 +185,7 @@ class Cleaner:
             :param in_context:str: string nested in desired node_parenthesis.
         """
         try:
-            if self.HasParenthesis(in_context):
+            if self.IsParentheticalWellFormed(in_context):
                 pos_open = in_context.index(self.node_parenthesis[0])
                 pos_close = in_context.rfind(self.node_parenthesis[1])
                 in_context = in_context[pos_open+1:pos_close]
@@ -263,12 +279,11 @@ class Cleaner:
         """
         try:
             if self.HasColon(in_context):
-                for loot_elem in self.CollectAllMatches(self.constants.UNENCLOSED_ARGS_REGEX, in_context):
+                for loot_elem in self.CollectAllMatches(self.constants.UNENCLOSED_ARGS_MULTIWORD_REGEX, in_context):
                     search = ''.join(loot_elem)
                     found_flag = loot_elem[0]
                     found_edge = loot_elem[1].lstrip(' ')
                     replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_edge + self.node_parenthesis[1]])
-
                     if 'ARG' not in loot_elem[0]:
                         if self.keep_edge_encoding:
                             found_flag, found_edge = self.EncapsulateEdge(loot_elem)
@@ -277,6 +292,10 @@ class Cleaner:
                             replace = ''
                         
                     in_context = self.ReplaceAllMatches(search, replace, in_context)
+
+            if self.HasUnenclosedPolarity(in_context):
+                in_context = re.sub(self.constants.MISSING_CAPTURED_NEG_REGEX, '[-]', in_context)
+
             return in_context
         except ValueError:
             print("ERR: Missing or wrong value passed to [AMRCleaner.EncapsulateUnenclosedValues].")
@@ -468,16 +487,17 @@ class Cleaner:
         """
         try:
             self.context = self.RemoveSpacingFormat(self.context)
-            if  self.HasParenthesis(self.context) and self.MatchSignsOccurences(self.context):
+            if self.IsParentheticalWellFormed(self.context) and self.MatchSignsOccurences(self.context):
                 self.context = self.EncapsulateUnenclosedValues(self.context)
                 self.context = self.EncapsulateStringifiedValues(self.context)
                 self.context = self.GetNestedContent(self.context)
                 self.context = self.ReplaceKnownExtensions(self.context)
                 self.cleaned_context = self.FinalFormatter(self.context)
                 self.isCleaned = self.AllowedCharacterOccurenceCheck(self.cleaned_context)
+
                 if(self.isCleaned):
                     return self.cleaned_context
-                else:
+                else:                 
                     return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.GenerateCleanAMR]. Arguments:\n{1!r}"

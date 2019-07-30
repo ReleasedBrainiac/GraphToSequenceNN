@@ -2,6 +2,7 @@ from collections import OrderedDict
 from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
 import numpy as np
+import sys
 
 class MatrixBuilder:
     """
@@ -139,6 +140,7 @@ class MatrixBuilder:
                                 nodes_stack.append(next_node) 
                         else:
                             prev_node = nodes_stack.pop()
+
                             for _ in range(closer-2):  
                                 nodes_stack.pop()
 
@@ -164,5 +166,6 @@ class MatrixBuilder:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+            sys.exit(0)
 
         

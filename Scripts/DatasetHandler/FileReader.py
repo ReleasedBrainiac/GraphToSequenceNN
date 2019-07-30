@@ -1,4 +1,5 @@
 import re
+import json
 from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotNone
 
@@ -59,5 +60,31 @@ class Reader:
                 return re.split(self.seperator_regex, fileIn.read())
         except Exception as ex:
             template = "An exception of type {0} occurred in [FileReader.GroupReadAMR]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def LoadJson(self):
+        """
+        This method parse a json file containing a list of amr and string pairs. 
+        """
+        try:
+            sentence_lengths:list = []
+            semantic_lengths:list = []
+            pairs:list = []
+
+            with open(self.path, 'r+') as f:
+                jsons = json.load(f)
+                for elem in jsons:
+                    amr:str = elem['amr']
+                    sent:str = elem['sent']
+
+                    if isNotNone(amr) and isNotNone(sent):
+                        semantic_lengths.append(len(amr))
+                        sentence_lengths.append(len(amr))
+                        pairs.append([sent, amr])
+
+                return sentence_lengths, semantic_lengths, pairs
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [FileReader.LoadJson]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)

@@ -141,6 +141,8 @@ class HistoryPlotter(object):
             try:
                 self.CollectLossFromHistory()
                 self.CollectLearningRatesFromHistory()
+
+
                 self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_stdcc_list, self._val_acc_stdcc_list])
                 self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_topkcc_list, self._val_acc_topkcc_list])
             except Exception as ex:
@@ -184,6 +186,17 @@ class HistoryPlotter(object):
                                     extender = 'categoriacal_epoch_plot',
                                     train_val_lists = [self._acc_stdcc_list, self._val_acc_stdcc_list])
                 
+            ## General
+            if 'acc' in self._history_keys and isNotNone(self._acc_stdcc_list) and isNotNone(self._val_acc_stdcc_list):
+                self.AccOrLossPlot( fig_num = 3, 
+                                    title = 'Model Accuracy', 
+                                    metric = 'accuracy', 
+                                    axis_labels = ['train', 'validation'], 
+                                    history_labels = ['Accuracy', 'Epoch'], 
+                                    extender = 'accuracy_epoch_plot',
+                                    train_val_lists = [self._acc_stdcc_list, self._val_acc_stdcc_list])
+            
+
             if 'lr' in self._history_keys and isNotNone(self._learning_rates):
                 self.LearningPlot(  fig_num = 4,
                                     title = 'Model Learning Rate')

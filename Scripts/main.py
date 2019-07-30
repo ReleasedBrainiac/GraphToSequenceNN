@@ -23,6 +23,7 @@ from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
+#TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page---------------------------
 #TODO IN MA => Next Level 1 => https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
 #TODO IN MA => Next Level 2 => http://proceedings.mlr.press/v48/niepert16.pdf
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
@@ -70,11 +71,11 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 5
+    EPOCHS:int = 20
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
-    DATASET_NAME:str =  'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt'
+    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
@@ -94,7 +95,7 @@ class Graph2SeqInKeras():
     HOP_STEPS:int = 5
     SHUFFLE_DATASET:bool = True
 
-    _accurracy:list = ['categorical_accuracy', 'top_k_categorical_accuracy']
+    _accurracy:list = ['acc']#'categorical_accuracy', 'top_k_categorical_accuracy']
     _available_gpus = None
     _predict_percentage_split:float = 5.0
     _predict_split_value:int = -1
@@ -251,7 +252,9 @@ class Graph2SeqInKeras():
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=pipe._max_words_sentences,
                                                                 show_feedback=True)
-            _, _, edge_fw_look_up, edge_bw_look_up, vectorized_sequences, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
+            _, _, edge_fw_look_up, edge_bw_look_up, _, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
+            #vectorized_targets = np.expand_dims(vectorized_targets, axis=2)
+            print("Targets Shape: ", vectorized_targets.shape)
             
             #TODO make vectorized_targets => to_categorical
             #TODO then softmax against it
@@ -264,14 +267,13 @@ class Graph2SeqInKeras():
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 
                                                 tokenizer=glove_dataset_processor,
-                                                max_sequence_length=pipe._max_words_sentences,
+                                                max_sequence_length= pipe._max_words_sentences,
                                                 glove_file_path=self.GLOVE, 
                                                 output_dim=out_dim_emb, 
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
 
-            print("Out_Sequence: ", vectorized_targets[0])
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
@@ -282,16 +284,13 @@ class Graph2SeqInKeras():
 
             train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
                         edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
-                        edge_bw_look_up[:self._dataset_size - self._predict_split_value], 
-                        vectorized_sequences[:self._dataset_size - self._predict_split_value]]
+                        edge_bw_look_up[:self._dataset_size - self._predict_split_value]]
 
-            train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
-            
             test_x = [  datasets_nodes_embedding[self._dataset_size - self._predict_split_value:], 
                         edge_fw_look_up[self._dataset_size - self._predict_split_value:], 
-                        edge_bw_look_up[self._dataset_size - self._predict_split_value:], 
-                        vectorized_sequences[self._dataset_size - self._predict_split_value:]]
+                        edge_bw_look_up[self._dataset_size - self._predict_split_value:]]
 
+            train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
             test_y = vectorized_targets[self._dataset_size - self._predict_split_value:]
 
             print("#######################################\n")
@@ -305,12 +304,13 @@ class Graph2SeqInKeras():
             encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
             model = builder.BuildGraphEmbeddingDecoder( encoder=encoder,
+                                                        act=activations.relu,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, metrics=self._accurracy)
-            if self.SHOW_FEEDBACK: builder.Summary(model)
+            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'cosine_proximity')
+            builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             print("#######################################\n")

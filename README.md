@@ -29,7 +29,7 @@ This is caused by the differnt interpretation of the paper.
 5. execute "python your_path_to/main.py"
 6. see the magic
 
-Additional: A much bigger Dataset [https://github.com/freesunshine0316/neural-graph-to-seq-mp] provided in Yue Zhang et al. => [https://frcchang.github.io/pub/acl18.song.pdf] 
+Additional: A much bigger (2M) Dataset [https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz] provided in Yue Zhang et al. => [https://frcchang.github.io/pub/acl18.song.pdf] 
 
 ### Attention: 
 - The console output will be logged completely and also shown. SET model.fit param verbose to 0 to reduce the log file size! 

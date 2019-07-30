@@ -5,7 +5,7 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten, TimeDistributed
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -30,7 +30,7 @@ class ModelBuilder:
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
         and build the necessary input tensors for the network. 
-        They can be accessed by calling 'get_encoder_inputs()' and 'get_decoder_inputs'.
+        They can be accessed by calling 'get_inputs()'.
             :param input_enc_dim:int: dimension of the encode inputs
             :param edge_dim:int: dimension of edge look ups
             :param input_dec_dim:int: dimension of the decoder inputs
@@ -51,10 +51,7 @@ class ModelBuilder:
 
         self.input_enc_shape = (input_enc_dim,) if (input_is_2d) else (edge_dim,input_enc_dim)
         self.edge_shape = (edge_dim,) if (input_is_2d) else (edge_dim,edge_dim)
-        self.input_dec_shape = (input_dec_dim,)
-
         self.encoder_inputs = self.BuildEncoderInputs()
-        self.decoder_inputs = self.BuildDecoderInputs()
 
     def BuildEncoderInputs(self):
         """
@@ -63,7 +60,6 @@ class ModelBuilder:
             Don't call it externally to use it as indirect input for model build!
             If you do so you going to get the 'Disconnected Graph' Error!
             This happens because you are generating NEW Input Tensors instead of getting the exsisting.
-            Better use 'get_encoder_inputs()'.
         """   
         try:
             features = Input(shape = self.input_enc_shape, name="features")
@@ -231,6 +227,8 @@ class ModelBuilder:
                                 stateful=stateful, 
                                 unroll=unroll)
 
+            
+
             return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"
@@ -244,8 +242,10 @@ class ModelBuilder:
             :param act:activations: the dense layers activations
         """   
         try:
-            flatten = Flatten(name='reduce_dimension')(previous_layer)
-            return Dense(units=self.input_dec_dim, activation='relu', name='dense_predict')(flatten)
+            #flatten = Flatten(name='reduce_dimension')(previous_layer)
+            pooling = GlobalMaxPooling1D(data_format='channels_last', name='max_pooling')(previous_layer)
+            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(pooling)
+            #return TimeDistributed(Dense(units=self.input_dec_dim, activation=act, name='dense_predict') , name='timed_dense_predict')(previous_layer)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -256,7 +256,7 @@ class ModelBuilder:
                                         backward_layer: Layer =None, 
                                         hidden_dim: int =100, 
                                         kernel_init: str ='glorot_uniform',
-                                        act: activations = activations.relu,
+                                        act: activations = activations.softmax,
                                         kernel_regularizer: regularizers =regularizers.l2(0.01),
                                         activity_regularizer: regularizers =regularizers.l1(0.01)
                                         ):
@@ -387,9 +387,9 @@ class ModelBuilder:
 
     def CompileModel(self, 
                      model:training.Model, 
-                     loss:str ='categorical_crossentropy', 
+                     loss:str = 'kullback_leibler_divergence', 
                      optimizer:str ='rmsprop', 
-                     metrics:list =['top_k_categorical_accuracy:', 'categorical_accuracy']):
+                     metrics:list =['acc']):
         """
         This function compiles the training model.
             :param model:training.Model: the training model
@@ -399,11 +399,12 @@ class ModelBuilder:
         """   
         try:
             if optimizer == 'rmsprop':
-                optimizer = RMSprop(lr=0.001)
+                optimizer = RMSprop(lr=0.006)
 
             model.compile(  loss=loss,
                             optimizer=optimizer,
                             metrics=metrics)
+
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.CompileModel]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -438,36 +439,13 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def get_encoder_inputs(self):
-        """
-        This getter returns the encoder inputs.
-        """   
-        try:
-            return self.encoder_inputs
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.get_encoder_inputs]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message) 
-
-    def get_decoder_inputs(self):
-        """
-        This getter returns the decoder inputs.
-        """   
-        try:
-            return self.decoder_inputs
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.get_decoder_inputs]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message) 
-
     def get_inputs(self):
         """
-        This getter returns the encoder and decoder inputs in exactly this order [encoder, decoder].
+        This getter returns the encoder and decoder inputs in exactly this order [encoder].
         """   
         try:
             AssertNotNone(self.encoder_inputs, 'encoder inputs')
-            AssertNotNone(self.decoder_inputs, 'decoder inputs')
-            return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]
+            return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2]]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.get_inputs]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

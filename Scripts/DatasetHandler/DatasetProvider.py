@@ -95,10 +95,8 @@ class DatasetPipeline:
             :param semantic:str: raw semantic input
         """
         try:
-
-            #TODO Old -> Remove: cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_edges=self._is_keeping_edges)
             node_parenthesis = ['(',')'] if ('(' in semantic and ')' in semantic) else None
-            cleaner = Cleaner(input_context=semantic, input_extension_dict=self.extension_dict, keep_edges=self.is_keeping_edges, node_parenthesis=node_parenthesis)
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_edges=self._is_keeping_edges, node_parenthesis=node_parenthesis)
 
             if cleaner.isCleaned:
                 self._extension_dict = cleaner.extension_dict
@@ -144,10 +142,10 @@ class DatasetPipeline:
 
         try:          
             semantic:str = self.EncloseWrongFormattedAMR(data_pair[1])
-            sentence:str = self.RemoveEnclosingAngleBracket(self.constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
+            sentence:str = self.RemoveEnclosingAngleBracket(self._constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
             semantic = self.ForgeAmrSemanticString(semantic)
 
-            if(not self.as_amr): 
+            if(not self._as_amr): 
                 semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
@@ -234,14 +232,14 @@ class DatasetPipeline:
             sentence_lengths:list = None
             semantic_lengths:list = None
             pairs:list = None
-            reader = Reader(self.in_path)
+            reader = Reader(self._in_path)
 
-            if ".txt" in self.in_path:
+            if ".txt" in self._in_path:
                 dataset = reader.GroupReadAMR()
                 dataset=dataset[1:len(dataset)]
                 sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
-                                                                        sentence_restriction=self.restriction_sentence, 
-                                                                        semantics_restriction=self.restriction_semantic).Extract()
+                                                                        sentence_restriction=self._restriction_chars_sentence, 
+                                                                        semantics_restriction=self._restriction_chars_semantic).Extract()
             else:
                 sentence_lengths, semantic_lengths, pairs = reader.LoadJson()
 

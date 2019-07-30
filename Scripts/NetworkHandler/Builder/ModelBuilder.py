@@ -71,22 +71,6 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def BuildDecoderInputs(self):
-        """
-        This function builds the decoder input tensors for the network.
-        ATTENTION: 
-            Don't call it externally to use it as indirect input for model build!
-            If you do so you going to get the 'Disconnected Graph' Error!
-            This happens because you are generating NEW Input Tensors instead of getting the exsisting.
-            Better use 'get_decoder_inputs()'.
-        """   
-        try:
-            return Input(shape = self.input_dec_shape, name="sentences")
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderInputs]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message) 
-
     def BuildNeighbourhoodLayer(self, 
                                 features, 
                                 look_up, 
@@ -387,7 +371,7 @@ class ModelBuilder:
 
     def CompileModel(self, 
                      model:training.Model, 
-                     loss:str = 'kullback_leibler_divergence', 
+                     loss:str = 'sparse_categorical_crossentropy', 
                      optimizer:str ='rmsprop', 
                      metrics:list =['acc']):
         """

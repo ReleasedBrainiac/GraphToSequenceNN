@@ -71,7 +71,7 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 20
+    EPOCHS:int = 3
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
     BUILDTYPE:int = 1
@@ -309,7 +309,7 @@ class Graph2SeqInKeras():
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'cosine_proximity')
+            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'logcosh')
             builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 

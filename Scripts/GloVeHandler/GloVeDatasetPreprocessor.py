@@ -126,7 +126,7 @@ class GloVeDatasetPreprocessor:
         """   
         try:
             if self.show_response: print('Vectorize vocab!')
-            padded_sequences = pad_sequences(tokenized_sequences, maxlen=self.MAX_SEQUENCE_LENGTH)
+            padded_sequences = pad_sequences(tokenized_sequences, padding='post', maxlen=self.MAX_SEQUENCE_LENGTH)
             indices = np.arange(padded_sequences.shape[0])
             return padded_sequences, indices
         except Exception as ex:

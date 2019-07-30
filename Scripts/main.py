@@ -134,7 +134,6 @@ class Graph2SeqInKeras():
                 sys.stdout.flush()
 
                 # Set network changes
-                #self._accurracy = self.multi_acc[run]
                 self.EPOCHS = self.multi_epochs[run]
                 self.HOP_STEPS = self.multi_hops[run]
                 self.VALIDATION_SPLIT = self.multi_val_split[run]

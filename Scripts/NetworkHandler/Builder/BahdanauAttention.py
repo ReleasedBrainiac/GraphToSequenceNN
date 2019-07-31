@@ -22,7 +22,7 @@ class BahdanauAttention(keras.Model):
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def call(self, sample_outs, hidden_state):
+    def __call__(self, sample_outs, hidden_state):
         """
         The call method of the (keras) layer.
             :param sample_outs:

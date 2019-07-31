@@ -14,8 +14,8 @@ class BarChart(object):
                     max_card:int, 
                     title:str = 'Cardinalities Occurences', 
                     short_title:str = 'Cardinality', 
-                    y_label:str = 'Cardinalities', 
-                    x_label:str = 'Occourences', 
+                    x_label:str = 'Cardinalities', 
+                    y_label:str = 'Occourences', 
                     path:str = None, 
                     save_it:bool = True):
         """

@@ -23,6 +23,8 @@ from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
+#TODO many-to-many => https://github.com/keras-team/keras/issues/1029
+#TODO another resource => https://data-science-blog.com/blog/2017/12/20/maschinelles-lernen-klassifikation-vs-regression/
 #TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page---------------------------
 #TODO IN MA => Next Level 1 => https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
 #TODO IN MA => Next Level 2 => http://proceedings.mlr.press/v48/niepert16.pdf
@@ -90,12 +92,12 @@ class Graph2SeqInKeras():
     GLOVE_OUTPUT_DIM:int = 100
     GLOVE_VOCAB_SIZE:int = 5000
     VALIDATION_SPLIT:float = 0.2
-    MIN_NODE_CARDINALITY:int = 7
-    MAX_NODE_CARDINALITY:int = 48
-    HOP_STEPS:int = 5
+    MIN_NODE_CARDINALITY:int = 15
+    MAX_NODE_CARDINALITY:int = 35
+    HOP_STEPS:int = 15
     SHUFFLE_DATASET:bool = True
 
-    _accurracy:list = ['acc']#'categorical_accuracy', 'top_k_categorical_accuracy']
+    _accurracy:list = ['categorical_accuracy']
     _available_gpus = None
     _predict_percentage_split:float = 5.0
     _predict_split_value:int = -1
@@ -245,16 +247,17 @@ class Graph2SeqInKeras():
             pipe.PlotCardinalities(self.MODEL_DESC)
             self.DatasetLookUpEqualization(datapairs, max_cardinality)
                 
+            max_sequence_len:int = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
+                
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
                                                                 vocab_size=in_vocab_size,
-                                                                max_sequence_length=pipe._max_words_sentences,
+                                                                max_sequence_length=max_sequence_len,
                                                                 show_feedback=True)
             _, _, edge_fw_look_up, edge_bw_look_up, _, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
-            #vectorized_targets = np.expand_dims(vectorized_targets, axis=2)
-            print("Targets Shape: ", vectorized_targets.shape)
+            
             
             #TODO make vectorized_targets => to_categorical
             #TODO then softmax against it
@@ -267,12 +270,13 @@ class Graph2SeqInKeras():
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 
                                                 tokenizer=glove_dataset_processor,
-                                                max_sequence_length= pipe._max_words_sentences,
+                                                max_sequence_length= max_sequence_len,
                                                 glove_file_path=self.GLOVE, 
                                                 output_dim=out_dim_emb, 
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
+            vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
@@ -298,19 +302,20 @@ class Graph2SeqInKeras():
 
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
-                                    input_dec_dim=pipe._max_words_sentences,
+                                    input_dec_dim=vectorized_targets.shape[2],
                                     batch_size=self.BATCH_SIZE)
 
             encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
             model = builder.BuildGraphEmbeddingDecoder( encoder=encoder,
-                                                        act=activations.relu,
+                                                        act=activations.softmax,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'logcosh')
-            builder.Summary(model)
+            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'categorical_crossentropy')
+            
+            #builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             print("#######################################\n")

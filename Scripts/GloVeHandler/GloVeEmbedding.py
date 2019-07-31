@@ -80,19 +80,18 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values:list):
+    def ReplaceDatasetsNodeValuesByEmbedding(self, datasets_nodes_values:list, check_cardinality:bool = True):
         """
         This function returns  embedding numpy arrays each dataset with stringified node values.
         The word embedding is directly collected from embedding_indices dictionairy.
         Remind, unknown words will be set to a vector of given embedding length with random values.
         Additionally, if you have different graph node cardinalities in your dataset, this tool gonna extend them to an equal size depending on the given max_cardinality.
             :param datasets_nodes_values:list: all datasets nodes values from GloVePreprocessor
-
+            :param check_cardinality:bool: active check to preserve cardinality of the node encoding -> switch to false for sentences
             :returns: np.ndarray 3D
         """   
         try:
             datasets_nodes_initial_features = []
-            max_dim = -1
             for dataset in datasets_nodes_values:
                 dataset_nodes_initial_features = []
                 for word in dataset:
@@ -103,8 +102,11 @@ class GloVeEmbedding:
                     
                     dataset_nodes_initial_features.append(word_embedding)
 
-                assert (self.max_cardinality >= len(dataset_nodes_initial_features)), "ERROR: [Features Expansion FAILED], the given max cardinality was lower then the dataset max_cardinality!"
-                datasets_nodes_initial_features.append(np.array(self.Extend2DByDim(dataset_nodes_initial_features)))
+                if check_cardinality: 
+                    assert (self.max_cardinality >= len(dataset_nodes_initial_features)), "ERROR: [Features Expansion FAILED], the given max cardinality was lower then the dataset max_cardinality!"
+                    datasets_nodes_initial_features.append(np.array(self.Extend2DByDim(dataset_nodes_initial_features)))
+                else:
+                    datasets_nodes_initial_features.append(np.array(dataset_nodes_initial_features))
 
             return np.array(datasets_nodes_initial_features)
         except Exception as ex:

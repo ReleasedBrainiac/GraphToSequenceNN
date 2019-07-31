@@ -5,9 +5,10 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten, TimeDistributed
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten, TimeDistributed, Reshape, GRU
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
+from NetworkHandler.Builder.BahdanauAttention import BahdanauAttention
 
 class ModelBuilder:
     """
@@ -145,7 +146,7 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def BuildDecoderLSTM(   self,
+    def BuildLSTM(   self,
                             inputs:Layer,
                             prev_memory_state, 
                             prev_carry_state,
@@ -153,7 +154,7 @@ class ModelBuilder:
                             training:bool =False,
                             units =0,
                             batch_size =1,
-                            act:str ='sigmoid', 
+                            act:str ='relu', 
                             rec_act:str ='hard_sigmoid', 
                             use_bias:bool =True, 
                             kernel_initializer:str ='glorot_uniform', 
@@ -211,11 +212,10 @@ class ModelBuilder:
                                 stateful=stateful, 
                                 unroll=unroll)
 
-            
-
-            return decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            output, h, c = decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
+            return output, (h, c)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderLSTM]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildLSTM]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
@@ -226,10 +226,17 @@ class ModelBuilder:
             :param act:activations: the dense layers activations
         """   
         try:
-            #flatten = Flatten(name='reduce_dimension')(previous_layer)
-            pooling = GlobalMaxPooling1D(data_format='channels_last', name='max_pooling')(previous_layer)
-            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(pooling)
-            #return TimeDistributed(Dense(units=self.input_dec_dim, activation=act, name='dense_predict') , name='timed_dense_predict')(previous_layer)
+            print(self.input_dec_dim)
+
+            #pooling = GlobalMaxPooling1D(data_format='channels_last', name='max_pooling')(previous_layer)
+            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(previous_layer)
+
+            
+
+            #rs = Reshape((-1, self.input_dec_dim, (self.edge_dim*2)), name='reshape_test')(previous_layer)
+            #dense = Dense(units=1, activation=act, name='dense_test')(rs)
+
+            #return TimeDistributed(Dense(units=self.input_enc_dim, activation=act, name='dense_predict') , name='timed_dense_predict')(previous_layer)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -259,7 +266,7 @@ class ModelBuilder:
             AssertNotNone(backward_layer, 'backward_layer')
             concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
             hidden_dim = 2* hidden_dim
-            concat_act = Dense( hidden_dim, 
+            hidden = Dense( hidden_dim, 
                                 kernel_initializer=kernel_init,
                                 activation=act,
                                 kernel_regularizer=kernel_regularizer,
@@ -268,14 +275,14 @@ class ModelBuilder:
 
             concat_pool = None
             if(not self.input_is_2d):
-                concat_pool = GlobalMaxPooling1D(data_format='channels_last', name='concat_max_pooling')(concat_act)
+                concat_pool = GlobalMaxPooling1D(data_format='channels_last', name='concat_max_pooling')(hidden)
             else: 
-                concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), (-1, hidden_dim)), name='concat_max_pool')(concat_act)
+                concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), (-1, hidden_dim)), name='concat_max_pool')(hidden)
 
             graph_embedding_encoder_states = [concat_pool, concat_pool]
 
 
-            return [concat_act, graph_embedding_encoder_states]
+            return [hidden, graph_embedding_encoder_states]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmeddingConcatenation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -347,7 +354,9 @@ class ModelBuilder:
             AssertIsKerasTensor(prev_memory_state)
             AssertIsKerasTensor(prev_carry_state)
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-            lstm_decoder_outs, _, _ = self.BuildDecoderLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size)
+
+            encoder_lstm, states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
+            lstm_decoder_outs, _ = self.BuildLSTM(inputs=encoder_lstm, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True,)
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"
@@ -371,7 +380,7 @@ class ModelBuilder:
 
     def CompileModel(self, 
                      model:training.Model, 
-                     loss:str = 'sparse_categorical_crossentropy', 
+                     loss:str = 'categorical_crossentropy', 
                      optimizer:str ='rmsprop', 
                      metrics:list =['acc']):
         """

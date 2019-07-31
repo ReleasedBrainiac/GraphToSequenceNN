@@ -356,7 +356,14 @@ class ModelBuilder:
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
             encoder_lstm, states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-            lstm_decoder_outs, _ = self.BuildLSTM(inputs=encoder_lstm, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True,)
+
+            print("encoder_lstm_out: ", encoder_lstm)
+            print("encoder_lstm_h_states: ", states[0])
+
+            bahda = BahdanauAttention(states_dim)
+            attention_out, _ = bahda(encoder_lstm, states[0])
+
+            lstm_decoder_outs, _ = self.BuildLSTM(inputs=attention_out, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True,)
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"

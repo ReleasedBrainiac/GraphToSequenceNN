@@ -5,7 +5,7 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, Flatten, TimeDistributed, Reshape, GRU
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Bidirectional
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 from NetworkHandler.Builder.BahdanauAttention import BahdanauAttention
@@ -212,6 +212,9 @@ class ModelBuilder:
                                 stateful=stateful, 
                                 unroll=unroll)
 
+            #if not "decoder" in name:
+            #    decoder_lstm = Bidirectional(decoder_lstm)
+
             output, h, c = decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
             return output, (h, c)
         except Exception as ex:
@@ -226,16 +229,11 @@ class ModelBuilder:
             :param act:activations: the dense layers activations
         """   
         try:
-            print(self.input_dec_dim)
-
-            #pooling = GlobalMaxPooling1D(data_format='channels_last', name='max_pooling')(previous_layer)
             return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(previous_layer)
 
             
-
             #rs = Reshape((-1, self.input_dec_dim, (self.edge_dim*2)), name='reshape_test')(previous_layer)
             #dense = Dense(units=1, activation=act, name='dense_test')(rs)
-
             #return TimeDistributed(Dense(units=self.input_enc_dim, activation=act, name='dense_predict') , name='timed_dense_predict')(previous_layer)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
@@ -356,13 +354,19 @@ class ModelBuilder:
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
             encoder_lstm, states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-            attention_out, _ = BahdanauAttention(states_dim)(encoder_lstm, states)
 
-            print("Attention: ", attention_out.shape)
-            print("Attention: ", states[0].shape)
-            print("Attention: ", states[1].shape)
+            attention_out, attention_states = BahdanauAttention(states_dim)(encoder_lstm, states[0])
+            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=0))(attention_out)
+            
+            #print("Dim: ", states_dim)
+            #print("attention_out: ", attention_out)
+            #print("encoder_lstm: ", encoder_lstm)
+            #print("Reshape_att_1: ", Reshape(target_shape=(1,-1, states_dim))(attention_out))
+            #print("Reshape_att_2: ", )
 
-            lstm_decoder_outs, _ = self.BuildLSTM(inputs=attention_out, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True,)
+            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_reshaped, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True)
+
+
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"

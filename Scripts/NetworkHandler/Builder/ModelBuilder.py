@@ -5,10 +5,9 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Bidirectional
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Activation, multiply, add
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
-from NetworkHandler.Builder.BahdanauAttention import BahdanauAttention
 
 class ModelBuilder:
     """
@@ -151,7 +150,7 @@ class ModelBuilder:
                             prev_memory_state, 
                             prev_carry_state,
                             name:str ='sequence_decoder',
-                            training:bool =False,
+                            training =None,
                             units =0,
                             batch_size =1,
                             act:str ='relu', 
@@ -211,9 +210,6 @@ class ModelBuilder:
                                 go_backwards=go_backwards, 
                                 stateful=stateful, 
                                 unroll=unroll)
-
-            #if not "decoder" in name:
-            #    decoder_lstm = Bidirectional(decoder_lstm)
 
             output, h, c = decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
             return output, (h, c)
@@ -335,6 +331,30 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
+    def BuildBahdanauAttentionPipe(self, units:int, sample_outs, sample_state):
+        """
+        This method implements the functionality of the "BahdanauAttention". 
+        It is an abstaction from https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention example.
+            :param units:int: dense units for the given sample out and hidden
+            :param sample_outs: encoder or decoder sample outs
+            :param sample_state: encoder or decoder hidden states
+        """
+        try:
+            hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="lambda_time_axis")(sample_state)
+            outs = Dense(units, name="dense_sample_outs")(sample_outs)
+            hidd = Dense(units, name="dense_hidden_outs")(sample_state)
+
+            score = Activation("tanh", name="tanh_bahdanau")(add([outs, hidd]))
+            attention_weights = Activation("softmax", name="softmax_bahdanau")(score)
+
+            context_vector = Lambda(lambda z: K.sum(z, axis=1), name="lambda_context_vector")(multiply([attention_weights, sample_outs]))
+
+            return context_vector, attention_weights
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildBahdanauAttentionPipe]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
     def BuildGraphEmbeddingDecoder( self,
                                     encoder: Layer,
                                     prev_memory_state: Layer,  
@@ -354,17 +374,10 @@ class ModelBuilder:
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
             encoder_lstm, states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-
-            attention_out, attention_states = BahdanauAttention(states_dim)(encoder_lstm, states[0])
+            attention_out, attention_states = self.BuildBahdanauAttentionPipe(states_dim, encoder_lstm, states[0])
             attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=0))(attention_out)
-            
-            #print("Dim: ", states_dim)
-            #print("attention_out: ", attention_out)
-            #print("encoder_lstm: ", encoder_lstm)
-            #print("Reshape_att_1: ", Reshape(target_shape=(1,-1, states_dim))(attention_out))
-            #print("Reshape_att_2: ", )
 
-            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_reshaped, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size, training = True)
+            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_reshaped, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size)
 
 
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)

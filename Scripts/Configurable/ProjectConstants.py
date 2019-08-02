@@ -3,29 +3,31 @@ class Constants():
     This class provides necessary constants for the whole Graph2Sequence Tool.
     """
     # Raw Datafile Constants
-    ELEMENT_SPLIT_REGEX = '\#\s+'
+    ELEMENT_SPLIT_REGEX:str = '\#\s+'
 
     # Look up Datafile Constants
-    MAPPING_SPLIT_REGEX = '\#'
+    MAPPING_SPLIT_REGEX:str = '\#'
 
     # Dataset Provider Constants
-    TYP_ERROR = 'Entered wrong type! Input is no String!'
-    SIGN_ERROR = 'Unauthorized sign found!'
-    PARENTHESIS_ERROR = 'Unauthorized parenthtesis found!'
-    SENTENCE_DELIM = '::snt'
-    SEMANTIC_DELIM = '::smt'
-    FILE_DELIM = '::file'
+    TYP_ERROR:str = 'Entered wrong type! Input is no String!'
+    SIGN_ERROR:str = 'Unauthorized sign found!'
+    PARENTHESIS_ERROR:str = 'Unauthorized parenthtesis found!'
+    SENTENCE_DELIM:str = '::snt'
+    SEMANTIC_DELIM:str = '::smt'
+    FILE_DELIM:str = '::file'
+    START_SIGN:str = "<GO>"
+    END_SIGN:str = "<EOS>"
 
     # AMR Cleaner Constants
-    INDENTATION = 6
-    COLON = ':'
-    QUOTATION_MARK = '"'
-    CONNECTOR = '-'
-    POLARITY = ' - '
-    WHITESPACE = ' '
-    NEG_POLARITY = 'not'
-    POS_POLITE = 'positive'
-    NEG_POL_LABEL = 'N0T'
+    INDENTATION:int = 6
+    COLON:str = ':'
+    QUOTATION_MARK:str = '"'
+    CONNECTOR:str = '-'
+    POLARITY:str = ' - '
+    WHITESPACE:str = ' '
+    NEG_POLARITY:str = 'not'
+    POS_POLITE:str = 'positive'
+    NEG_POL_LABEL:str = 'N0T'
 
     # Regex
     EXTENSION_REGEX = r'(\w*(\-\w+)+)'

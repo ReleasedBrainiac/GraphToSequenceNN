@@ -12,8 +12,9 @@ from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
 
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
+from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber
+from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -23,6 +24,7 @@ from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 
+#TODO bset tutorial => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
 #TODO many-to-many => https://github.com/keras-team/keras/issues/1029
 #TODO another resource => https://data-science-blog.com/blog/2017/12/20/maschinelles-lernen-klassifikation-vs-regression/
 #TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page---------------------------
@@ -249,24 +251,26 @@ class Graph2SeqInKeras():
                 
             max_sequence_len:int = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
                 
+            print("~~~~~~ Example Target Data Pipe ~~~~~~~")
+            print("Target 0", datapairs[0][0])
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
             print("#######################################\n")
-            print("######## Glove Embedding Layer ########")
+            print("########## Dataset Tokenizer ##########")
+
             glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=max_sequence_len,
                                                                 show_feedback=True)
-            _, _, edge_fw_look_up, edge_bw_look_up, _, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
-            
-            
-            #TODO make vectorized_targets => to_categorical
-            #TODO then softmax against it
-            #TODO make lookup dict to_categorical => vectorized_targets
-            #TODO make vectorized_targets => Number2Words
-            #TODO maybe TADA!
+            _, _, edge_fw_look_up, edge_bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
 
-            #TODO maybe add BahdanauAttention
+            print("~~~~~~ Example Target Tokenizer ~~~~~~~")
+            #glove_dataset_processor.Convert("Input 0", glove_dataset_processor.tokenizer, vectorized_inputs[0])
+            glove_dataset_processor.Convert("Target 0", glove_dataset_processor.tokenizer, vectorized_targets[0])
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
+            print("#######################################\n")
+            print("######## Glove Embedding Layer ########")
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 
                                                 tokenizer=glove_dataset_processor,
@@ -275,9 +279,27 @@ class Graph2SeqInKeras():
                                                 output_dim=out_dim_emb, 
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
+
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
+            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+
+            print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
+            print(vectorized_inputs[:5][:][0])
+
+            print(datasets_nodes_embedding.shape)
+
+            print(int(datasets_nodes_embedding.shape[0]))
+            decoder_inputs_uncoded = CreateNListWithRepeatingValue(int(datasets_nodes_embedding.shape[0]), Constants().START_SIGN)
+
+            vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
             vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
+            glove_embedding.ClearTokenizer()
+            glove_embedding.ClearEmbeddingIndices()
+
+
+            print(decoder_inputs_uncoded)
+            sys.exit(0)
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()

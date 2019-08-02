@@ -319,6 +319,21 @@ def setOrDefault(input, default, wantSet:bool):
 
 
 # Basic values, list and matrix operations.
+def CreateNListWithRepeatingValue(repeatable_value, times:int):
+    """
+    This function allow to generate a list n times long containing at each entry the given repat value!
+        :param repeatable_value: value to repeat
+        :param times:int: lenght of the list
+    """
+    try:
+        AssertNotNone(repeatable_value, msg="The given repeat value is None! No list will be created!")
+        AssertNotNegative(times)
+        return [repeatable_value] * times
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.CreateNListWithRepeatingValue]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 def ReorderListByIndices(reorder_list:list, ordering_indices:list):
     """
     This function reorder a list by a given list of ordering indices.
@@ -408,6 +423,15 @@ def AssertNotNone(value, msg:str = ''):
     """
     warning = msg if (msg != '') else "Given value was None!"
     assert (value is not None), warning
+
+def AssertNotNegative(number, msg:str = ''):
+    """
+    This assertion alerts on negatives numbers.
+        :param value: given object
+        :param msg:str: [optional] given msg
+    """
+    warning = msg if (msg != '') else "Given value was Negative!"
+    assert (isNumber(number) and number > -1), warning
 
 def AssertEquality(first_object, second_object, msg:str = ''):
     """

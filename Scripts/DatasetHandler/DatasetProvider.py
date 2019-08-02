@@ -83,7 +83,10 @@ class DatasetPipeline:
         try:
             in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
             in_sentence = re.sub('</[^>]+>','', in_sentence)
-            return  re.sub('<[^/>]+/>','', '#'+in_sentence)+'\n'
+            return re.sub('<[^/>]+/>','', '#'+in_sentence)+'\n'
+            # Ref => https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
+            #in_sentence = re.sub(r"([?.!,¿])", r" \1 ", in_sentence)
+            #return  re.sub(r'[" "]+', " ", in_sentence)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.RemoveEnclosingAngleBracket]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -141,14 +144,15 @@ class DatasetPipeline:
         """
 
         try:          
-            semantic:str = self.EncloseWrongFormattedAMR(data_pair[1])
             sentence:str = self.RemoveEnclosingAngleBracket(self._constants.SENTENCE_DELIM+' '+data_pair[0]).replace('\n','')
+            semantic:str = self.EncloseWrongFormattedAMR(data_pair[1])
             semantic = self.ForgeAmrSemanticString(semantic)
 
             if(not self._as_amr): 
                 semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
+                sentence = self._constants.START_SIGN + ' ' + sentence + ' ' + self._constants.END_SIGN
                 return [sentence, semantic]
             else:
                 return None

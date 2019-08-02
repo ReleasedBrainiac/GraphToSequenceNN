@@ -44,7 +44,7 @@ class GloVeDatasetPreprocessor:
             self.show_response = show_feedback               
 
             self.MAX_SEQUENCE_LENGTH = max_sequence_length  if (max_sequence_length > 0) else 1000
-            self.tokenizer = None if (vocab_size < 1) else Tokenizer(num_words=vocab_size, split=' ', char_level=False)
+            self.tokenizer = None if (vocab_size < 1) else Tokenizer(num_words=vocab_size, split=' ', char_level=False, filters='')
 
             print('Input/padding:\t\t => ', self.MAX_SEQUENCE_LENGTH)
             print('Vocab size:\t\t => ', vocab_size)
@@ -92,11 +92,11 @@ class GloVeDatasetPreprocessor:
                     self.edge_matrices_fw.append(dataset[1][0][0])
                     self.edge_matrices_bw.append(dataset[1][0][1])
 
-                    ph_dec_in = self.ReplaceSentenceFlagAndDialogElements(dataset[0])
-                    ph_tar_in = ph_dec_in.split(' ', 1)[1]
-                    
-                    self.sentences_dec_in.append(ph_dec_in)
-                    self.sentences_tar_in.append(ph_tar_in)
+                    input_t_0 = self.ReplaceSentenceFlagAndDialogElements(dataset[0])
+                    input_t_minus_1 = input_t_0.split(' ', 1)[1]
+
+                    self.sentences_dec_in.append(input_t_0)
+                    self.sentences_tar_in.append(input_t_minus_1)
             assert (len(self.sentences_dec_in) == len(self.sentences_tar_in)), "Dataset Error! Inputs counter doesn't match targets counter"
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
@@ -176,4 +176,20 @@ class GloVeDatasetPreprocessor:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.FreeUnusedResources]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-        
+
+    def Convert(self, prefix:str, lang:Tokenizer, tensor):
+        """
+        Used from example => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention to test my stuff.
+            :param prefix:str: string prefix
+            :param lang:Tokenizer: word embedding
+            :param tensor: testable tensor
+        """
+        try:
+            print("[", prefix, "]")
+            for t in tensor:
+                if t!=0: print ("%d ----> %s" % (t, lang.index_word[t]))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Convert]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+                

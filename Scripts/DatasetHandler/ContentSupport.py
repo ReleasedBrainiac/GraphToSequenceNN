@@ -354,6 +354,35 @@ def ReorderListByIndices(reorder_list:list, ordering_indices:list):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def RepeatNTimsNdArray(times:int, array:np.ndarray, axis:int = 0):
+    """
+    This function repeats a given numpy.ndarray desired times and return a 
+        :param times:int: repeat value
+        :param array:np.ndarray: numpy.ndarray
+        :param axis:int: axis to repeat
+    """
+    try:
+        return np.repeat(array[None,:],times, axis=axis)
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.RepeatNTimsNdArray]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
+def ConcatenateNdArray(first_array:np.ndarray, append_array:np.ndarray, axis:int = 0):
+    """
+    This function repeats a given numpy.ndarray desired times and return a 
+        :param times:int: repeat value
+        :param first_array:np.ndarray: a numpy.ndarray
+        :param append_array:np.ndarray: another numpy.ndarray
+        :param axis:int: axis to repeat
+    """
+    try:
+        return np.concatenate([first_array, append_array], axis=axis)
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.ConcatenateNdArray]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 def MatrixExpansionWithZeros(np_2D_array:np.ndarray, up_to_dim:int):
     """
     This function allow to expand a 2D matrix in both directions and fill the empty space with zeros.

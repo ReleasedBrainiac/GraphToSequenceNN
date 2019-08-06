@@ -30,7 +30,7 @@ class ModelBuilder:
         """
         This constructor collects the necessary dimensions for the GraphEmbedding Network 
         and build the necessary input tensors for the network. 
-        They can be accessed by calling 'get_inputs()'.
+        They can be accessed by calling 'get_encoder_inputs()' and 'get_decoder_inputs'.
             :param input_enc_dim:int: dimension of the encode inputs
             :param edge_dim:int: dimension of edge look ups
             :param input_dec_dim:int: dimension of the decoder inputs
@@ -51,7 +51,10 @@ class ModelBuilder:
 
         self.input_enc_shape = (input_enc_dim,) if (input_is_2d) else (edge_dim,input_enc_dim)
         self.edge_shape = (edge_dim,) if (input_is_2d) else (edge_dim,edge_dim)
+        self.input_dec_shape = (1,)
+
         self.encoder_inputs = self.BuildEncoderInputs()
+        self.decoder_inputs = self.BuildDecoderInputs()
 
     def BuildEncoderInputs(self):
         """
@@ -70,6 +73,22 @@ class ModelBuilder:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildEncoderInputs]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
+
+    def BuildDecoderInputs(self):
+        """
+        This function builds the decoder input tensors for the network.
+        ATTENTION: 
+            Don't call it externally to use it as indirect input for model build!
+            If you do so you going to get the 'Disconnected Graph' Error!
+            This happens because you are generating NEW Input Tensors instead of getting the exsisting.
+            Better use 'get_decoder_inputs()'.
+        """   
+        try:
+            return Input(shape = self.input_dec_shape, name="words")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderInputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
     def BuildNeighbourhoodLayer(self, 
                                 features, 
@@ -340,15 +359,12 @@ class ModelBuilder:
             :param sample_state: encoder or decoder hidden states
         """
         try:
-            hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="lambda_time_axis")(sample_state)
+            hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="expand_time_axis")(sample_state)
             outs = Dense(units, name="dense_sample_outs")(sample_outs)
-            hidd = Dense(units, name="dense_hidden_outs")(sample_state)
-
+            hidd = Dense(units, name="dense_hidden_outs")(hidden_with_time_axis)
             score = Activation("tanh", name="tanh_bahdanau")(add([outs, hidd]))
             attention_weights = Activation("softmax", name="softmax_bahdanau")(score)
-
             context_vector = Lambda(lambda z: K.sum(z, axis=1), name="lambda_context_vector")(multiply([attention_weights, sample_outs]))
-
             return context_vector, attention_weights
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildBahdanauAttentionPipe]. Arguments:\n{1!r}"
@@ -356,12 +372,14 @@ class ModelBuilder:
             print(message) 
 
     def BuildGraphEmbeddingDecoder( self,
+                                    embedding: Embedding,
                                     encoder: Layer,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
                                     act:activations = activations.softmax):
         """
         This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
+            :param embedding_layer:Embedding: given embedding layer
             :param encoder:Layer: given encoder out layer
             :param prev_memory_state:Layer: previous layer mem state
             :param prev_carry_state:Layer: previous layer carry state
@@ -373,12 +391,24 @@ class ModelBuilder:
             AssertIsKerasTensor(prev_carry_state)
             states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
-            encoder_lstm, states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-            attention_out, attention_states = self.BuildBahdanauAttentionPipe(states_dim, encoder_lstm, states[0])
-            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=0))(attention_out)
+            print("prev_memory_state: ", prev_memory_state)
+            print("prev_carry_state: ", prev_carry_state)
 
-            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_reshaped, prev_memory_state=states[0], prev_carry_state=states[1], units=states_dim, batch_size=self.batch_size)
+            encoder_out, encoder_states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
 
+            print("encoder_out: ", encoder_out)
+
+            attention_out, attention_states = self.BuildBahdanauAttentionPipe(states_dim, encoder_out, encoder_states[0])
+
+            print("attention_out: ", attention_out)
+
+            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
+            attention_embedding_concatenation = concatenate([attention_reshaped,embedding], name="attention_embedding_concatenation", axis=-1)
+
+            print("attention_embedding_concatenation: ", attention_embedding_concatenation)
+
+
+            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_embedding_concatenation, prev_memory_state=encoder_states[0], prev_carry_state=encoder_states[1], units=states_dim, batch_size=self.batch_size)
 
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:
@@ -455,13 +485,36 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
+    def get_encoder_inputs(self):
+        """
+        This getter returns the encoder inputs.
+        """   
+        try:
+            return self.encoder_inputs
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_encoder_inputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    def get_decoder_inputs(self):
+        """
+        This getter returns the decoder inputs.
+        """   
+        try:
+            return self.decoder_inputs
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_decoder_inputs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
     def get_inputs(self):
         """
-        This getter returns the encoder and decoder inputs in exactly this order [encoder].
+        This getter returns the encoder and decoder inputs in exactly this order [encoder, decoder].
         """   
         try:
             AssertNotNone(self.encoder_inputs, 'encoder inputs')
-            return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2]]
+            AssertNotNone(self.decoder_inputs, 'decoder inputs')
+            return [self.encoder_inputs[0], self.encoder_inputs[1], self.encoder_inputs[2], self.decoder_inputs]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.get_inputs]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

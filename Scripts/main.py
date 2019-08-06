@@ -14,7 +14,7 @@ from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue
+from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue, ConcatenateNdArray, RepeatNTimsNdArray
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -303,6 +303,7 @@ class Graph2SeqInKeras():
             print("#### Prepare Train and Predictset #####")
 
             #TODO: Missing Teacherforcing -> each graph repeat for each word in sentence!
+            #TODO: Call -> GenerateDatasetTeacherForcing
 
             train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
                         edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
@@ -494,6 +495,38 @@ class Graph2SeqInKeras():
             template = "An exception of type {0} occurred in [Main.SplitData]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def GenerateDatasetTeacherForcing(self, split_border:int, nodes_embedding:np.ndarray, fw_look_up, bw_look_up, vectorized_sentences):
+
+        try:
+
+            #ConcatenateNdArray
+            #RepeatNTimsNdArray
+
+
+
+
+
+            '''
+            train_x = [ datasets_nodes_embedding[:split_border], 
+                        edge_fw_look_up[:split_border], 
+                        edge_bw_look_up[:split_border],
+                        vectorized_inputs[:split_border]]
+
+            test_x = [  datasets_nodes_embedding[split_border:], 
+                        edge_fw_look_up[split_border:], 
+                        edge_bw_look_up[split_border:],
+                        vectorized_inputs[split_border:]]
+
+            train_y = vectorized_targets[:split_border]
+            test_y = vectorized_targets[split_border:]
+            '''
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.GenerateDatasetTeacherForcing]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+
 
 
 if __name__ == "__main__":

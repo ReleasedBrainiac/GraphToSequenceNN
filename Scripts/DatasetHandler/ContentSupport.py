@@ -194,6 +194,13 @@ def isInStr(search , content):
         print('WRONG INPUT FOR [isInStr]')
         return False
 
+def isNotNegativeNum(input):
+    """
+    Check a number being positive
+        :param input: any type that suffice isNumber
+    """
+    return (isNumber(input) and abs(input) is input)
+
 def hasContent(input):
     """
     This function check sequences/collections containing at least min 1 value.
@@ -431,7 +438,7 @@ def AssertNotNegative(number, msg:str = ''):
         :param msg:str: [optional] given msg
     """
     warning = msg if (msg != '') else "Given value was Negative!"
-    assert (isNumber(number) and number > -1), warning
+    assert isNotNegativeNum(number), warning
 
 def AssertEquality(first_object, second_object, msg:str = ''):
     """

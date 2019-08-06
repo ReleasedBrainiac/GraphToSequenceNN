@@ -3,7 +3,7 @@ from numpy import asarray, zeros
 from keras.layers import Embedding
 from keras.initializers import Constant
 from keras.preprocessing.text import Tokenizer
-
+from DatasetHandler.ContentSupport import isNotNegativeNum
 
 class GloVeEmbedding:
     """
@@ -171,18 +171,21 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildVocabEmbeddingLayer(self, embedding_matrix:np.ndarray):
+    def BuildVocabEmbeddingLayer(self, embedding_matrix:np.ndarray, input_len:int = -1):
         """
         This function load pre-trained word embeddings into an Embedding layer.
         Note that the embedding is set to not trainable to keep the embeddings fixed.
             :param embedding_matrix:np.ndarray: the vocab embedding matrix
+            :param input_len:int: allowed input length
         """   
         try:
+            allowed_input_len = input_len if isNotNegativeNum(input_len) else self.MAX_SEQUENCE_LENGTH
+
             return Embedding(input_dim=self.NUMBER_WORDS,
                              output_dim=self.EMBEDDING_DIM,
                              batch_input_shape=self.batch_input_shape,
                              embeddings_initializer=Constant(embedding_matrix),
-                             input_length=self.MAX_SEQUENCE_LENGTH,
+                             input_length=allowed_input_len,
                              trainable=False,
                              name=('glove_'+str(self.EMBEDDING_DIM)+'d_embedding'))
         except Exception as ex:
@@ -212,16 +215,18 @@ class GloVeEmbedding:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildGloveVocabEmbeddingLayer(self):
+    def BuildGloveVocabEmbeddingLayer(self, is_per_word:bool = False):
         """
         This function build the GloVe embedding layer.
+            :param is_per_word:bool: word wise input or sentence wise
         """   
         try:
             print('~~~~~~~~ Build Embedding Layer ~~~~~~~~')
             embedding_matrix = self.BuildVocabEmbeddingMatrix()
             if self.show_response: print('Embedding matrix:\n\t=> ',type(embedding_matrix))
 
-            embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix)
+            embedding_layer = self.BuildVocabEmbeddingLayer(embedding_matrix, 1) if is_per_word else self.BuildVocabEmbeddingLayer(embedding_matrix)
+
             if self.show_response: print('Embedding layer:\n\t=> ',type(embedding_layer))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return embedding_layer

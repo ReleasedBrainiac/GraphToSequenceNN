@@ -284,22 +284,18 @@ class Graph2SeqInKeras():
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
 
             print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
-            print(vectorized_inputs[:5][:][0])
+           
 
-            print(datasets_nodes_embedding.shape)
+            #vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
+            #vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
-            print(int(datasets_nodes_embedding.shape[0]))
-            decoder_inputs_uncoded = CreateNListWithRepeatingValue(int(datasets_nodes_embedding.shape[0]), Constants().START_SIGN)
+            vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
+            vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
 
-            vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
-            vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
+            sys.exit(0)
 
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
-
-
-            print(decoder_inputs_uncoded)
-            sys.exit(0)
 
             print('Embedding Resources:\n\t => Free (in further steps unused) resources!', )
             glove_embedding.ClearTokenizer()
@@ -310,11 +306,13 @@ class Graph2SeqInKeras():
 
             train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
                         edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
-                        edge_bw_look_up[:self._dataset_size - self._predict_split_value]]
+                        edge_bw_look_up[:self._dataset_size - self._predict_split_value],
+                        vectorized_inputs[:self._dataset_size - self._predict_split_value]]
 
             test_x = [  datasets_nodes_embedding[self._dataset_size - self._predict_split_value:], 
                         edge_fw_look_up[self._dataset_size - self._predict_split_value:], 
-                        edge_bw_look_up[self._dataset_size - self._predict_split_value:]]
+                        edge_bw_look_up[self._dataset_size - self._predict_split_value:],
+                        vectorized_inputs[self._dataset_size - self._predict_split_value:]]
 
             train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
             test_y = vectorized_targets[self._dataset_size - self._predict_split_value:]
@@ -329,7 +327,8 @@ class Graph2SeqInKeras():
 
             encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
-            model = builder.BuildGraphEmbeddingDecoder( encoder=encoder,
+            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer, 
+                                                        encoder=encoder,
                                                         act=activations.softmax,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])

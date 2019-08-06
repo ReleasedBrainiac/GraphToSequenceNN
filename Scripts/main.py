@@ -281,7 +281,7 @@ class Graph2SeqInKeras():
                                                 show_feedback=True)
 
             datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer()
+            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(True)
 
             print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
            
@@ -290,9 +290,7 @@ class Graph2SeqInKeras():
             #vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
             vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
-            vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
-
-            sys.exit(0)
+            #vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
 
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
@@ -325,19 +323,30 @@ class Graph2SeqInKeras():
                                     input_dec_dim=vectorized_targets.shape[2],
                                     batch_size=self.BATCH_SIZE)
 
+            print("Builder!")
+
             encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
-            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer, 
+            print("Encoder!")
+
+            ins = builder.get_decoder_inputs()
+            print(ins.shape)
+
+            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(ins), 
                                                         encoder=encoder,
                                                         act=activations.softmax,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
+
+            print("Decoder!")
 
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model, metrics=self._accurracy, loss = 'categorical_crossentropy')
             
             #builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
+
+            sys.exit(0)
 
             print("#######################################\n")
             print("########### Starts Training ###########")

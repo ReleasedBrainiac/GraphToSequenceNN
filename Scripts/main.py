@@ -96,7 +96,7 @@ class Graph2SeqInKeras():
     VALIDATION_SPLIT:float = 0.2
     MIN_NODE_CARDINALITY:int = 15
     MAX_NODE_CARDINALITY:int = 35
-    HOP_STEPS:int = 15
+    HOP_STEPS:int = 3
     SHUFFLE_DATASET:bool = True
 
     _accurracy:list = ['categorical_accuracy']
@@ -287,7 +287,7 @@ class Graph2SeqInKeras():
            
 
             #vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
-            #vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
+            vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
             vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
             #vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
@@ -301,6 +301,8 @@ class Graph2SeqInKeras():
 
             print("#######################################\n")
             print("#### Prepare Train and Predictset #####")
+
+            #TODO: Missing Teacherforcing -> each graph repeat for each word in sentence!
 
             train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
                         edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
@@ -329,10 +331,7 @@ class Graph2SeqInKeras():
 
             print("Encoder!")
 
-            ins = builder.get_decoder_inputs()
-            print(ins.shape)
-
-            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(ins), 
+            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(builder.get_decoder_inputs()), 
                                                         encoder=encoder,
                                                         act=activations.softmax,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
@@ -345,8 +344,6 @@ class Graph2SeqInKeras():
             
             #builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
-
-            sys.exit(0)
 
             print("#######################################\n")
             print("########### Starts Training ###########")

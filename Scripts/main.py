@@ -287,7 +287,7 @@ class Graph2SeqInKeras():
            
 
             #vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
-            vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
+            #vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
             vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
             #vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
@@ -305,6 +305,13 @@ class Graph2SeqInKeras():
             #TODO: Missing Teacherforcing -> each graph repeat for each word in sentence!
             #TODO: Call -> GenerateDatasetTeacherForcing
 
+            train_x, train_y, test_x, test_y = self.GenerateDatasetTeacherForcing(  split_border = (self._dataset_size - self._predict_split_value), 
+                                                                                    nodes_embedding = datasets_nodes_embedding, 
+                                                                                    fw_look_up = edge_fw_look_up, 
+                                                                                    bw_look_up = edge_bw_look_up, 
+                                                                                    vecs_input_sentences = vectorized_inputs,
+                                                                                    vecs_target_sentences = vectorized_targets)
+            '''
             train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
                         edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
                         edge_bw_look_up[:self._dataset_size - self._predict_split_value],
@@ -317,7 +324,7 @@ class Graph2SeqInKeras():
 
             train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
             test_y = vectorized_targets[self._dataset_size - self._predict_split_value:]
-
+            '''
             print("#######################################\n")
             print("########## Construct Network ##########")
 
@@ -342,8 +349,6 @@ class Graph2SeqInKeras():
 
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model, metrics=self._accurracy, loss = 'categorical_crossentropy')
-            
-            #builder.Summary(model)
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             print("#######################################\n")
@@ -361,8 +366,7 @@ class Graph2SeqInKeras():
                                 validation_split=self.VALIDATION_SPLIT,
                                 callbacks=[base_lr, reduce_lr])
 
-            self._history_keys = list(history.history.keys())
-            print("History Keys: ", self._history_keys)
+            print("History Keys: ", list(history.history.keys()))
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
@@ -496,31 +500,64 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GenerateDatasetTeacherForcing(self, split_border:int, nodes_embedding:np.ndarray, fw_look_up, bw_look_up, vectorized_sentences):
+    def GenerateDatasetTeacherForcing(self, split_border:int, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_sentences:np.ndarray, vecs_target_sentences:np.ndarray):
 
         try:
+            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_sentences) == len(vecs_target_sentences):                
+                path_partial:str = (self.FOLDERNAME + self.fname + self.fname + "_DT_" + self.TIME_NOW + "_")
 
-            #ConcatenateNdArray
-            #RepeatNTimsNdArray
+                train_x = [] 
+                train_y = []
+                test_x = []
+                test_y = []
 
+                nodes_emb = None
+                forward_look_up = None
+                backward_look_up = None
+                vecs_input_words = None
+                vecs_target_words = None
 
+                print("Start Dataset Generator\n[", end = '')
 
+                for s_idx in range(len(vecs_input_sentences)):
 
+                    tmp_nodes_emb = nodes_embedding[s_idx]
+                    tmp_forward_look_up = fw_look_up[s_idx]
+                    tmp_backward_look_up = bw_look_up[s_idx]
+                    tmp_vecs_input_words = np.trim_zeros(vecs_input_sentences[s_idx])
+                    tmp_vecs_target_words = np.trim_zeros(vecs_target_sentences[s_idx])
+                    qualified_entries = np.count_nonzero(tmp_vecs_input_words) - 1      #The -1 mean i will not include the the first copy since we keep the initial as well!
+                    
+                    if (nodes_emb is None) and (forward_look_up is None) and (backward_look_up is None) and (vecs_input_words is None) and (vecs_target_words is None):
+                        nodes_emb = RepeatNTimsNdArray(times=qualified_entries, array=tmp_nodes_emb)
+                        forward_look_up = RepeatNTimsNdArray(times=qualified_entries, array=tmp_forward_look_up)
+                        backward_look_up = RepeatNTimsNdArray(times=qualified_entries, array=tmp_backward_look_up)
+                        vecs_input_words = tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1]
+                        vecs_target_words = tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],))
 
-            '''
-            train_x = [ datasets_nodes_embedding[:split_border], 
-                        edge_fw_look_up[:split_border], 
-                        edge_bw_look_up[:split_border],
-                        vectorized_inputs[:split_border]]
+                    else:
+                        nodes_emb = ConcatenateNdArray(nodes_emb, RepeatNTimsNdArray(times=qualified_entries, array=tmp_nodes_emb))
+                        forward_look_up = ConcatenateNdArray(forward_look_up, RepeatNTimsNdArray(times=qualified_entries, array=tmp_forward_look_up))
+                        backward_look_up = ConcatenateNdArray(backward_look_up, RepeatNTimsNdArray(times=qualified_entries, array=tmp_backward_look_up))
+                        vecs_input_words = ConcatenateNdArray(vecs_input_words, tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1])
+                        vecs_target_words = ConcatenateNdArray(vecs_target_words, tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)))
+                
+                    if ((s_idx+1)%250 is 0 ): 
+                        print(" >", end = '')
+                    if ((s_idx+1) == len(vecs_input_sentences)): 
+                        print(" ] Done!")
+                
+                np.savetxt((path_partial + "nodes_emb.out"), nodes_emb)
+                np.savetxt((path_partial + "forward_look_up.out"), forward_look_up)
+                np.savetxt((path_partial + "backward_look_up.out"), backward_look_up)
+                np.savetxt((path_partial + "vecs_input_words.out"), vecs_input_words)
+                np.savetxt((path_partial + "vecs_target_words.out"), vecs_target_words)
 
-            test_x = [  datasets_nodes_embedding[split_border:], 
-                        edge_fw_look_up[split_border:], 
-                        edge_bw_look_up[split_border:],
-                        vectorized_inputs[split_border:]]
-
-            train_y = vectorized_targets[:split_border]
-            test_y = vectorized_targets[split_border:]
-            '''
+                sys.exit(0)
+                
+            else:
+                assert not(len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_sentences) == len(vecs_target_sentences)), "The given inputs of GenerateDatasetTeacherForcing aren't machting at first dimension!"
+                sys.exit(0)
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.GenerateDatasetTeacherForcing]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

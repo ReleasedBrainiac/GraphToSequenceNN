@@ -78,8 +78,13 @@ class NumpyDatasetHandler():
 
             shape_match = re.match(self._shape_regex, shape_line)
             shape_str = shape_match.group(2)
-            shape_tupe = tuple(map(int, shape_str[1:-1].split(', ')))
-            return np.loadtxt(path).reshape(shape_tupe)
+
+            if not ',)' in shape_str:
+                shape_tupe = tuple(map(int, shape_str[1:-1].split(', ')))
+                return np.loadtxt(path).reshape(shape_tupe)
+            else:
+                shape_tupe = tuple(map(int, shape_str[1:-2].split(', ')))
+                return np.loadtxt(path).reshape(shape_tupe)
         except Exception as ex:
             template = "An exception of type {0} occurred in [NumpyDatasetHandler.Load3DNdArray]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

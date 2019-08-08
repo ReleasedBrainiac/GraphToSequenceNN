@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from Configurable.ProjectConstants import Constants
 from DatasetHandler.ContentSupport import isNotEmptyString, getIndexedODictLookUp
+from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 import numpy as np
 import sys
 
@@ -168,4 +169,39 @@ class MatrixBuilder:
             print(message)
             sys.exit(0)
 
-        
+class MatrixHandler():
+    """
+    This class provide matrix equalization algorithms to expand and zero fill matrices.
+    """
+    def SingleLookUpEqualization(self, datapair:list, max_card:int):
+        """
+        This function wraps the MatrixExpansionWithZeros function for the foward and backward edge look up for a datapair.
+            :param datapair:list: single elemt of the DatasetPipeline result 
+            :param max_card:int: desired max cardinality 
+        """
+        try:
+            assert (datapair[1][0] is not None), ('Wrong input for dataset edge look up size equalization!')
+            elem1 = MatrixExpansionWithZeros(datapair[1][0][0], max_card)
+            elem2 = MatrixExpansionWithZeros(datapair[1][0][1], max_card)
+            assert (elem1.shape == elem2.shape and elem1.shape == (max_card,max_card)), ("Results have wrong shape!")
+            return [elem1,elem2]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [MatrixHandler.SingleLookUpEqualization]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            sys.exit(1)
+
+    def DatasetLookUpEqualization(self, datapairs:list ,max_cardinality:int):
+        """
+        This function equalizes all datasets neighbourhood look up matrices to a given max cardinality.
+            :param datapairs:list: the dataset
+            :param max_cardinality:int: the given cardinality
+        """   
+        try:
+            assert (max_cardinality > 0), ("Max graph nodes cardinality was 0!")
+            for datapair in datapairs:
+                datapair[1][0] = self.SingleLookUpEqualization(datapair, max_cardinality)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [MatrixHandler.DatasetLookUpEqualization]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)    

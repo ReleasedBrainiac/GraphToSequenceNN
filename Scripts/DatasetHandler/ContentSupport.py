@@ -473,6 +473,22 @@ def StatusReport(run_index:int, max_index:int, steps:int):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def DatasetSplitIndex(dataset_size:int, split_percentage:float):
+        """
+        This method return a number for the size of desired test samples from dataset by a given percentage.
+            :param dataset_size:int: size of the whole datset
+            :param split_percentage:float: desired test size percentage from dataset
+        """   
+        try:
+            if isNumber(dataset_size) and isNumber(split_percentage):
+                return round((dataset_size * split_percentage)/100.0)
+            else:
+                return -1
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ContentSupport.DatasetSplitIndex]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
 
 # Asserts for cases where an exception is necessary.
 def AssertNotNone(value, msg:str = ''):

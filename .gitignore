@@ -9,3 +9,5 @@
 **/.ipynb_checkpoints/
 **/GloVeWordVectors/**/Datasets/
 **/GloVeWordVectors/**
+*Datasets
+*graph2seq_*

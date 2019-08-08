@@ -368,18 +368,16 @@ def RepeatNTimsNdArray(times:int, array:np.ndarray, axis:int = 0):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
-def ConcatenateNdArray(first_array:np.ndarray, append_array:np.ndarray, axis:int = 0):
+def ConcatenateNdArrays(arrays:list, axis:int = 0):
     """
     This function repeats a given numpy.ndarray desired times and return a 
-        :param times:int: repeat value
-        :param first_array:np.ndarray: a numpy.ndarray
-        :param append_array:np.ndarray: another numpy.ndarray
+        :param arrays:list: list of np.ndarrays
         :param axis:int: axis to repeat
     """
     try:
-        return np.concatenate([first_array, append_array], axis=axis)
+        return np.concatenate(arrays, axis=axis)
     except Exception as ex:
-        template = "An exception of type {0} occurred in [ContentSupport.ConcatenateNdArray]. Arguments:\n{1!r}"
+        template = "An exception of type {0} occurred in [ContentSupport.ConcatenateNdArrays]. Arguments:\n{1!r}"
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
@@ -449,6 +447,32 @@ def RoundUpRestricted(in_value:int, given_dim:int =100, isBidrectional:bool =Tru
         template = "An exception of type {0} occurred in [ContentSupport.RoundUpRestricted]. Arguments:\n{1!r}"
         message = template.format(type(ex).__name__, ex.args)
         print(message)
+
+def StatusReport(run_index:int, max_index:int, steps:int):
+    """
+    This function allow to easy provide a verbose report for iteration based steps.
+        :param run_index:int: current run index
+        :param max_index:int: max run index
+        :param steps:int: report steps
+    """
+    try:
+        AssertNotNegative(run_index)
+        AssertNotNegative(max_index)
+        AssertNotNegative(steps)
+        assert (run_index <= max_index), "max index was lower then run index!"
+        assert (steps <= max_index), "max index was lower then steps!"
+
+        if (run_index == 0): 
+            print("Start Report!")
+        if ((run_index+1)% steps == 0 ): 
+            print((run_index+1)," / ", max_index)
+        if ((run_index+1) == max_index): 
+            print("End Report!")
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.StatusReport]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 
 # Asserts for cases where an exception is necessary.
 def AssertNotNone(value, msg:str = ''):

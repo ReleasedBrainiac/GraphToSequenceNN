@@ -49,3 +49,7 @@ class Constants():
     UNENCLOSED_ARGS_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z0-9+\-]+)'
     UNENCLOSED_ARGS_MULTIWORD_REGEX = r'\B\:(?=\S*[+-]*)([a-zA-Z0-9*-]+)+( +[a-zA-Z0-9+\-_]+)'
     MISSING_CAPTURED_NEG_REGEX = r'\B( - )'
+
+    NP_GATHER_LOAD_SHAPE_REX:str = r'(# Array shape: )?([0-9, ()]+)'
+
+    NP_TEACHER_FORCING_FILE_NAMES:list = ["_nodes_emb.out", "_forward_look_up.out", "_backward_look_up.out", "_vecs_input_words.out", "_vecs_target_words.out"]

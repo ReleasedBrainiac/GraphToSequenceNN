@@ -1,6 +1,6 @@
 import numpy as np
 import re
-from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray, StatusReport
+from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray
 from Configurable.ProjectConstants import Constants
 
 class NumpyDatasetHandler():

@@ -14,7 +14,7 @@ from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue, ConcatenateNdArray, RepeatNTimsNdArray
+from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -23,6 +23,7 @@ from NetworkHandler.Builder.ModelBuilder import ModelBuilder
 from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
+from DatasetHandler.NumpyHandler import NumpyDatasetHandler, NumpyDatasetPreprocessor
 
 #TODO bset tutorial => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
 #TODO many-to-many => https://github.com/keras-team/keras/issues/1029
@@ -98,6 +99,9 @@ class Graph2SeqInKeras():
     MAX_NODE_CARDINALITY:int = 35
     HOP_STEPS:int = 3
     SHUFFLE_DATASET:bool = True
+
+    USE_PREPARED_DATASET:bool = True
+    PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
 
     _accurracy:list = ['categorical_accuracy']
     _available_gpus = None
@@ -262,7 +266,7 @@ class Graph2SeqInKeras():
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=max_sequence_len,
                                                                 show_feedback=True)
-            _, _, edge_fw_look_up, edge_bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
+            _, _, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
 
             print("~~~~~~ Example Target Tokenizer ~~~~~~~")
             #glove_dataset_processor.Convert("Input 0", glove_dataset_processor.tokenizer, vectorized_inputs[0])
@@ -280,7 +284,7 @@ class Graph2SeqInKeras():
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=True)
 
-            datasets_nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
+            nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
             glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(True)
 
             print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
@@ -302,29 +306,26 @@ class Graph2SeqInKeras():
             print("#######################################\n")
             print("#### Prepare Train and Predictset #####")
 
-            #TODO: Missing Teacherforcing -> each graph repeat for each word in sentence!
-            #TODO: Call -> GenerateDatasetTeacherForcing
 
-            train_x, train_y, test_x, test_y = self.GenerateDatasetTeacherForcing(  split_border = (self._dataset_size - self._predict_split_value), 
-                                                                                    nodes_embedding = datasets_nodes_embedding, 
-                                                                                    fw_look_up = edge_fw_look_up, 
-                                                                                    bw_look_up = edge_bw_look_up, 
-                                                                                    vecs_input_sentences = vectorized_inputs,
-                                                                                    vecs_target_sentences = vectorized_targets)
-            '''
-            train_x = [ datasets_nodes_embedding[:self._dataset_size - self._predict_split_value], 
-                        edge_fw_look_up[:self._dataset_size - self._predict_split_value], 
-                        edge_bw_look_up[:self._dataset_size - self._predict_split_value],
-                        vectorized_inputs[:self._dataset_size - self._predict_split_value]]
+            generator = NumpyDatasetPreprocessor(folder_path = self.FOLDERNAME)
+            if not self.USE_PREPARED_DATASET:
+                nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = generator.PreprocessTeacherForcingDS(  nodes_embedding, 
+                                                                                                                                        fw_look_up, 
+                                                                                                                                        bw_look_up, 
+                                                                                                                                        vectorized_inputs,
+                                                                                                                                        vectorized_targets)
+            else:
+                 nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = NumpyDatasetHandler(path=self.PREPARED_DS_PATH).LoadTeacherForcingDS()
+            
 
-            test_x = [  datasets_nodes_embedding[self._dataset_size - self._predict_split_value:], 
-                        edge_fw_look_up[self._dataset_size - self._predict_split_value:], 
-                        edge_bw_look_up[self._dataset_size - self._predict_split_value:],
-                        vectorized_inputs[self._dataset_size - self._predict_split_value:]]
-
-            train_y = vectorized_targets[:self._dataset_size - self._predict_split_value]
-            test_y = vectorized_targets[self._dataset_size - self._predict_split_value:]
-            '''
+            split_border = (self._dataset_size - self._predict_split_value)
+            train_x, train_y, test_x, test_y = generator.NetworkInputPreparation(   nodes_embedding, 
+                                                                                    fw_look_up, 
+                                                                                    bw_look_up, 
+                                                                                    vectorized_inputs,
+                                                                                    vectorized_targets,
+                                                                                    split_border)
+           
             print("#######################################\n")
             print("########## Construct Network ##########")
 
@@ -333,11 +334,11 @@ class Graph2SeqInKeras():
                                     input_dec_dim=vectorized_targets.shape[2],
                                     batch_size=self.BATCH_SIZE)
 
-            print("Builder!")
+            print("Builder Start!")
 
             encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
 
-            print("Encoder!")
+            print("Encoder Constructed!")
 
             model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(builder.get_decoder_inputs()), 
                                                         encoder=encoder,
@@ -345,7 +346,7 @@ class Graph2SeqInKeras():
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
-            print("Decoder!")
+            print("Decoder Constructed!")
 
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model, metrics=self._accurracy, loss = 'categorical_crossentropy')
@@ -500,69 +501,7 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def GenerateDatasetTeacherForcing(self, split_border:int, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_sentences:np.ndarray, vecs_target_sentences:np.ndarray):
-
-        try:
-            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_sentences) == len(vecs_target_sentences):                
-                path_partial:str = (self.FOLDERNAME + self.fname + self.fname + "_DT_" + self.TIME_NOW + "_")
-
-                train_x = [] 
-                train_y = []
-                test_x = []
-                test_y = []
-
-                nodes_emb = None
-                forward_look_up = None
-                backward_look_up = None
-                vecs_input_words = None
-                vecs_target_words = None
-
-                print("Start Dataset Generator\n[", end = '')
-
-                for s_idx in range(len(vecs_input_sentences)):
-
-                    tmp_nodes_emb = nodes_embedding[s_idx]
-                    tmp_forward_look_up = fw_look_up[s_idx]
-                    tmp_backward_look_up = bw_look_up[s_idx]
-                    tmp_vecs_input_words = np.trim_zeros(vecs_input_sentences[s_idx])
-                    tmp_vecs_target_words = np.trim_zeros(vecs_target_sentences[s_idx])
-                    qualified_entries = np.count_nonzero(tmp_vecs_input_words) - 1      #The -1 mean i will not include the the first copy since we keep the initial as well!
-                    
-                    if (nodes_emb is None) and (forward_look_up is None) and (backward_look_up is None) and (vecs_input_words is None) and (vecs_target_words is None):
-                        nodes_emb = RepeatNTimsNdArray(times=qualified_entries, array=tmp_nodes_emb)
-                        forward_look_up = RepeatNTimsNdArray(times=qualified_entries, array=tmp_forward_look_up)
-                        backward_look_up = RepeatNTimsNdArray(times=qualified_entries, array=tmp_backward_look_up)
-                        vecs_input_words = tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1]
-                        vecs_target_words = tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],))
-
-                    else:
-                        nodes_emb = ConcatenateNdArray(nodes_emb, RepeatNTimsNdArray(times=qualified_entries, array=tmp_nodes_emb))
-                        forward_look_up = ConcatenateNdArray(forward_look_up, RepeatNTimsNdArray(times=qualified_entries, array=tmp_forward_look_up))
-                        backward_look_up = ConcatenateNdArray(backward_look_up, RepeatNTimsNdArray(times=qualified_entries, array=tmp_backward_look_up))
-                        vecs_input_words = ConcatenateNdArray(vecs_input_words, tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1])
-                        vecs_target_words = ConcatenateNdArray(vecs_target_words, tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)))
-                
-                    if ((s_idx+1)%250 is 0 ): 
-                        print(" >", end = '')
-                    if ((s_idx+1) == len(vecs_input_sentences)): 
-                        print(" ] Done!")
-                
-                np.savetxt((path_partial + "nodes_emb.out"), nodes_emb)
-                np.savetxt((path_partial + "forward_look_up.out"), forward_look_up)
-                np.savetxt((path_partial + "backward_look_up.out"), backward_look_up)
-                np.savetxt((path_partial + "vecs_input_words.out"), vecs_input_words)
-                np.savetxt((path_partial + "vecs_target_words.out"), vecs_target_words)
-
-                sys.exit(0)
-                
-            else:
-                assert not(len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_sentences) == len(vecs_target_sentences)), "The given inputs of GenerateDatasetTeacherForcing aren't machting at first dimension!"
-                sys.exit(0)
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.GenerateDatasetTeacherForcing]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-            print(ex)
+    
 
 
 

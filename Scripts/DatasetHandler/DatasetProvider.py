@@ -112,9 +112,10 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def ForgeAmrTree(self, semantic:str):
+    '''def ForgeAmrTree(self, semantic:str):
         """
         This function converts a AMR semantic into a cleaned and minimalized anytree reprenstation.
+        In case of saving a stringified version will be provided!
             :param semantic:str: semantic string
         """
         try:
@@ -122,7 +123,7 @@ class DatasetPipeline:
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print(message)
+            print(message)'''
 
     def ForgeMatrices(self, semantic:str):
         """

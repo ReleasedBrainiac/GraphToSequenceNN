@@ -5,7 +5,7 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Activation, multiply, add
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Activation, multiply, add, Flatten
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -244,7 +244,8 @@ class ModelBuilder:
             :param act:activations: the dense layers activations
         """   
         try:
-            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(previous_layer)
+            flatten = Flatten(name='reduce_dimension')(previous_layer)
+            return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(flatten)
 
             
             #rs = Reshape((-1, self.input_dec_dim, (self.edge_dim*2)), name='reshape_test')(previous_layer)

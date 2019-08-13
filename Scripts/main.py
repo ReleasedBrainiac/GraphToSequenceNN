@@ -1,4 +1,3 @@
-import argparse
 import os
 import sys
 import platform as pf
@@ -8,22 +7,21 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
 from keras import activations
-from keras.callbacks import History, ReduceLROnPlateau, BaseLogger
+from keras.callbacks import History, ReduceLROnPlateau, BaseLogger, EarlyStopping, ModelCheckpoint
 
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import RoundUpRestricted, isNotNone, isNumber, CreateNListWithRepeatingValue
+from DatasetHandler.ContentSupport import DatasetSplitIndex
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
-from DatasetHandler.ContentSupport import MatrixExpansionWithZeros
 from NetworkHandler.Builder.ModelBuilder import ModelBuilder
-from Plotter.SaveHistory import HistorySaver
 from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 from DatasetHandler.NumpyHandler import NumpyDatasetHandler, NumpyDatasetPreprocessor
+from GraphHandler.SemanticMatrixBuilder import MatrixHandler
 
 #TODO bset tutorial => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
 #TODO many-to-many => https://github.com/keras-team/keras/issues/1029
@@ -76,36 +74,35 @@ class Graph2SeqInKeras():
     """
 
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    EPOCHS:int = 3
+    EPOCHS:int = 10
     VERBOSE:int = 1
     BATCH_SIZE:int = 1
-    BUILDTYPE:int = 1
     DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #
     fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
     GLOVE_VEC_SIZE:int = 100
     PLOT:str = "plot.png"
-    EXTENDER:str = "dc.ouput"
+    EXTENDER:str = "amr.cleaner.ouput"
     MAX_LENGTH_DATA:int = -1
     SHOW_FEEDBACK:bool = False
     SAVE_PLOTS = True
-    SAVING_CLEANED_AMR:bool = False
+    SAVE_CLD_AMR_OR_MTX:bool = False
     KEEP_EDGES:bool = True
     GLOVE_OUTPUT_DIM:int = 100
     GLOVE_VOCAB_SIZE:int = 5000
-    VALIDATION_SPLIT:float = 0.2
+    VALIDATION_SPLIT:float = 0.8
     MIN_NODE_CARDINALITY:int = 15
     MAX_NODE_CARDINALITY:int = 35
     HOP_STEPS:int = 3
     SHUFFLE_DATASET:bool = True
 
-    USE_PREPARED_DATASET:bool = True
+    USE_PREPARED_DATASET:bool = False
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
 
-    _accurracy:list = ['categorical_accuracy']
+    _accurracy:list = ['acc']
     _available_gpus = None
-    _predict_percentage_split:float = 5.0
+    _predict_percentage_split:float = 8.0
     _predict_split_value:int = -1
     _dataset_size:int = -1
     _history_keys:list = None
@@ -122,7 +119,7 @@ class Graph2SeqInKeras():
     datasets = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
     multi_epochs = [10, 15, 20, 10, 15, 20]
     multi_hops = [4, 5, 7, 4, 5, 7]
-    multi_val_split = [0.2, 0.2, 0.80, 0.2, 0.2, 0.80]
+    multi_val_split = [0.75, 0.65, 0.80, 0.75, 0.65, 0.80]
     runs:int = len(multi_epochs)
 
 
@@ -190,7 +187,7 @@ class Graph2SeqInKeras():
 
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-            if self.SAVING_CLEANED_AMR:
+            if self.SAVE_CLD_AMR_OR_MTX:
                 self.ExecuteCleanedAMRStoring(  in_dataset=self.DATASET,
                                                 in_extender=self.EXTENDER,
                                                 in_max_length=self.MAX_LENGTH_DATA,
@@ -211,6 +208,7 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
+
 
     def ExecuteNetwork(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, keep_edges=False):
         """
@@ -248,10 +246,11 @@ class Graph2SeqInKeras():
             datapairs = pipe.ProvideData()
             max_cardinality = pipe._max_observed_nodes_cardinality
             self._dataset_size = len(datapairs)
-            self._predict_split_value = self.TestSplitSize(self._dataset_size, self._predict_percentage_split)
+            self._predict_split_value = DatasetSplitIndex(self._dataset_size, self._predict_percentage_split)
             print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
+
             pipe.PlotCardinalities(self.MODEL_DESC)
-            self.DatasetLookUpEqualization(datapairs, max_cardinality)
+            MatrixHandler().DatasetLookUpEqualization(datapairs, max_cardinality)
                 
             max_sequence_len:int = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
                 
@@ -294,7 +293,7 @@ class Graph2SeqInKeras():
             #vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
 
             vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
-            #vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
+            vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
 
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
@@ -313,9 +312,10 @@ class Graph2SeqInKeras():
                                                                                                                                         fw_look_up, 
                                                                                                                                         bw_look_up, 
                                                                                                                                         vectorized_inputs,
-                                                                                                                                        vectorized_targets)
+                                                                                                                                        vectorized_targets,
+                                                                                                                                        save=False)
             else:
-                 nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = NumpyDatasetHandler(path=self.PREPARED_DS_PATH).LoadTeacherForcingDS()
+                nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = NumpyDatasetHandler(path=self.PREPARED_DS_PATH).LoadTeacherForcingDS()
             
 
             split_border = (self._dataset_size - self._predict_split_value)
@@ -324,14 +324,16 @@ class Graph2SeqInKeras():
                                                                                     bw_look_up, 
                                                                                     vectorized_inputs,
                                                                                     vectorized_targets,
-                                                                                    split_border)
+                                                                                    split_border)                                                        
            
             print("#######################################\n")
             print("########## Construct Network ##########")
 
+            input_dec_dim = 1 if len(vectorized_targets.shape) <= 1 else vectorized_targets.shape[-1]
+
             builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
-                                    input_dec_dim=vectorized_targets.shape[2],
+                                    input_dec_dim=input_dec_dim,
                                     batch_size=self.BATCH_SIZE)
 
             print("Builder Start!")
@@ -342,14 +344,14 @@ class Graph2SeqInKeras():
 
             model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(builder.get_decoder_inputs()), 
                                                         encoder=encoder,
-                                                        act=activations.softmax,
+                                                        act=activations.relu,
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
             print("Decoder Constructed!")
 
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'categorical_crossentropy')
+            builder.CompileModel(model=model, metrics=self._accurracy, loss = 'logcosh')
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             print("#######################################\n")
@@ -357,6 +359,9 @@ class Graph2SeqInKeras():
 
             base_lr = BaseLogger()
             reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
+            es = EarlyStopping(monitor='val_loss', mode='min', patience=100)
+            mc = ModelCheckpoint(self.MODEL_DESC+'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
+
 
             history = model.fit(train_x, 
                                 train_y,
@@ -365,7 +370,7 @@ class Graph2SeqInKeras():
                                 verbose=self.VERBOSE, 
                                 shuffle=self.SHUFFLE_DATASET,
                                 validation_split=self.VALIDATION_SPLIT,
-                                callbacks=[base_lr, reduce_lr])
+                                callbacks=[base_lr, reduce_lr, es, mc])
 
             print("History Keys: ", list(history.history.keys()))
 
@@ -433,76 +438,6 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
-
-    def SingleLookUpEqualization(self, datapair:list, max_card:int):
-        """
-        This function wraps the MatrixExpansionWithZeros function for the foward and backward edge look up for a datapair.
-            :param datapair:list: single elemt of the DatasetPipeline result 
-            :param max_card:int: desired max cardinality 
-        """
-        try:
-            assert (datapair[1][0] is not None), ('Wrong input for dataset edge look up size equalization!')
-            elem1 = MatrixExpansionWithZeros(datapair[1][0][0], max_card)
-            elem2 = MatrixExpansionWithZeros(datapair[1][0][1], max_card)
-            assert (elem1.shape == elem2.shape and elem1.shape == (max_card,max_card)), ("Results have wrong shape!")
-            return [elem1,elem2]
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.SingleLookUpEqualization]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-            sys.exit(1)
-
-    def DatasetLookUpEqualization(self, datapairs:list ,max_cardinality:int):
-        """
-        This function equalizes all datasets neighbourhood look up matrices to a given max cardinality.
-            :param datapairs:list: the dataset
-            :param max_cardinality:int: the given cardinality
-        """   
-        try:
-            assert (max_cardinality > 0), ("Max graph nodes cardinality was 0!")
-            for datapair in datapairs:
-                datapair[1][0] = self.SingleLookUpEqualization(datapair, max_cardinality)
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.DatasetLookUpEqualization]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    def SavePyPlotToFile(self, extender:str = None, orientation:str = 'landscape', image_type:str = 'png'):
-        """
-        This function is a simple wrapper for the PyPlot savefig function with default values.
-            :param extender:str: extender for the filename [Default None]
-            :param orientation:str: print orientation [Default 'landscape']
-            :parama image_type:str: image file type [Default 'png']
-        """   
-        try:
-            if extender is None:
-                plt.savefig((self.MODEL_DESC+'plot.'+image_type), orientation=orientation)
-            else: 
-                plt.savefig((self.MODEL_DESC+extender+'.'+image_type), orientation=orientation)
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.SavePyPlotToFile]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-            print(ex)
-
-    def TestSplitSize(self, dataset_size:int, split_percentage:float):
-        """
-        This method return a number for the size of desired test samples from dataset by a given percentage.
-            :param dataset_size:int: size of the whole datset
-            :param split_percentage:float: desired test size percentage from dataset
-        """   
-        try:
-            if isNumber(dataset_size) and isNumber(split_percentage):
-                return round((dataset_size * split_percentage)/100.0)
-            else:
-                return -1
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.SplitData]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-
-    
-
 
 
 if __name__ == "__main__":

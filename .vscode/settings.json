@@ -6,10 +6,11 @@
         "-p",
         "test*.py"
     ],
-    "python.testing.pytestEnabled": true,
+    "python.testing.pytestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": false,
     "python.testing.promptToConfigure": false,
-    "python.autoComplete.extraPaths": ["${workspaceFolder}/Scripts"],
-    "python.linting.pylintEnabled": true
+    "python.autoComplete.extraPaths": ["./Scripts/"],
+    "python.linting.pylintEnabled": true,
+    "python.jediEnabled": false
 }

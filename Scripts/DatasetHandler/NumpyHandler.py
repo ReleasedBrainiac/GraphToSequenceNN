@@ -152,8 +152,8 @@ class NumpyDatasetPreprocessor():
                 vecs_input_words = []
                 vecs_target_words = []
 
-                print("Shape Inp: ", vecs_input_sentences.shape, " ... [0]", vecs_input_sentences[0])
-                print("Shape Out: ", vecs_target_sentences.shape, " ... [0]",  vecs_target_sentences[0])
+                #print("Shape Inp: ", vecs_input_sentences.shape, " ... [0]", vecs_input_sentences[0])
+                #print("Shape Out: ", vecs_target_sentences.shape, " ... [0]",  vecs_target_sentences[0])
 
                 print("Start Dataset Generator")
                 for s_idx in range(dataset_len):

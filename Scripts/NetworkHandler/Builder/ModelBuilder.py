@@ -246,11 +246,6 @@ class ModelBuilder:
         try:
             flatten = Flatten(name='reduce_dimension')(previous_layer)
             return Dense(units=self.input_dec_dim, activation=act, name='dense_predict')(flatten)
-
-            
-            #rs = Reshape((-1, self.input_dec_dim, (self.edge_dim*2)), name='reshape_test')(previous_layer)
-            #dense = Dense(units=1, activation=act, name='dense_test')(rs)
-            #return TimeDistributed(Dense(units=self.input_enc_dim, activation=act, name='dense_predict') , name='timed_dense_predict')(previous_layer)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoderPrediction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -377,14 +372,14 @@ class ModelBuilder:
                                     encoder: Layer,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
-                                    act:activations = activations.softmax):
+                                    act = activations.softmax):
         """
         This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
             :param embedding_layer:Embedding: given embedding layer
             :param encoder:Layer: given encoder out layer
             :param prev_memory_state:Layer: previous layer mem state
             :param prev_carry_state:Layer: previous layer carry state
-            :param act:activations: layers activation function [Default Softmax]
+            :param act: layers activation function [Default Softmax]
         """
         try:
             AssertIsKerasTensor(encoder)
@@ -396,18 +391,10 @@ class ModelBuilder:
             print("prev_carry_state: ", prev_carry_state)
 
             encoder_out, encoder_states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-
-            print("encoder_out: ", encoder_out)
-
             attention_out, attention_states = self.BuildBahdanauAttentionPipe(states_dim, encoder_out, encoder_states[0])
-
-            print("attention_out: ", attention_out)
 
             attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
             attention_embedding_concatenation = concatenate([attention_reshaped,embedding], name="attention_embedding_concatenation", axis=-1)
-
-            print("attention_embedding_concatenation: ", attention_embedding_concatenation)
-
 
             lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_embedding_concatenation, prev_memory_state=encoder_states[0], prev_carry_state=encoder_states[1], units=states_dim, batch_size=self.batch_size)
 

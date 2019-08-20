@@ -4,7 +4,6 @@ from DatasetHandler.FileReader import Reader
 from DatasetHandler.FileWriter import Writer
 from DatasetHandler.DatasetExtractor import Extractor
 from Configurable.ProjectConstants import Constants
-from TreeHandler.TreeParser import TParser
 from GraphHandler.SemanticMatrixBuilder import MatrixBuilder as MParser
 from AMRHandler.AMRCleaner import Cleaner
 from Plotter.PlotBarChart import BarChart
@@ -27,7 +26,9 @@ class DatasetPipeline:
                  show_feedback:bool =False, 
                  keep_edges:bool =False, 
                  min_cardinality:int =1, 
-                 max_cardinality:int =100):
+                 max_cardinality:int =100,
+                 saving_cleaned_data:bool = False,
+                 stringified_amr:bool = False):
         """
         This class constructor collect informations about the input and output files.
         Further its possible to define a max_lengt for the used dataset. 
@@ -47,6 +48,8 @@ class DatasetPipeline:
             :param keep_edges:bool: include edges in the amr cleaner strategy
             :param min_cardinality:int: define min range for the node matrix representation [>2 (at least 3 nodes/words) depends on the SPO sentence definition in english]
             :param max_cardinality:int: define max range for the node matrix representation 
+            :param saving_cleaned_data:bool: allow to save the cleaned dataset.
+            :param stringified_amr:bool: convert semantic to matrices
         """   
         try:
             self._constants = Constants()
@@ -62,14 +65,14 @@ class DatasetPipeline:
             self._graph_node_cardinalities_list = []
             self._count_graph_node_cards_occs = dict()
             self._is_showing_feedback = show_feedback
-            self._is_saving = False
+            self._is_saving = saving_cleaned_data
             self._is_keeping_edges = keep_edges
-            self._as_amr = False
             self._out_path_extender = output_path_extender
             self._restriction_chars_sentence = setOrDefault(max_length, -1, isInt(max_length))
             self._restriction_chars_semantic = -1 if (max_length < 0)  else (2 * self._restriction_chars_sentence)
             self._min_cardinality = min_cardinality if (min_cardinality > 2) else 3
             self._max_cardinality = max_cardinality if (max_cardinality >= min_cardinality) else 100
+            self._stringified_amr = stringified_amr
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.__init__]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -84,9 +87,6 @@ class DatasetPipeline:
             in_sentence = re.sub('<[^/>][^>]*>','', in_sentence)
             in_sentence = re.sub('</[^>]+>','', in_sentence)
             return re.sub('<[^/>]+/>','', '#'+in_sentence)+'\n'
-            # Ref => https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
-            #in_sentence = re.sub(r"([?.!,¿])", r" \1 ", in_sentence)
-            #return  re.sub(r'[" "]+', " ", in_sentence)
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.RemoveEnclosingAngleBracket]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -112,19 +112,6 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    '''def ForgeAmrTree(self, semantic:str):
-        """
-        This function converts a AMR semantic into a cleaned and minimalized anytree reprenstation.
-        In case of saving a stringified version will be provided!
-            :param semantic:str: semantic string
-        """
-        try:
-            return TParser(semantic, self._is_showing_feedback, self._is_saving).Execute()
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [DatasetProvider.ForgeAmrTree]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)'''
-
     def ForgeMatrices(self, semantic:str):
         """
         This function converts a given semantic into a cleaned metrix representation [Neigbouring and Nodes].
@@ -149,7 +136,7 @@ class DatasetPipeline:
             semantic:str = self.EncloseWrongFormattedAMR(data_pair[1])
             semantic = self.ForgeAmrSemanticString(semantic)
 
-            if(not self._as_amr): 
+            if(not self._stringified_amr): 
                 semantic = self.ForgeMatrices(semantic)
                 
             if isNotNone(semantic) and isNotNone(sentence): 
@@ -175,7 +162,7 @@ class DatasetPipeline:
             for pair in data_pairs: 
                 data_pair = self.CollectDatasetPair(pair)
                 if isNotNone(data_pair):
-                    if(not self._as_amr):
+                    if(not self._stringified_amr):
                         edges_dim = data_pair[1][0][0].shape[0]
 
                         if (self._min_cardinality <= edges_dim and edges_dim <= self._max_cardinality):
@@ -221,18 +208,10 @@ class DatasetPipeline:
             
     def Pipeline(self):
         """
-        This function collect the cleaned sentences and the cleaned semantics will hae the following structure: 
-
-            [For Saving]
-            => AMR string representation IF [as_amr = True] otherwise AnyTree as JSON
-
-            [For Processing]
-            => Numpy.ndarrays [[Neighbourings_fw, Neighbourings_bw], Nodes/Words/Features]
-
+        This function collect the cleaned sentences and the cleaned semantics
             Return: List[sentence, semantics]
         """
         try:
-
             dataset = None
             sentence_lengths:list = None
             semantic_lengths:list = None
@@ -252,7 +231,7 @@ class DatasetPipeline:
             mean_semantics = CalculateMeanValue(str_lengths=semantic_lengths)
             data_pairs = self.CollectAllDatasetPairs(pairs)
 
-            if (not self._as_amr): self.CollectCardinalityOccurences()
+            if (not self._stringified_amr): self.CollectCardinalityOccurences()
 
             print('\n~~~~~~~~~~~~~ Cleaning AMR ~~~~~~~~~~~~')
             print('[Size Restriction]:\t Sentence =', self._restriction_chars_sentence, '| Semantic = ', self._restriction_chars_semantic)
@@ -269,32 +248,19 @@ class DatasetPipeline:
             template = "An exception of type {0} occurred in [DatasetProvider.Pipeline]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
-    def SaveData(self, as_amr:bool):
-        """
-        This function calls the Pipeline and store the desired results.
-            :param as_amr:bool: IF True => raw AMR string ELSE anytree json string
-        """
-        try:
-            
-            self._as_amr = as_amr
-            self._is_saving = True
-            writer = Writer(self._in_path, 
-                            self._out_path_extender, 
-                            self.Pipeline())
-            return None
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [DatasetProvider.SaveData]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
         
     def ProvideData(self):
         """
         This function calls the Pipeline and return the cleaned dataset for ANN usage.
+        Additional the cleaned dataset can be stored!
         """
         try:
-            self._is_saving = False
             datapairs = self.Pipeline()
+
+            if(self._is_saving): 
+                Writer(self._in_path, self._out_path_extender, datapairs)
+                print('Finished storing process!')
+
             print('Result structure:\n\t=> [Sentence, EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
             return datapairs
         except Exception as ex:
@@ -330,7 +296,6 @@ class DatasetPipeline:
             template = "An exception of type {0} occurred in [DatasetProvider.PlotCardinalities]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
 
     def EncloseWrongFormattedAMR(self, amr:str):
         """

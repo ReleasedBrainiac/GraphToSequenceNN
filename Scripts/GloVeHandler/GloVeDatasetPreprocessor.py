@@ -145,14 +145,14 @@ class GloVeDatasetPreprocessor:
             if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
 
             vectorized_dec_ins, indices_dec = self.VectorizeVocab(tokenized_dec_ins)
-            vectorized_tar_ins, indices_tar = self.VectorizeVocab(tokenized_tar_ins)
-
-            assert (indices_dec.all() == indices_tar.all()), "Indices missmatch for vectorized decoder inputs and targets!"
-
             if self.show_response: 
                 print('\t=> Fixed',vectorized_dec_ins.shape,'decoder input tensor.')
+
+            vectorized_tar_ins, indices_tar = self.VectorizeVocab(tokenized_tar_ins)
+            if self.show_response: 
                 print('\t=> Fixed',vectorized_tar_ins.shape,'decoder target tensor.')
 
+            assert (indices_dec.all() == indices_tar.all()), "Indices missmatch for vectorized decoder inputs and targets!"
             self.tokenizer_words = self.tokenizer.word_index.items()
             self.edge_matrices_fw = np.array(self.edge_matrices_fw)
             self.edge_matrices_bw = np.array(self.edge_matrices_bw)

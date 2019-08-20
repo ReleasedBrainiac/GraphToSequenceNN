@@ -6,14 +6,13 @@ from numpy import array_equal, argmax
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
-from keras import activations
 from keras.callbacks import History, ReduceLROnPlateau, BaseLogger, EarlyStopping, ModelCheckpoint
 
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import DatasetSplitIndex
+from DatasetHandler.ContentSupport import DatasetSplitIndex, isNone
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -85,9 +84,8 @@ class Graph2SeqInKeras():
     PLOT:str = "plot.png"
     EXTENDER:str = "amr.cleaner.ouput"
     MAX_LENGTH_DATA:int = -1
-    SHOW_FEEDBACK:bool = False
+    SHOW_GLOBAL_FEEDBACK:bool = False
     SAVE_PLOTS = True
-    SAVE_CLD_AMR_OR_MTX:bool = False
     KEEP_EDGES:bool = True
     GLOVE_OUTPUT_DIM:int = 100
     GLOVE_VOCAB_SIZE:int = 5000
@@ -101,6 +99,8 @@ class Graph2SeqInKeras():
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
 
     _accurracy:list = ['acc']
+    _loss_function:str = 'sparse_categorical_crossentropy'
+    _last_activation:str = 'softmax'
     _available_gpus = None
     _predict_percentage_split:float = 8.0
     _predict_split_value:int = -1
@@ -124,8 +124,11 @@ class Graph2SeqInKeras():
 
 
     def Execute(self):
-        if self.MULTI_RUN: return self.ExectuteMulti()
-        else: return self.ExecuteSingle()
+        if self.MULTI_RUN: 
+            return self.ExectuteMulti()
+        else: 
+            #return self.ExecuteSingle()
+            return self.ToolPipe()
 
     def ExectuteMulti(self):
         for dataset in self.datasets:
@@ -148,7 +151,8 @@ class Graph2SeqInKeras():
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
                 self.FOLDERNAME:str = "graph2seq_model_" + self.fname + "_DT_" + self.TIME_NOW + "/"
                 self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self.fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.GLOVE_VEC_SIZE) + "_DT_" + self.TIME_NOW + "_"
-                self.ExecuteSingle()
+                #self.ExecuteSingle()
+                self.ToolPipe()
 
     def ExecuteSingle(self):
         """
@@ -186,31 +190,359 @@ class Graph2SeqInKeras():
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.TF_CPP_MIN_LOG_LEVEL
 
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-            if self.SAVE_CLD_AMR_OR_MTX:
-                self.ExecuteCleanedAMRStoring(  in_dataset=self.DATASET,
-                                                in_extender=self.EXTENDER,
-                                                in_max_length=self.MAX_LENGTH_DATA,
-                                                is_show=self.SHOW_FEEDBACK,
-                                                keep_edges=self.KEEP_EDGES,
-                                                as_amr=True)
-            else:
-                self.ExecuteNetwork(in_dataset=self.DATASET, 
-                                    in_glove=self.GLOVE, 
-                                    in_extender=self.EXTENDER,
-                                    in_max_length=self.MAX_LENGTH_DATA,
-                                    in_vocab_size=self.GLOVE_VOCAB_SIZE,
-                                    out_dim_emb=self.GLOVE_OUTPUT_DIM,
-                                    is_show=self.SHOW_FEEDBACK,
-                                    keep_edges=self.KEEP_EDGES)
+            self.ExecuteNetwork(in_dataset=self.DATASET,
+                                in_extender=self.EXTENDER,
+                                in_max_length=self.MAX_LENGTH_DATA,
+                                in_vocab_size=self.GLOVE_VOCAB_SIZE,
+                                out_dim_emb=self.GLOVE_OUTPUT_DIM,
+                                is_show=self.SHOW_GLOBAL_FEEDBACK,
+                                keep_edges=self.KEEP_EDGES)
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.ExecuteTool]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             sys.exit(1)
 
+    def SystemInfo(self):
+        try:
+            print("Model Folder Path:", self.FOLDERNAME)
+            if not FolderCreator(self.FOLDERNAME).Create(): 
+                print("Result folder was not being created!")
+                return False
 
-    def ExecuteNetwork(self, in_dataset, in_glove, in_extender="output", in_max_length=-1, in_vocab_size=20000, out_dim_emb=100, is_show=True, keep_edges=False):
+            sys.stdout = FACLogger(self.FOLDERNAME, self.fname + "_Log")
+            self._available_gpus = KTFGPUHandler().GetAvailableGPUs()
+
+            print("\n#######################################")
+            print("######## Graph to Sequence ANN ########")
+            print("#######################################\n")
+
+            print("~~~~~~~~~~ System Informations ~~~~~~~~")
+            print("Used OS:\t\t=> ", pf.system())
+            print("Release:\t\t=> ", pf.release())
+            print("Version:\t\t=> ", pf.version())
+            print("Architecture:\t\t=> ", pf.architecture())
+            print("Machine:\t\t=> ", pf.machine())
+            print("Platform:\t\t=> ", pf.platform())
+            print("CPU:\t\t\t=> ", pf.processor())
+            print("GPUs:\t\t\t=> ", self._available_gpus)
+            print("Python Version:\t\t=> ", pf.python_version())
+            print("Tensorflow version: \t=> ", tf.__version__)
+            print("Keras version: \t\t=> ", keras.__version__, '\n')
+
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.TF_CPP_MIN_LOG_LEVEL
+
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.SystemInfo]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def DatasetPreprocessor(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, show_processor_feedback:bool=False, keep_edges:bool=True, semantic_amr_string:bool=False):
+        try:
+            pipe = DatasetPipeline( in_path=in_dataset, 
+                                    output_path_extender=in_extender, 
+                                    max_length=in_max_length, 
+                                    show_feedback=show_processor_feedback,
+                                    keep_edges=keep_edges,
+                                    min_cardinality=self.MIN_NODE_CARDINALITY, 
+                                    max_cardinality=self.MAX_NODE_CARDINALITY,
+                                    stringified_amr=semantic_amr_string)
+
+            datapairs = pipe.ProvideData()
+            max_cardinality = pipe._max_observed_nodes_cardinality
+            self._dataset_size = len(datapairs)
+            self._predict_split_value = DatasetSplitIndex(self._dataset_size, self._predict_percentage_split)
+
+            pipe.PlotCardinalities(self.MODEL_DESC)
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
+
+            MatrixHandler().DatasetLookUpEqualization(datapairs, max_cardinality)
+            max_sequence_len:int = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
+
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("~~~~~~ Example Target Data Pipe ~~~~~~~")
+                print("Target 0", datapairs[0][0])
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+            return [max_sequence_len, max_cardinality, datapairs]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.DatasetPreprocessor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+
+    def GlovePreprocessor(self, datapairs:list, in_vocab_size:int, max_sequence_len:int=-1, show_processor_feedback:bool=True):
+        try:
+            print("#######################################\n")
+            print("########## Dataset Tokenizer ##########")
+
+            glove_dataset_processor = GloVeDatasetPreprocessor( nodes_context=datapairs, 
+                                                                vocab_size=in_vocab_size,
+                                                                max_sequence_length=max_sequence_len,
+                                                                show_feedback=show_processor_feedback)
+            _, _, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
+
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("~~~~~~ Example Target Tokenizer ~~~~~~~")
+                glove_dataset_processor.Convert("Input 0", glove_dataset_processor.tokenizer, vectorized_inputs[0])
+                glove_dataset_processor.Convert("Target 0", glove_dataset_processor.tokenizer, vectorized_targets[0])
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+            return [glove_dataset_processor, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.GlovePreprocessor]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)            
+
+    def GloveEmbedding(self, glove_dataset_processor:GloVeDatasetPreprocessor, dataset_nodes_values:list, vectorized_inputs:list, vectorized_targets:list, max_cardinality:int, max_sequence_len:int, in_vocab_size:int, out_dim_emb:int, show_processor_feedback:bool=True, embedding_input_wordwise:bool=True, nodes_to_embedding:bool=False):
+        try:
+            print("#######################################\n")
+            print("######## Glove Embedding Layer ########")
+            glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
+                                                vocab_size=in_vocab_size, 
+                                                tokenizer=glove_dataset_processor,
+                                                max_sequence_length= max_sequence_len,
+                                                glove_file_path=self.GLOVE, 
+                                                output_dim=out_dim_emb, 
+                                                batch_size=self.BATCH_SIZE,
+                                                show_feedback=show_processor_feedback)
+
+            nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
+            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
+
+            if self.SHOW_GLOBAL_FEEDBACK: 
+                print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
+           
+
+            if nodes_to_embedding:
+                vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
+                vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
+            else:
+                vectorized_inputs = np.expand_dims(vectorized_inputs, axis=-1)
+                vectorized_targets = np.expand_dims(vectorized_targets, axis=-1)
+
+            return [nodes_embedding, vectorized_inputs, vectorized_targets, glove_embedding_layer]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.GloveEmbedding]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+
+    def DatasetConvertToTeacherForcing(self, nodes_embedding:list, fw_look_up:list, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list, save_dataset:bool=False):
+        try:
+            print("#######################################\n")
+            print("### Create Word Wise Teacherforcing ###")
+
+
+            generator = NumpyDatasetPreprocessor(folder_path=self.FOLDERNAME)
+            if not self.USE_PREPARED_DATASET:
+                nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = generator.PreprocessTeacherForcingDS(  nodes_embedding, 
+                                                                                                                                        fw_look_up, 
+                                                                                                                                        bw_look_up, 
+                                                                                                                                        vectorized_inputs,
+                                                                                                                                        vectorized_targets,
+                                                                                                                                        save=save_dataset)
+            else:
+                nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = NumpyDatasetHandler(path=self.PREPARED_DS_PATH).LoadTeacherForcingDS()
+            
+
+            return [generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.DatasetConvertToTeacherForcing]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)   
+
+    def NetworkInputPreparation(self, generator:NumpyDatasetPreprocessor, nodes_embedding:list, fw_look_up, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list):
+        try:
+            print("#######################################\n")
+            print("#### Prepare Train and Predictset #####")
+            if isNone(generator):
+                generator = NumpyDatasetPreprocessor(None)
+
+            train_x, train_y, test_x, test_y = generator.NetworkInputPreparation(   nodes_embedding, 
+                                                                                    fw_look_up, 
+                                                                                    bw_look_up, 
+                                                                                    vectorized_inputs,
+                                                                                    vectorized_targets,
+                                                                                    (self._dataset_size - self._predict_split_value))
+
+            return [train_x, train_y, test_x, test_y]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.NetworkInputPreparation]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex) 
+
+    def NetworkConstruction(self, target_shape:tuple, max_cardinality:int, glove_embedding_layer:keras.layers.embeddings.Embedding):
+        try:
+            print("#######################################\n")
+            print("####### Construct Network Model #######")
+
+            input_dec_dim = 1 if len(target_shape) <= 1 else target_shape[-1]
+
+            print("Builder Init!")
+
+            builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
+                                    edge_dim=max_cardinality, 
+                                    input_dec_dim=input_dec_dim,
+                                    batch_size=self.BATCH_SIZE)
+
+            print("Build Encoder!")
+
+            encoder, graph_embedding_encoder_states = builder.BuildGraphEmbeddingEncoder(hops=self.HOP_STEPS)
+
+            print("Build Decoder!")
+
+            model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(builder.get_decoder_inputs()), 
+                                                        encoder=encoder,
+                                                        act=self._last_activation,
+                                                        prev_memory_state=graph_embedding_encoder_states[0],  
+                                                        prev_carry_state=graph_embedding_encoder_states[1])
+
+            print("Build Finalize and Plot!")
+            model = builder.MakeModel(layers=[model])
+            builder.CompileModel(model=model, metrics=self._accurracy, loss = self._loss_function)
+            builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
+
+            return model
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.NetworkConstruction]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)  
+
+    def NetworkTrain(self, model:keras.engine.training.Model, train_x:list, train_y:np.ndarray):
+        try:
+            print("#######################################\n")
+            print("########### Starts Training ###########")
+
+            base_lr = BaseLogger()
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
+            es = EarlyStopping(monitor='val_loss', mode='min', patience=100)
+            mc = ModelCheckpoint(self.MODEL_DESC+'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
+
+
+            return model.fit(   train_x, 
+                                train_y,
+                                batch_size = self.BATCH_SIZE,
+                                epochs=self.EPOCHS, 
+                                verbose=self.VERBOSE, 
+                                shuffle=self.SHUFFLE_DATASET,
+                                validation_split=self.VALIDATION_SPLIT,
+                                callbacks=[base_lr, reduce_lr, es, mc])
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.NetworkTrain]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)  
+
+    def NetworkPlotResults(self, history, new_style:bool = False):
+        try:
+            print("#######################################\n")
+            print("######## Plot Training Results ########")
+
+            print(type(history))
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("History Keys: ", list(history.history.keys()))
+
+            plotter = HistoryPlotter(   model_description = self.MODEL_DESC, 
+                                        path = None, 
+                                        history = history,
+                                        new_style = new_style)
+
+            plotter.PlotHistory()
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.NetworkPlotResults]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)  
+    
+    def NetworkPredict(self, model, test_x, test_y):
+        try:
+            print("#######################################\n")
+            print("########### Predict  Results ##########")
+
+            print(type(model))
+
+            y_pred = model.predict(test_x, batch_size = self.BATCH_SIZE, verbose=self.VERBOSE)
+
+            correct:int = 0
+            for i in range(len(y_pred)):
+                print("Test: ", test_y[i])
+                print("Pred: ",  y_pred[i])
+                if array_equal(test_y[i], y_pred[i]):
+                    correct += 1
+            print('Prediction Accuracy: %.2f%%' % (float(correct)/float(self._predict_split_value)*100.0))
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.NetworkPredict]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)  
+
+    def ToolPipe(self):
+        try:
+            self.SystemInfo()
+
+            max_sequence_len, max_cardinality, datapairs = self.DatasetPreprocessor(in_dataset=self.DATASET,
+                                                                                    in_extender=self.EXTENDER,
+                                                                                    in_max_length=self.MAX_LENGTH_DATA, 
+                                                                                    keep_edges=self.KEEP_EDGES)
+            
+            glove_dataset_processor, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values = self.GlovePreprocessor(  datapairs=datapairs, 
+                                                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE, 
+                                                                                                                                                    max_sequence_len=max_sequence_len)
+
+            nodes_embedding, vectorized_inputs, vectorized_targets, glove_embedding_layer = self.GloveEmbedding(glove_dataset_processor=glove_dataset_processor, 
+                                                                                                                dataset_nodes_values=dataset_nodes_values, 
+                                                                                                                vectorized_inputs=vectorized_inputs, 
+                                                                                                                vectorized_targets=vectorized_targets, 
+                                                                                                                max_cardinality=max_cardinality, 
+                                                                                                                max_sequence_len=max_sequence_len, 
+                                                                                                                in_vocab_size=self.GLOVE_VOCAB_SIZE, 
+                                                                                                                out_dim_emb=self.GLOVE_OUTPUT_DIM, 
+                                                                                                                show_processor_feedback=True, 
+                                                                                                                embedding_input_wordwise=True, 
+                                                                                                                nodes_to_embedding=False)
+
+            generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = self.DatasetConvertToTeacherForcing(nodes_embedding=nodes_embedding, 
+                                                                                                                                            fw_look_up=fw_look_up, 
+                                                                                                                                            bw_look_up=bw_look_up, 
+                                                                                                                                            vectorized_inputs=vectorized_inputs, 
+                                                                                                                                            vectorized_targets=vectorized_targets, 
+                                                                                                                                            save_dataset=False)
+
+            train_x, train_y, test_x, test_y = self.NetworkInputPreparation(generator=generator, 
+                                                                            nodes_embedding=nodes_embedding, 
+                                                                            fw_look_up=fw_look_up, 
+                                                                            bw_look_up=bw_look_up, 
+                                                                            vectorized_inputs=vectorized_inputs, 
+                                                                            vectorized_targets=vectorized_targets)
+
+            model = self.NetworkConstruction(   target_shape=vectorized_targets.shape, 
+                                                max_cardinality=max_cardinality, 
+                                                glove_embedding_layer=glove_embedding_layer)
+
+            history = self.NetworkTrain(model, train_x, train_y)
+
+            self.NetworkPlotResults(history)
+
+            self.NetworkPredict(model, test_x, test_y)
+            print("#######################################\n")
+            print("######## Process End ########")
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.ToolPipe]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)     
+    
+
+
+
+    def ExecuteNetwork(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, in_vocab_size:int=20000, out_dim_emb:int=100, is_show:bool=True, keep_edges:bool=False, semantic_amr_string:bool=False):
         """
         This function executes the training pipeline for the graph2seq tool.
 
@@ -224,16 +556,17 @@ class Graph2SeqInKeras():
             7. Save Network Model Weights
             8. Plot Train Results
 
-            :param in_dataset: input dataset
-            :param in_glove: path to glove word vector file
-            :param in_extender: output file entension
-            :param in_max_length: max allowed length of sentences (max_len Semantic = 2x max_len sentences)
-            :param in_vocab_size: the max amount of most occouring words you desire to store
-            :param out_dim_emb: dimension for the glove embedding layer output dimension
-            :param is_show: show process steps as console feedback
-            :param keep_edges: keep edgesduring cleaning
+            :param in_dataset:str: input dataset
+            :param in_extender:str: output file entension
+            :param in_max_length:int: max allowed length of sentences (max_len Semantic = 2x max_len sentences)
+            :param in_vocab_size:int: the max amount of most occouring words you desire to store
+            :param out_dim_emb:int: dimension for the glove embedding layer output dimension
+            :param is_show:bool: show process steps as console feedback
+            :param keep_edges:bool: keep edgesduring cleaning
+            :param semantic_amr_string:bool: semantic element as string not as matrices graph lookup
         """   
         try:
+
             print("\n###### AMR Dataset Preprocessing ######")
             pipe = DatasetPipeline(in_path=in_dataset, 
                                 output_path_extender=in_extender, 
@@ -241,7 +574,9 @@ class Graph2SeqInKeras():
                                 show_feedback=is_show,
                                 keep_edges=keep_edges,
                                 min_cardinality=self.MIN_NODE_CARDINALITY, 
-                                max_cardinality=self.MAX_NODE_CARDINALITY)
+                                max_cardinality=self.MAX_NODE_CARDINALITY,
+                                stringified_amr=semantic_amr_string)
+
 
             datapairs = pipe.ProvideData()
             max_cardinality = pipe._max_observed_nodes_cardinality
@@ -254,6 +589,8 @@ class Graph2SeqInKeras():
                 
             max_sequence_len:int = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
                 
+            ###########################################################################################################################################################################
+
             print("~~~~~~ Example Target Data Pipe ~~~~~~~")
             print("Target 0", datapairs[0][0])
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
@@ -271,6 +608,8 @@ class Graph2SeqInKeras():
             #glove_dataset_processor.Convert("Input 0", glove_dataset_processor.tokenizer, vectorized_inputs[0])
             glove_dataset_processor.Convert("Target 0", glove_dataset_processor.tokenizer, vectorized_targets[0])
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+            ###########################################################################################################################################################################
 
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
@@ -302,6 +641,8 @@ class Graph2SeqInKeras():
             glove_embedding.ClearTokenizer()
             glove_embedding.ClearEmbeddingIndices()
 
+            ###########################################################################################################################################################################
+
             print("#######################################\n")
             print("#### Prepare Train and Predictset #####")
 
@@ -324,7 +665,9 @@ class Graph2SeqInKeras():
                                                                                     bw_look_up, 
                                                                                     vectorized_inputs,
                                                                                     vectorized_targets,
-                                                                                    split_border)                                                        
+                                                                                    split_border)
+
+            ###########################################################################################################################################################################                                              
            
             print("#######################################\n")
             print("########## Construct Network ##########")
@@ -344,7 +687,7 @@ class Graph2SeqInKeras():
 
             model = builder.BuildGraphEmbeddingDecoder( embedding=glove_embedding_layer(builder.get_decoder_inputs()), 
                                                         encoder=encoder,
-                                                        act=activations.relu,
+                                                        act='relu',
                                                         prev_memory_state=graph_embedding_encoder_states[0],  
                                                         prev_carry_state=graph_embedding_encoder_states[1])
 
@@ -353,6 +696,8 @@ class Graph2SeqInKeras():
             model = builder.MakeModel(layers=[model])
             builder.CompileModel(model=model, metrics=self._accurracy, loss = 'logcosh')
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
+
+            ###########################################################################################################################################################################
 
             print("#######################################\n")
             print("########### Starts Training ###########")
@@ -372,17 +717,22 @@ class Graph2SeqInKeras():
                                 validation_split=self.VALIDATION_SPLIT,
                                 callbacks=[base_lr, reduce_lr, es, mc])
 
-            print("History Keys: ", list(history.history.keys()))
+            ###########################################################################################################################################################################
 
             print("#######################################\n")
             print("######## Plot Training Results ########")
+
+            print("History Keys: ", list(history.history.keys()))
 
             plotter = HistoryPlotter(   model_description = self.MODEL_DESC, 
                                         path = None, 
                                         history = history,
                                         new_style = False)
 
-            plotter.PlotHistory()           
+            plotter.PlotHistory()
+
+            ###########################################################################################################################################################################
+
             print("#######################################\n")
             print("########### Predict  Results ##########")
 
@@ -405,40 +755,30 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)
 
-    def ExecuteCleanedAMRStoring(self, 
-                             in_dataset:str, 
-                             in_extender:str, 
-                             in_max_length:int, 
-                             is_show:bool, 
-                             keep_edges:bool, 
-                             as_amr:bool):
-        """
-        This function stores the cleaned amr dataset, only!
-            :param in_dataset:str: input dataset
-            :param in_extender:str: output file entension
-            :param in_max_length:int: max allowed length of sentences (max_len Semantic = 2x max_len sentences)
-            :param is_show:bool: show process steps as console feedback
-            :param keep_edges:bool: keep edgesduring cleaning
-            :param as_amr:bool: save as amr if true else as json
-        """   
-        try:
-            pipe = DatasetPipeline(in_path=in_dataset, 
-                            output_path_extender=in_extender, 
-                            max_length=in_max_length, 
-                            show_feedback=is_show, 
-                            keep_edges=keep_edges,
-                            min_cardinality=self.MIN_NODE_CARDINALITY, 
-                            max_cardinality=self.MAX_NODE_CARDINALITY
-                            )
+    def TestNewSetup(self):
+        '''EPOCHS = 10
 
-            pipe.SaveData(as_amr=as_amr)
-            print('Finished storing process!')
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.ExecuteCleanedAMRStoring]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message)
-            sys.exit(1)
+        for epoch in range(EPOCHS):
+        start = time.time()
 
+        enc_hidden = encoder.initialize_hidden_state()
+        total_loss = 0
+
+        for (batch, (inp, targ)) in enumerate(dataset.take(steps_per_epoch)):
+            batch_loss = train_step(inp, targ, enc_hidden)
+            total_loss += batch_loss
+
+            if batch % 100 == 0:
+                print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1,
+                                                            batch,
+                                                            batch_loss.numpy()))
+        # saving (checkpoint) the model every 2 epochs
+        if (epoch + 1) % 2 == 0:
+            checkpoint.save(file_prefix = checkpoint_prefix)
+
+        print('Epoch {} Loss {:.4f}'.format(epoch + 1,
+                                            total_loss / steps_per_epoch))
+        print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))'''
 
 if __name__ == "__main__":
     Graph2SeqInKeras().Execute()

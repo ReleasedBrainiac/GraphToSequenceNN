@@ -303,8 +303,7 @@ class ModelBuilder:
                             act: activations = activations.relu,
                             kernel_regularizer: regularizers =regularizers.l2(0.01),
                             activity_regularizer: regularizers =regularizers.l1(0.01),
-                            use_bias: bool =False,
-                            drop_rate: float =0.2):
+                            use_bias: bool =False):
         """
         This function builds the 1st (encoder) part of the Graph2Sequence ANN
             :param hops:int: size of neighbours cover sphere for each node (which neighbours you want to know from your current p.o.v.) [Default 1]
@@ -316,7 +315,6 @@ class ModelBuilder:
             :param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
             :param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)]
             :param use_bias:bool: want result biased [Default False]
-            :param drop_rate:float: dropout percentage [Default 0.2]
         """ 
         try:
             out_shape_lambda = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
@@ -331,10 +329,10 @@ class ModelBuilder:
                 bw_name = ("bw_"+str(i))
                 
                 forward = self.BuildNeighbourhoodLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
-                forward = self.BuildSingleHopActivation(forward, fw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
+                forward = self.BuildSingleHopActivation(forward, fw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias)
 
                 backward = self.BuildNeighbourhoodLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
-                backward = self.BuildSingleHopActivation(backward, bw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias, drop_rate)
+                backward = self.BuildSingleHopActivation(backward, bw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias)
 
             return self.BuildGraphEmeddingConcatenation(forward,backward)
         except Exception as ex:
@@ -368,7 +366,8 @@ class ModelBuilder:
                                     encoder: Layer,
                                     prev_memory_state: Layer,  
                                     prev_carry_state: Layer,
-                                    act = activations.softmax):
+                                    act = activations.softmax,
+                                    drop_rate:float = 0.5):
         """
         This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
             :param embedding_layer:Embedding: given embedding layer
@@ -376,6 +375,7 @@ class ModelBuilder:
             :param prev_memory_state:Layer: previous layer mem state
             :param prev_carry_state:Layer: previous layer carry state
             :param act: layers activation function [Default Softmax]
+            :param drop_rate:float: dropout percentage
         """
         try:
             AssertIsKerasTensor(encoder)
@@ -393,6 +393,7 @@ class ModelBuilder:
             attention_embedding_concatenation = concatenate([attention_reshaped,embedding], name="attention_embedding_concatenation", axis=-1)
 
             lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_embedding_concatenation, prev_memory_state=encoder_states[0], prev_carry_state=encoder_states[1], units=states_dim, batch_size=self.batch_size)
+            decoder_dropout = Dropout(drop_rate, name=name+'decoder_drop')(lstm_decoder_outs)
 
             return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
         except Exception as ex:

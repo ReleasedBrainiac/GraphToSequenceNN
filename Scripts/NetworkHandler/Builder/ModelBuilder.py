@@ -132,8 +132,7 @@ class ModelBuilder:
                                   act: activations,
                                   kernel_regularizer: regularizers,
                                   activity_regularizer: regularizers,
-                                  use_bias: bool,
-                                  drop_rate: float):
+                                  use_bias: bool):
         """
         This function builds a layer structure for 1 Hop step in the encoder model part.
             :param previous_layer:Layer: the previous layer
@@ -145,10 +144,9 @@ class ModelBuilder:
             :param kernel_regularizer:regularizers: kernel regularizers
             :param activity_regularizer:regularizers: activity regularizers
             :param use_bias:bool: want result biased
-            :param drop_rate:float: dropout percentage
         """
         try:
-            dense = Dense(  units=hidden_dim,
+            return Dense(   units=hidden_dim,
                             input_shape = previous_layer.shape,
                             kernel_initializer=kernel_init,
                             bias_initializer=bias_init,
@@ -157,8 +155,6 @@ class ModelBuilder:
                             activity_regularizer=activity_regularizer,
                             use_bias=use_bias,
                             name=name+'_time_dist_dense_act')(previous_layer)
-
-            return Dropout(drop_rate, name=name+'_drop')(dense)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildSingleHopActivation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

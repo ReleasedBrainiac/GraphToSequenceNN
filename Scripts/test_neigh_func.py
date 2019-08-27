@@ -1,12 +1,14 @@
 import numpy as np
 import keras.backend as K
+import time
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 
 class TestNeigh():
 
     def Execute(self):
+        t0 = time.clock()
         embedding_sz:int = 200
-        batch_sz:int = 64
+        batch_sz:int = 16
         nodes:int = 35
         aggregator: str ='mean'
         
@@ -20,6 +22,9 @@ class TestNeigh():
 
         nhood = Nhood(feats, neighs, aggregator=aggregator, is_2d=False).Execute(batch_sz)
         print("nhood: ", nhood.shape)
+        t1 = time.clock()
+
+        print("Process Time: ", t1-t0)
 
 if __name__ == "__main__":
     TestNeigh().Execute()

@@ -83,7 +83,7 @@ class Graph2SeqInKeras():
     EPOCHS:int = 10
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 1
+    BATCH_SIZE:int = 4
     HOP_STEPS:int = 6
     WORD_WISE:bool = True
 

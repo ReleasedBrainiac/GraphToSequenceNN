@@ -62,13 +62,20 @@ class Neighbourhood:
         """   
         try:
             agg_f_vecs = None
-
             for i in range(features_size):        
                 found_neighbour_vectors = self.GetVectorNeighbours(features, neighbourhood, i)
                 aggregator_result = Aggregators(found_neighbour_vectors, self.axis, self.aggregator).Execute()
                 AssertNotNone(aggregator_result, 'aggregator_result')
-                agg_f_vecs = aggregator_result if (agg_f_vecs is None) else K.concatenate([agg_f_vecs, aggregator_result])
+
+                if (agg_f_vecs is None):
+                    agg_f_vecs = [aggregator_result] 
+                else: 
+                    agg_f_vecs.append(aggregator_result)
                 
+            agg_f_vecs = agg_f_vecs[0] if (features_size < 2) else K.concatenate(agg_f_vecs)
+
+                #TODO: Remove deprecated or out commented staff
+                #agg_f_vecs = aggregator_result if (agg_f_vecs is None) else K.concatenate([agg_f_vecs, aggregator_result])
             return K.transpose(K.reshape(agg_f_vecs, (features_size,-1)))
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetSamplesAggregatedFeatures]. Arguments:\n{1!r}"
@@ -107,19 +114,18 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def InputStrategySelection(self, batch_sz:int):
+    def InputStrategySelection(self, batch_sz:int=1):
         """
         This function processes the neighbourhood collection and selects a dimension conversion strategy for the desired returning dimension (2D or 3D)
-            :parama batch_sz:int: defines the batchsize
+            :parama batch_sz:int: defines the batch size
         """
         try:
-            samples = 1 if batch_sz < 1 else batch_sz
-            samples_results = self.GetAllSamplesAggregatedFeatures(sample_size=samples)
+            samples_results = self.GetAllSamplesAggregatedFeatures(sample_size=batch_sz)
 
             if self.is_2d:
                 return samples_results[0]
             else:
-                if(samples == 1):
+                if(batch_sz == 1):
                     return K.expand_dims(samples_results[0], axis=0)
                 else:  
                     return K.stack(samples_results)
@@ -128,7 +134,7 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def Execute(self, batch_sz:int):
+    def Execute(self, batch_sz:int=1):
         """
         This function executes the feature aggregation process for the next neighbouring step.
             :parama batch_sz:int: defines the batchsize

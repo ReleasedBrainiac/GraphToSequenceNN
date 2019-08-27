@@ -481,7 +481,7 @@ def DatasetSplitIndex(dataset_size:int, split_percentage:float):
         """   
         try:
             if isNumber(dataset_size) and isNumber(split_percentage):
-                return round((dataset_size * split_percentage)/100.0)
+                return round(dataset_size * split_percentage)
             else:
                 return -1
         except Exception as ex:

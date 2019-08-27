@@ -152,9 +152,6 @@ class NumpyDatasetPreprocessor():
                 vecs_input_words = []
                 vecs_target_words = []
 
-                #print("Shape Inp: ", vecs_input_sentences.shape, " ... [0]", vecs_input_sentences[0])
-                #print("Shape Out: ", vecs_target_sentences.shape, " ... [0]",  vecs_target_sentences[0])
-
                 print("Start Dataset Generator")
                 for s_idx in range(dataset_len):
 
@@ -167,19 +164,10 @@ class NumpyDatasetPreprocessor():
                         tmp_vecs_target_words = vecs_target_sentences[s_idx]
                         qualified_entries = len(tmp_vecs_input_words) - 1
 
-                    #print("tmp_vecs_input_words: ", tmp_vecs_input_words.shape)
-                    #print("tmp_vecs_target_words: ", tmp_vecs_target_words.shape)
-                    #print("qualified_entries: ", qualified_entries)
-
                     nodes_emb.append(RepeatNTimsNdArray(times=qualified_entries, array=nodes_embedding[s_idx]))
                     forward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=fw_look_up[s_idx]))
                     backward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=bw_look_up[s_idx]))
-
-                    #print("Trimmed: ", tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1])
-
                     vecs_input_words.append( tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1] )
-
-
                     vecs_target_words.append( tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)) )
 
                     if (self._show_feedback): StatusReport(run_index=s_idx, max_index=dataset_len, steps=500)

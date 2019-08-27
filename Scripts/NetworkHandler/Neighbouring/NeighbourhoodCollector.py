@@ -107,13 +107,13 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def InputStrategySelection(self):
+    def InputStrategySelection(self, batch_sz:int):
         """
         This function processes the neighbourhood collection and selects a dimension conversion strategy for the desired returning dimension (2D or 3D)
+            :parama batch_sz:int: defines the batchsize
         """
         try:
-            sample_size= self.neighbouring.shape[0].value
-            samples = 1 if (sample_size is None) else int(sample_size)
+            samples = 1 if batch_sz < 1 else batch_sz
             samples_results = self.GetAllSamplesAggregatedFeatures(sample_size=samples)
 
             if self.is_2d:
@@ -128,14 +128,15 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def Execute(self):
+    def Execute(self, batch_sz:int):
         """
         This function executes the feature aggregation process for the next neighbouring step.
+            :parama batch_sz:int: defines the batchsize
         """   
         try:
             AssertIsTensor(self.features)
             AssertIsTensor(self.neighbouring)
-            return self.InputStrategySelection()
+            return self.InputStrategySelection(batch_sz)
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

@@ -4,8 +4,8 @@ from keras.utils import plot_model
 from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
-from keras.optimizers import RMSprop
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, TimeDistributed, Activation, multiply, add, Flatten
+from keras.optimizers import RMSprop, Adam, Nadam, Adagrad, Adadelta
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, RepeatVector, Activation, multiply, add, Flatten, Reshape
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -20,6 +20,7 @@ class ModelBuilder:
         => 4. https://machinelearningmastery.com/define-encoder-decoder-sequence-sequence-model-neural-machine-translation-keras/ 
         => 5. https://www.liip.ch/en/blog/sentiment-detection-with-keras-word-embeddings-and-lstm-deep-learning-networks
         => 6. https://medium.com/tensorflow/predicting-the-price-of-wine-with-the-keras-functional-api-and-tensorflow-a95d1c2c1b03
+        => 7. https://stackoverflow.com/questions/51749404/how-to-connect-lstm-layers-in-keras-repeatvector-or-return-sequence-true
 
     Recommended resources:
         => 1. https://theailearner.com/2019/01/25/multi-input-and-multi-output-models-in-keras/
@@ -51,7 +52,7 @@ class ModelBuilder:
 
         self.input_enc_shape = (input_enc_dim,) if (input_is_2d) else (edge_dim,input_enc_dim)
         self.edge_shape = (edge_dim,) if (input_is_2d) else (edge_dim,edge_dim)
-        self.input_dec_shape = (1,)
+        self.input_dec_shape = (input_dec_dim,) if (input_dec_dim > 0) else (1,)
 
         self.encoder_inputs = self.BuildEncoderInputs()
         self.decoder_inputs = self.BuildDecoderInputs()
@@ -90,7 +91,7 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildNeighbourhoodLayer(self, 
+    def NhoodLambdaLayer(self, 
                                 features, 
                                 look_up, 
                                 hop:int, 
@@ -119,117 +120,7 @@ class ModelBuilder:
             dataset = [features, look_up]
             return Lambda(hood_func, output_shape=out_shape, name=name+name_ext)(dataset)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildNeighbourhoodLayer]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message) 
-
-    def BuildSingleHopActivation( self,
-                                  previous_layer: Layer,
-                                  name:str,
-                                  hidden_dim: int,
-                                  kernel_init: str,
-                                  bias_init: str,
-                                  act: activations,
-                                  kernel_regularizer: regularizers,
-                                  activity_regularizer: regularizers,
-                                  use_bias: bool):
-        """
-        This function builds a layer structure for 1 Hop step in the encoder model part.
-            :param previous_layer:Layer: the previous layer
-            :param name:str: the layer name 
-            :param hidden_dim:int: hidden dimension
-            :param kernel_init:str: kernel initializer
-            :param bias_init:str: bias initializer
-            :param act:activations: activation function
-            :param kernel_regularizer:regularizers: kernel regularizers
-            :param activity_regularizer:regularizers: activity regularizers
-            :param use_bias:bool: want result biased
-        """
-        try:
-            return Dense(   units=hidden_dim,
-                            input_shape = previous_layer.shape,
-                            kernel_initializer=kernel_init,
-                            bias_initializer=bias_init,
-                            activation=act,
-                            kernel_regularizer=kernel_regularizer,
-                            activity_regularizer=activity_regularizer,
-                            use_bias=use_bias,
-                            name=name+'_time_dist_dense_act')(previous_layer)
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildSingleHopActivation]. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            print(message) 
-
-    def BuildLSTM(   self,
-                            inputs:Layer,
-                            prev_memory_state, 
-                            prev_carry_state,
-                            name:str ='sequence_decoder',
-                            training =None,
-                            units =0,
-                            batch_size =1,
-                            act:str ='relu', 
-                            rec_act:str ='hard_sigmoid', 
-                            use_bias:bool =True, 
-                            kernel_initializer:str ='glorot_uniform', 
-                            recurrent_initializer:str ='orthogonal', 
-                            bias_initializer:str ='zeros', 
-                            unit_forget_bias:bool =True, 
-                            kernel_regularizer=None, 
-                            recurrent_regularizer=None, 
-                            bias_regularizer=None, 
-                            activity_regularizer=None, 
-                            kernel_constraint=None, 
-                            recurrent_constraint=None, 
-                            bias_constraint=None, 
-                            dropout:float =0.0, 
-                            rec_dropout:float =0.0, 
-                            implementation:int =1, 
-                            return_sequences:bool =True, 
-                            return_state:bool =True, 
-                            go_backwards:bool =False, 
-                            stateful:bool =False, 
-                            unroll:bool =False):
-        """
-        This function is as wrapper for the Keras LSTM with previous states. Its based on the definition in the keras-team gihub repository.
-            :Params are the Keras params! [Class Docu -> Standard Resources -> 1.]
-        """
-        try:
-            AssertNotNone(inputs, 'lstm_inputs')
-            AssertNotNone(prev_memory_state, 'prev_memory_state')
-            AssertNotNone(prev_carry_state, 'prev_carry_state')
-            AssertNotNegative(units)
-
-            decoder_lstm = LSTM(name=name,
-                                units=units,
-                                batch_size=batch_size,
-                                activation=act, 
-                                recurrent_activation=rec_act, 
-                                use_bias=use_bias, 
-                                kernel_initializer=kernel_initializer, 
-                                recurrent_initializer=recurrent_initializer, 
-                                bias_initializer=bias_initializer, 
-                                unit_forget_bias=unit_forget_bias, 
-                                kernel_regularizer=kernel_regularizer, 
-                                recurrent_regularizer=recurrent_regularizer, 
-                                bias_regularizer=bias_regularizer, 
-                                activity_regularizer=activity_regularizer, 
-                                kernel_constraint=kernel_constraint, 
-                                recurrent_constraint=recurrent_constraint, 
-                                bias_constraint=bias_constraint, 
-                                dropout=dropout, 
-                                recurrent_dropout=rec_dropout, 
-                                implementation=implementation, 
-                                return_sequences=return_sequences, 
-                                return_state=return_state, 
-                                go_backwards=go_backwards, 
-                                stateful=stateful, 
-                                unroll=unroll)
-
-            output, h, c = decoder_lstm(inputs=inputs, initial_state=[prev_memory_state, prev_carry_state], training=training)
-            return output, (h, c)
-        except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildLSTM]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.NhoodLambdaLayer]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
@@ -271,12 +162,17 @@ class ModelBuilder:
             AssertNotNone(backward_layer, 'backward_layer')
             concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
             hidden_dim = 2* hidden_dim
+
+            '''
             hidden = Dense( hidden_dim, 
                                 kernel_initializer=kernel_init,
                                 activation=act,
                                 kernel_regularizer=kernel_regularizer,
                                 activity_regularizer=activity_regularizer,
                                 name="concatenation_act")(concat)
+            '''
+            
+            hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
 
             concat_pool = None
             if(not self.input_is_2d):
@@ -284,42 +180,34 @@ class ModelBuilder:
             else: 
                 concat_pool = Lambda(lambda x: K.reshape(K.max(x,axis=0), (-1, hidden_dim)), name='concat_max_pool')(hidden)
 
-            graph_embedding_encoder_states = [concat_pool, concat_pool]
+            graph_embedding_state_h = concat_pool
+            graph_embedding_state_c = concat_pool
+            #graph_embedding_states = [concat_pool, concat_pool]
 
-
-            return [hidden, graph_embedding_encoder_states]
+            return [hidden, graph_embedding_state_h, graph_embedding_state_c]
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmeddingConcatenation]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def BuildGraphEmbeddingEncoder(
+    def BuildGraphEmbeddingLayers(
                             self, 
                             hops: int =1,
                             aggregator: str ='mean',
                             hidden_dim: int =100, 
-                            kernel_init: str ='glorot_uniform',
-                            bias_init: str ='zeros',
-                            act: activations = activations.relu,
-                            kernel_regularizer: regularizers =regularizers.l2(0.01),
-                            activity_regularizer: regularizers =regularizers.l1(0.01),
-                            use_bias: bool =False):
+                            act: activations = activations.relu):
         """
         This function builds the 1st (encoder) part of the Graph2Sequence ANN
             :param hops:int: size of neighbours cover sphere for each node (which neighbours you want to know from your current p.o.v.) [Default 1]
             :param aggregator:str: aggretaor function [Default mean]
             :param hidden_dim:int: hidden dimension depends on the embedding dimension e.g. GloVe vector length used. [Default 100]
-            :param kernel_init:str: kernel initializer [Default glorot_uniform]
-            :param bias_init:str: bias initializer [Defaul zeros]
             :param act:activations: activation function [Default relu]
-            :param kernel_regularizer:regularizers: kernel regularizers [Default l2(0.01)]
-            :param activity_regularizer:regularizers: activity regularizers [Default l1(0.01)]
-            :param use_bias:bool: want result biased [Default False]
         """ 
         try:
+            extension = "_dense_act"
             out_shape_lambda = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
             features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute()
+            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute(self.batch_size)
 
             forward = features_inputs 
             backward = features_inputs 
@@ -328,17 +216,82 @@ class ModelBuilder:
                 fw_name = ("fw_"+str(i))
                 bw_name = ("bw_"+str(i))
                 
-                forward = self.BuildNeighbourhoodLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
-                forward = self.BuildSingleHopActivation(forward, fw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias)
+                
+                forward = self.NhoodLambdaLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
+                forward = Dense(units=hidden_dim, activation=act, name=fw_name+extension)(forward)
 
-                backward = self.BuildNeighbourhoodLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
-                backward = self.BuildSingleHopActivation(backward, bw_name, hidden_dim, kernel_init, bias_init, act, kernel_regularizer, activity_regularizer, use_bias)
+                backward = self.NhoodLambdaLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
+                backward = Dense(units=hidden_dim, activation=act, name=bw_name+extension)(backward)
 
-            return self.BuildGraphEmeddingConcatenation(forward,backward)
+            return self.BuildGraphEmeddingConcatenation(forward,backward, hidden_dim=hidden_dim)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingEncoder]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingLayers]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
+
+    ######################################################################################
+
+    def BuildStatePassingEncoder(   self,
+                                    sequence_embedding: Embedding,
+                                    graph_embedding: Layer,
+                                    prev_memory_state: Layer,  
+                                    prev_carry_state: Layer,
+                                    act = activations.relu):
+        try:
+            units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+            encoder_out, enc_h, enc_c = LSTM(   name="encoder_lstm", 
+                                                units=units, 
+                                                batch_size=self.batch_size, 
+                                                activation=act, 
+                                                return_sequences =True, 
+                                                return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
+
+            attention_out, att_weights = self.BuildBahdanauAttentionPipe(units, encoder_out, enc_h)
+
+            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
+
+            embedding_lstm = LSTM(attention_reshaped.shape[-1].value, batch_size=self.batch_size, return_sequences=True, name="attention_activate")(sequence_embedding)
+            stated_att_encoder = concatenate([attention_reshaped,embedding_lstm], name="att_emb_concatenation", axis=-1)
+
+            return units, stated_att_encoder, enc_h, enc_c, att_weights
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildStatePassingEncoder]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    def BuildRecursiveEncoder(  self,
+                                sequence_lenght:int,
+                                sequence_embedding: Embedding,
+                                graph_embedding: Layer,
+                                prev_memory_state: Layer,  
+                                prev_carry_state: Layer,
+                                act = activations.relu):
+        """
+        This implemenation is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/ ~> Recursive Model B
+        """
+        try: 
+            units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+            
+            encoder_out = LSTM( name="encoder_lstm", 
+                                units=units, 
+                                batch_size=self.batch_size, 
+                                activation=act)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
+
+            repeated_graph_embedding = RepeatVector(sequence_lenght)(encoder_out)
+
+            embedding_lstm = LSTM(  units=encoder_out.shape[-1].value, 
+                                    batch_size=self.batch_size,
+                                    return_sequences=True, 
+                                    name="attention_activate")(sequence_embedding)
+
+            encoder = concatenate([repeated_graph_embedding, embedding_lstm], name="repeat_emb_concatenation", axis=-1)
+            return units, encoder
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildRecursiveEncoder]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
+
+    ######################################################################################
 
     def BuildBahdanauAttentionPipe(self, units:int, sample_outs, sample_state):
         """
@@ -361,16 +314,16 @@ class ModelBuilder:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def BuildGraphEmbeddingDecoder( self,
-                                    embedding: Embedding,
-                                    encoder: Layer,
-                                    prev_memory_state: Layer,  
-                                    prev_carry_state: Layer,
-                                    act = activations.softmax,
-                                    drop_rate:float = 0.5):
+    def BuildDecoder(   self,
+                        units:int,
+                        encoder: Layer,
+                        prev_memory_state: Layer,  
+                        prev_carry_state: Layer,
+                        act = activations.relu,
+                        drop_rate:float = 0.5):
         """
-        This function builds the 2nd (decoder) part of the Graph2Sequence ANN.
-            :param embedding_layer:Embedding: given embedding layer
+        This function builds the decoder of the Graph2Sequence ANN.
+            :param units:count of decoder cells
             :param encoder:Layer: given encoder out layer
             :param prev_memory_state:Layer: previous layer mem state
             :param prev_carry_state:Layer: previous layer carry state
@@ -378,26 +331,20 @@ class ModelBuilder:
             :param drop_rate:float: dropout percentage
         """
         try:
-            AssertIsKerasTensor(encoder)
-            AssertIsKerasTensor(prev_memory_state)
-            AssertIsKerasTensor(prev_carry_state)
-            states_dim = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-
-            print("prev_memory_state: ", prev_memory_state)
-            print("prev_carry_state: ", prev_carry_state)
-
-            encoder_out, encoder_states = self.BuildLSTM(inputs=encoder, prev_memory_state=prev_memory_state, prev_carry_state=prev_carry_state, units=states_dim, batch_size=self.batch_size, name="encoder_lstm")
-            attention_out, attention_states = self.BuildBahdanauAttentionPipe(states_dim, encoder_out, encoder_states[0])
-
-            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
-            attention_embedding_concatenation = concatenate([attention_reshaped,embedding], name="attention_embedding_concatenation", axis=-1)
-
-            lstm_decoder_outs, dec_states = self.BuildLSTM(inputs=attention_embedding_concatenation, prev_memory_state=encoder_states[0], prev_carry_state=encoder_states[1], units=states_dim, batch_size=self.batch_size)
-            decoder_dropout = Dropout(drop_rate, name=name+'decoder_drop')(lstm_decoder_outs)
-
-            return self.BuildDecoderPrediction(previous_layer=lstm_decoder_outs, act=act)
+            decoder = LSTM( name="decoder_lstm", 
+                            units=units, 
+                            batch_size=self.batch_size, 
+                            activation=act,
+                            return_sequences =True, 
+                            return_state =True)
+                                            
+            if (prev_memory_state != None and prev_carry_state != None):
+                lstm_decoder_outs, _, _ = decoder(inputs=encoder, initial_state=[prev_memory_state, prev_carry_state], training=True)
+            else:
+                lstm_decoder_outs, _, _ = decoder(inputs=encoder, training=True)
+            return Dropout(drop_rate, name='decoder_drop')(lstm_decoder_outs)
         except Exception as ex:
-            template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingDecoder]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoder]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
@@ -418,24 +365,24 @@ class ModelBuilder:
 
     def CompileModel(self, 
                      model:training.Model, 
-                     loss:str = 'categorical_crossentropy', 
-                     optimizer:str ='rmsprop', 
-                     metrics:list =['acc']):
+                     loss:str='categorical_crossentropy', 
+                     optimizer:str='adam', 
+                     metrics:list=['acc'],
+                     clipvalue:float=20.0,
+                     learn_rate:float=0.001):
         """
         This function compiles the training model.
             :param model:training.Model: the training model
             :param loss:str: name of a loss function [Keras definition]
-            :param optimizer:str: name of an optimizer
+            :param optimizer: name of an optimizer
             :param metrics:list: list of strings of possible metrics [Keras definition]
         """   
         try:
-            if optimizer == 'rmsprop':
-                optimizer = RMSprop(lr=0.006)
+            optimizer = self.get_optimizer(name=optimizer, clipvalue=clipvalue, learn_rate=learn_rate)
 
             model.compile(  loss=loss,
                             optimizer=optimizer,
                             metrics=metrics)
-
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.CompileModel]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -469,6 +416,27 @@ class ModelBuilder:
             template = "An exception of type {0} occurred in [ModelBuilder.Plot]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
+
+    def get_optimizer(self, name:str,  clipvalue:float=20.0, learn_rate:float=0.001, amsgrad:bool=False, decay:float=0.0):
+        try:
+            if name == 'rmsprop':
+                return RMSprop(lr=learn_rate, clipvalue=clipvalue)
+
+            if name == 'adam':
+                return Adam(lr=learn_rate, beta_1=0.9, beta_2=0.999, epsilon=None, decay=decay, amsgrad=amsgrad, clipvalue=clipvalue)
+
+            if name == 'Adagrad':
+                return Adagrad(lr=learn_rate, epsilon=None, decay=decay, clipvalue=clipvalue)
+
+            if name == 'Adadelta':
+                return Adadelta(lr=learn_rate, rho=0.95, epsilon=None, decay=decay, clipvalue=clipvalue)
+
+            if name == 'Nadam':
+                return Nadam(lr=learn_rate, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004, clipvalue=clipvalue)
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [ModelBuilder.get_optimizer]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 
 
     def get_encoder_inputs(self):
         """

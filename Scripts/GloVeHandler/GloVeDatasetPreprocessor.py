@@ -1,4 +1,4 @@
-import collections
+import collections, re
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -67,7 +67,12 @@ class GloVeDatasetPreprocessor:
             :param sentence:str: input sentence
         """
         try:
-            return sentence.replace('#::snt ', '').replace('" ', '').replace(' "', '').replace('- -','-')
+            sentence = sentence.replace('#::snt ', '')
+            sentence = sentence.replace('- -','-')
+            sentence = sentence.replace('"', '')
+            sentence = sentence.replace('(','')
+            sentence = sentence.replace(')','')
+            return sentence.replace('  ',' ')
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.ReplaceSentenceFlagAndDialogElements]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -116,6 +121,29 @@ class GloVeDatasetPreprocessor:
             return sequences_in_dec, sequences_in_tar
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.TokenizeVocab]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def TokenizeNodes(self, node_lists:list):
+        """
+        This method convert nodes word lookup to nodes word index look up.
+            :param node_lists:list: list of node lists
+        """   
+        try:
+            look_up = {y:x for x,y in self.tokenizer.index_word.items()} 
+            tokenized_nodes_all = []
+
+            for nodes in node_lists:
+                tokenized_nodes = []
+
+                for node in nodes:
+                    tokenized_nodes.append(look_up.get(node, 0))
+
+                tokenized_nodes_all.append(tokenized_nodes)
+
+            return tokenized_nodes_all
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.TokenizeNodes]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 

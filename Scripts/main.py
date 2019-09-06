@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
 from keras.callbacks import History, ReduceLROnPlateau, BaseLogger, EarlyStopping, ModelCheckpoint
+from keras.layers import Embedding
 
 from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
@@ -21,8 +22,10 @@ from Plotter.PlotHistory import HistoryPlotter
 from NetworkHandler.TensorflowSetup.UsageHandlerGPU import KTFGPUHandler
 from DatasetHandler.NumpyHandler import NumpyDatasetHandler, NumpyDatasetPreprocessor
 from GraphHandler.SemanticMatrixBuilder import MatrixHandler
+from keras.utils import to_categorical
 
 #TODO bset tutorial => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
+#TODO K-Fold Keras => https://machinelearningmastery.com/evaluate-performance-deep-learning-models-keras/
 #TODO many-to-many => https://github.com/keras-team/keras/issues/1029
 #TODO another resource => https://data-science-blog.com/blog/2017/12/20/maschinelles-lernen-klassifikation-vs-regression/
 #TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page---------------------------
@@ -80,17 +83,18 @@ class Graph2SeqInKeras():
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
 
     #Network
-    EPOCHS:int = 10
+    EPOCHS:int = 4
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
     BATCH_SIZE:int = 4
     HOP_STEPS:int = 6
     WORD_WISE:bool = True
+    USE_GLOVE:bool = False
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.200d.txt'
     GLOVE_OUTPUT_DIM:int = 200
-    GLOVE_VOCAB_SIZE:int = 5000
+    GLOVE_VOCAB_SIZE:int = 10000
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
@@ -123,6 +127,7 @@ class Graph2SeqInKeras():
     _dataset_size:int = -1
     _history_keys:list = None
     _max_sequence_len:int = -1
+    _unique_words:int = -1
        
     
     # Multi Run Setup!
@@ -230,7 +235,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)
 
-    def GlovePreprocessor(self, datapairs:list, in_vocab_size:int, max_sequence_len:int=-1, show_processor_feedback:bool=True):
+    def TokenizerPreprocessor(self, datapairs:list, in_vocab_size:int, max_sequence_len:int=-1, show_processor_feedback:bool=True):
         try:
             print("#######################################\n")
             print("########## Dataset Tokenizer ##########")
@@ -239,47 +244,95 @@ class Graph2SeqInKeras():
                                                                 vocab_size=in_vocab_size,
                                                                 max_sequence_length=max_sequence_len,
                                                                 show_feedback=show_processor_feedback)
-            _, _, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values, _ = glove_dataset_processor.Execute()
+            _, _, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding, _ = glove_dataset_processor.Execute()
+            self._unique_words = len(glove_dataset_processor._word_index)
 
             if self.SHOW_GLOBAL_FEEDBACK:
+                print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
                 print("~~~~~~ Example Target Tokenizer ~~~~~~~")
-                glove_dataset_processor.Convert("Input 0", glove_dataset_processor.tokenizer, vectorized_inputs[0])
-                glove_dataset_processor.Convert("Target 0", glove_dataset_processor.tokenizer, vectorized_targets[0])
+                glove_dataset_processor.Convert("Input 0", glove_dataset_processor._tokenizer, vectorized_inputs[0])
+                glove_dataset_processor.Convert("Target 0", glove_dataset_processor._tokenizer, vectorized_targets[0])
                 print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-            return [glove_dataset_processor, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values]
+            glove_dataset_processor.PlotNoneRatio(self.MODEL_DESC)
+
+            return [glove_dataset_processor, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.GlovePreprocessor]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.TokenizerPreprocessor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)            
 
-    def GloveEmbedding(self, glove_dataset_processor:GloVeDatasetPreprocessor, dataset_nodes_values:list, vectorized_inputs:list, vectorized_targets:list, max_cardinality:int, max_sequence_len:int, in_vocab_size:int, out_dim_emb:int, show_processor_feedback:bool=True, embedding_input_wordwise:bool=True, nodes_to_embedding:bool=False):
+    def GloveEmbedding( self, 
+                        tokenizer:GloVeDatasetPreprocessor, 
+                        nodes_embedding:list, 
+                        vectorized_inputs:list, 
+                        vectorized_targets:list, 
+                        max_cardinality:int, 
+                        max_sequence_len:int, 
+                        in_vocab_size:int, 
+                        out_dim_emb:int, 
+                        show_processor_feedback:bool=True, 
+                        embedding_input_wordwise:bool=True, 
+                        nodes_to_embedding:bool=False):
         try:
             print("#######################################\n")
             print("######## Glove Embedding Layer ########")
             glove_embedding = GloVeEmbedding(   max_cardinality=max_cardinality, 
                                                 vocab_size=in_vocab_size, 
-                                                tokenizer=glove_dataset_processor,
+                                                tokenizer=tokenizer,
                                                 max_sequence_length= max_sequence_len,
                                                 glove_file_path=self.GLOVE, 
                                                 output_dim=out_dim_emb, 
                                                 batch_size=self.BATCH_SIZE,
                                                 show_feedback=show_processor_feedback)
 
-            nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(dataset_nodes_values)
-            glove_embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
-
-            if self.SHOW_GLOBAL_FEEDBACK: 
-                print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
-           
+            nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(nodes_embedding)
+            embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
 
             if nodes_to_embedding:
                 vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
                 vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
-            return [nodes_embedding, vectorized_inputs, vectorized_targets, glove_embedding_layer]
+            return [nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.GloveEmbedding]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
+
+    def CategoricalEmbedding(   self,
+                                tokenizer:GloVeDatasetPreprocessor,
+                                nodes_embedding:list, 
+                                vectorized_inputs:list, 
+                                vectorized_targets:list, 
+                                max_cardinality:int, 
+                                max_sequence_len:int, 
+                                in_vocab_size:int, 
+                                out_dim_emb:int, 
+                                show_processor_feedback:bool=True, 
+                                embedding_input_wordwise:bool=True,
+                                nodes_to_embedding:bool=False):
+        try:
+            print("#######################################\n")
+            print("##### Categorical Embedding Layer #####")
+            input_len:int = 1 if embedding_input_wordwise else max_sequence_len
+            embedding_layer = Embedding(in_vocab_size, out_dim_emb, input_length=input_len)
+
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("Nodes example: ", nodes_embedding[0])
+
+            nodes_embedding = tokenizer.TokenizeNodes(nodes_embedding)
+            nodes_embedding = [to_categorical(y=node_vec, num_classes=self._unique_words) for node_vec in nodes_embedding]
+
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("Nodes example: ", nodes_embedding[0])
+                print("Inputs example: ", vectorized_inputs[0])
+                print("Targetss example: ", vectorized_targets[0])
+                print("Embedding layer shape: ", embedding_layer)
+
+            return [nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer]
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [Main.CategoricalEmbedding]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)
@@ -328,6 +381,13 @@ class Graph2SeqInKeras():
                                                                                     vectorized_targets,
                                                                                     (self._dataset_size - self._predict_split_value))
 
+            # Free space
+            nodes_embedding = None
+            fw_look_up = None
+            bw_look_up = None
+            vectorized_inputs = None
+            vectorized_targets = None
+
             return [train_x, train_y, test_x, test_y]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.NetworkInput]. Arguments:\n{1!r}"
@@ -335,7 +395,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex) 
 
-    def NetworkGraphEncoderConstruction(self, target_shape:tuple, max_cardinality:int, glove_embedding_layer:keras.layers.embeddings.Embedding):
+    def NetworkGraphEncoderConstruction(self, target_shape:tuple, max_cardinality:int, embedding_layer:keras.layers.embeddings.Embedding):
         try:
             input_dec_dim = 1 if self.WORD_WISE else target_shape[-1]
 
@@ -346,7 +406,7 @@ class Graph2SeqInKeras():
                                     batch_size=self.BATCH_SIZE)
 
             graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.GLOVE_OUTPUT_DIM)
-            sequence_embedding = glove_embedding_layer(builder.get_decoder_inputs())
+            sequence_embedding = embedding_layer(builder.get_decoder_inputs())
 
             if self._use_stated_encoder:
                 print("Build Encoder Stated!")
@@ -383,11 +443,11 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)  
 
-    def NetworkConstruction(self, target_shape:tuple, max_cardinality:int, glove_embedding_layer:keras.layers.embeddings.Embedding):
+    def NetworkConstruction(self, target_shape:tuple, max_cardinality:int, embedding_layer:keras.layers.embeddings.Embedding):
         try:
             print("#######################################\n")
             print("####### Construct Network Model #######")
-            builder, units, encoder, enc_h, enc_c, _ = self.NetworkGraphEncoderConstruction(target_shape, max_cardinality, glove_embedding_layer)
+            builder, units, encoder, enc_h, enc_c, _ = self.NetworkGraphEncoderConstruction(target_shape, max_cardinality, embedding_layer)
             model = self.NetworkDecoderConstruction(builder, encoder, units, [enc_h, enc_c])
 
 
@@ -428,7 +488,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)  
 
-    def NetworkPlotResults(self, history, new_style:bool = False):
+    def NetworkPlotResults(self, history, iterator_value:int = -1, new_style:bool = False):
         try:
             print("#######################################\n")
             print("######## Plot Training Results ########")
@@ -437,7 +497,8 @@ class Graph2SeqInKeras():
             if self.SHOW_GLOBAL_FEEDBACK:
                 print("History Keys: ", list(history.history.keys()))
 
-            plotter = HistoryPlotter(   model_description = self.MODEL_DESC, 
+            description:str = self.MODEL_DESC if (iterator_value < 0) else self.MODEL_DESC + "_Num_" + str(iterator_value)
+            plotter = HistoryPlotter(   model_description = description, 
                                         path = None, 
                                         history = history,
                                         new_style = new_style)
@@ -480,12 +541,15 @@ class Graph2SeqInKeras():
                                                                     in_max_length=self.MAX_LENGTH_DATA, 
                                                                     keep_edges=self.KEEP_EDGES)
             
-            glove_dataset_processor, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, dataset_nodes_values = self.GlovePreprocessor(  datapairs=datapairs, 
-                                                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE, 
-                                                                                                                                                    max_sequence_len=self._max_sequence_len)
+            tokenizer, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding = self.TokenizerPreprocessor( datapairs=datapairs, 
+                                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE, 
+                                                                                                                                    max_sequence_len=self._max_sequence_len,
+                                                                                                                                    show_processor_feedback=True)
+            embedding_layer = None
 
-            nodes_embedding, vectorized_inputs, vectorized_targets, glove_embedding_layer = self.GloveEmbedding(glove_dataset_processor=glove_dataset_processor, 
-                                                                                                                dataset_nodes_values=dataset_nodes_values, 
+            if self.USE_GLOVE:
+                nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer = self.GloveEmbedding(  tokenizer=tokenizer, 
+                                                                                                                nodes_embedding=nodes_embedding, 
                                                                                                                 vectorized_inputs=vectorized_inputs, 
                                                                                                                 vectorized_targets=vectorized_targets, 
                                                                                                                 max_cardinality=max_cardinality, 
@@ -495,6 +559,19 @@ class Graph2SeqInKeras():
                                                                                                                 show_processor_feedback=True, 
                                                                                                                 embedding_input_wordwise=self.WORD_WISE, 
                                                                                                                 nodes_to_embedding=False)
+            else:
+                nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer = self.CategoricalEmbedding(tokenizer=tokenizer,
+                                                                                                                    nodes_embedding=nodes_embedding,
+                                                                                                                    vectorized_inputs=vectorized_inputs, 
+                                                                                                                    vectorized_targets=vectorized_targets, 
+                                                                                                                    max_cardinality=max_cardinality, 
+                                                                                                                    max_sequence_len=self._max_sequence_len, 
+                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE, 
+                                                                                                                    out_dim_emb=self.GLOVE_OUTPUT_DIM, 
+                                                                                                                    show_processor_feedback=True, 
+                                                                                                                    embedding_input_wordwise=self.WORD_WISE, 
+                                                                                                                    nodes_to_embedding=False)
+            tokenizer = None
             generator = None
             
             if self.WORD_WISE:
@@ -524,12 +601,10 @@ class Graph2SeqInKeras():
 
             model = self.NetworkConstruction(   target_shape=vectorized_targets.shape, 
                                                 max_cardinality=max_cardinality, 
-                                                glove_embedding_layer=glove_embedding_layer)
+                                                embedding_layer=embedding_layer)
 
             history = self.NetworkTrain(model, train_x, train_y)
-
             self.NetworkPlotResults(history)
-
             self.NetworkPredict(model, test_x, test_y)
 
             print("#######################################\n")
@@ -539,8 +614,6 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)     
-    
-     
 
     
 if __name__ == "__main__":

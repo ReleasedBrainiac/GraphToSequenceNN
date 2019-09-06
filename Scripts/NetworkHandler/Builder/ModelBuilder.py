@@ -5,7 +5,7 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop, Adam, Nadam, Adagrad, Adadelta
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, Reshape, GlobalMaxPooling1D, RepeatVector, Activation, multiply, add, Flatten, Reshape
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, GlobalMaxPooling1D, RepeatVector, Activation, multiply, add, Flatten, BatchNormalization
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -320,7 +320,8 @@ class ModelBuilder:
                         prev_memory_state: Layer,  
                         prev_carry_state: Layer,
                         act = activations.relu,
-                        drop_rate:float = 0.5):
+                        drop_rate:float = 0.5,
+                        use_batch_norm:bool=True):
         """
         This function builds the decoder of the Graph2Sequence ANN.
             :param units:count of decoder cells
@@ -342,6 +343,10 @@ class ModelBuilder:
                 lstm_decoder_outs, _, _ = decoder(inputs=encoder, initial_state=[prev_memory_state, prev_carry_state], training=True)
             else:
                 lstm_decoder_outs, _, _ = decoder(inputs=encoder, training=True)
+
+            if use_batch_norm:
+                lstm_decoder_outs = BatchNormalization()(lstm_decoder_outs)
+
             return Dropout(drop_rate, name='decoder_drop')(lstm_decoder_outs)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildDecoder]. Arguments:\n{1!r}"
@@ -376,6 +381,8 @@ class ModelBuilder:
             :param loss:str: name of a loss function [Keras definition]
             :param optimizer: name of an optimizer
             :param metrics:list: list of strings of possible metrics [Keras definition]
+            :param clipvalue:float: control gradient clipping
+            :param learn_rate:float: optimizer learning rate
         """   
         try:
             optimizer = self.get_optimizer(name=optimizer, clipvalue=clipvalue, learn_rate=learn_rate)

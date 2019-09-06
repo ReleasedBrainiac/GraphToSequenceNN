@@ -257,7 +257,7 @@ class GloVeDatasetPreprocessor:
                         title = 'None value occurences in graph nodes', 
                         short_title = 'Occurence min and max', 
                         x_label = 'Node values', 
-                        y_label = 'Found None values',
+                        y_label = 'None values',
                         path = path)
             return None
         except Exception as ex:

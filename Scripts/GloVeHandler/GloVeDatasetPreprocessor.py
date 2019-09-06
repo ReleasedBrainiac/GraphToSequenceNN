@@ -1,4 +1,4 @@
-import collections
+import collections, sys
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -38,7 +38,7 @@ class GloVeDatasetPreprocessor:
             self._edge_matrices_fw:list = None
             self._edge_matrices_bw:list = None
 
-            self._min:int = -1
+            self._min:int = sys.maxint
             self._max:int = -1
             self._word_to_none_ratios:dict = {}
 
@@ -105,7 +105,7 @@ class GloVeDatasetPreprocessor:
                     # Collect the none ratio values for bar chart
                     summed_nones = sum(x is not None for x in node_words)
                     self._min = min(self._min, summed_nones) 
-                    self._max = min(self._max, summed_nones) 
+                    self._max = max(self._max, summed_nones) 
                     self._word_to_none_ratios[len(node_words)] = summed_nones
 
                     self._edge_matrices_fw.append(dataset[1][0][0])

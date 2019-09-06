@@ -288,8 +288,12 @@ class DatasetPipeline:
         """
         try:
             BarChart(   dataset = self._count_graph_node_cards_occs, 
-                        min_card = self._min_cardinality,
-                        max_card = self._max_cardinality, 
+                        min = self._min_cardinality,
+                        max = self._max_cardinality, 
+                        title = 'Cardinalities Occurences', 
+                        short_title = 'Cardinality', 
+                        x_label = 'Cardinalities', 
+                        y_label = 'Occourences',
                         path = path)
             return None
         except Exception as ex:

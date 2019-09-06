@@ -97,7 +97,8 @@ class GloVeDatasetPreprocessor:
             self._sentences_tar_in = []
             self._word_to_none_ratios = {}
 
-            for dataset in datasets: 
+            while len(datasets) > 0:
+                dataset = datasets.pop()
                 if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
                     node_words = dataset[1][1]
                     key = len(node_words)
@@ -121,6 +122,7 @@ class GloVeDatasetPreprocessor:
 
                     self._sentences_dec_in.append(input_t_0)
                     self._sentences_tar_in.append(input_t_minus_1)
+
             assert (len(self._sentences_dec_in) == len(self._sentences_tar_in)), "Dataset Error! Inputs counter doesn't match targets counter"
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"

@@ -242,8 +242,8 @@ class GloVeDatasetPreprocessor:
         """
         try:
             BarChart(   dataset = self._word_to_none_ratios, 
-                        min = self._min,
-                        max = self._max, 
+                        min_value = self._min,
+                        max_value = self._max, 
                         title = 'None value occurences in graph nodes', 
                         short_title = 'Occurence min and max', 
                         x_label = 'Node values', 

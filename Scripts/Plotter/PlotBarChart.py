@@ -10,8 +10,8 @@ class BarChart(object):
     """
     def __init__(   self, 
                     dataset:dict, 
-                    min:int, 
-                    max:int, 
+                    min_value:int, 
+                    max_value:int, 
                     title:str = None, 
                     short_title:str = None, 
                     x_label:str = None, 
@@ -21,8 +21,8 @@ class BarChart(object):
         """
         The class constructor.
             :param dataset:dict: dataset as dict
-            :param min:int: minimum
-            :param max:int: maximum
+            :param min_value:int: minimum
+            :param max_value:int: maximum
             :param title:str: plot image long title
             :param short_title:str: short title
             :param y_label:str: label for the y values
@@ -32,8 +32,8 @@ class BarChart(object):
         """
         try:
             self._dataset:dict = dataset if isNotNone(dataset) else None
-            self._min_card:int = min if (min > -1) else -1
-            self._max_card:int = max if (max > -1) else -1
+            self._min_value:int = min_value if (min_value > -1) else -1
+            self._max_value:int = max_value if (max_value > -1) else -1
             self._title:str = title if isNotNone(title) else 'Untitled'
             self._short_title:str = short_title if isNotNone(short_title) else ''
             self._y_label:str = y_label if isNotNone(y_label) else 'Y_Value'
@@ -53,7 +53,7 @@ class BarChart(object):
         This method print the bar chart.
         """
         try:
-            i_card_subtitle:str = self._short_title + " Interval: [" + str(self._min_card) + " , " + str(self._max_card) + "]"
+            i_card_subtitle:str = self._short_title + " Interval: [" + str(self._min_value) + " , " + str(self._max_value) + "]"
             ds_keys = self._dataset.keys()
             cardinalities:list = []
             occourences:list = []

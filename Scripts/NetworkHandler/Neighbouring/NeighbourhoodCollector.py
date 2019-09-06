@@ -74,8 +74,6 @@ class Neighbourhood:
                 
             agg_f_vecs = agg_f_vecs[0] if (features_size < 2) else K.concatenate(agg_f_vecs)
 
-                #TODO: Remove deprecated or out commented staff
-                #agg_f_vecs = aggregator_result if (agg_f_vecs is None) else K.concatenate([agg_f_vecs, aggregator_result])
             return K.transpose(K.reshape(agg_f_vecs, (features_size,-1)))
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.GetSamplesAggregatedFeatures]. Arguments:\n{1!r}"

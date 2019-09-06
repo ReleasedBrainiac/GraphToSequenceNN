@@ -1,0 +1,171 @@
+Cyberreality (Synthwave - Retrowave - Chillwave Mix) - YouTube
+https://www.youtube.com/watch?v=_VtnDS6IJEk
+
+Giolì & Assia - YouTube
+https://www.youtube.com/channel/UCCvvW7nH3uVVH1hJ6_PRn0A
+
+How to Implement a Beam Search Decoder for Natural Language Processing
+https://machinelearningmastery.com/beam-search-decoder-natural-language-processing/
+
+Neural Machine Translation with Attention  |  TensorFlow Core  |  TensorFlow
+https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
+
+Word-level LSTM text generator. Creating automatic song lyrics with Neural Networks.
+https://medium.com/coinmonks/word-level-lstm-text-generator-creating-automatic-song-lyrics-with-neural-networks-b8a1617104fb
+
+How to Develop a Word-Level Neural Language Model and Use it to Generate Text
+https://machinelearningmastery.com/how-to-develop-a-word-level-neural-language-model-in-keras/
+
+nmt_keras/base.ipynb at master · devm2024/nmt_keras
+https://github.com/devm2024/nmt_keras/blob/master/base.ipynb
+
+[Keras] Returning the hidden state in keras RNNs with return_state - Digital Thinking
+http://digital-thinking.de/keras-returning-hidden-state-in-rnns/
+
+Text classifier with Keras+TensorFlow using Recurrent Neural Networks
+https://medium.com/coinmonks/text-classifier-with-keras-tensorflow-using-recurrent-neural-networks-ad63dd5fc316
+
+How to Develop Multi-Step LSTM Time Series Forecasting Models for Power Usage
+https://machinelearningmastery.com/how-to-develop-lstm-models-for-multi-step-time-series-forecasting-of-household-power-consumption/
+
+neural network - How to split a keras model into submodels after it's created - Data Science Stack Exchange
+https://datascience.stackexchange.com/questions/43927/how-to-split-a-keras-model-into-submodels-after-its-created
+
+Graph2Seq/model.py at master · IBM/Graph2Seq
+https://github.com/IBM/Graph2Seq/blob/master/main/model.py
+
+How to Develop an Encoder-Decoder Model for Sequence-to-Sequence Prediction in Keras
+https://machinelearningmastery.com/develop-encoder-decoder-model-sequence-sequence-prediction-keras/
+
+About Train, Validation and Test Sets in Machine Learning
+https://towardsdatascience.com/train-validation-and-test-sets-72cb40cba9e7
+
+Meaning of polysemisch in German english dictionary - Bedeutung polysemisch in Englisch Deutsch Wörterbuch 1
+https://www.almaany.com/en/dict/en-de/polysemisch/
+
+Doc2Vec with Keras (0.77) | Kaggle
+https://www.kaggle.com/alyosama/doc2vec-with-keras-0-77/comments
+
+removed dropout from encoder · ReleasedBrainiac/GraphToSequenceNN@fa3e443
+https://github.com/ReleasedBrainiac/GraphToSequenceNN/commit/fa3e44344984220911bf44daaa64938ec5a7db77#diff-45d318fb280c99d165565b037854e70c
+
+performance - Efficient Stack implementation in Python - Stack Overflow
+https://stackoverflow.com/questions/31229962/efficient-stack-implementation-in-python
+
+Optimizers - Keras Documentation
+https://keras.io/optimizers/
+
+Losses - Keras Documentation
+https://keras.io/losses/#available-loss-functions
+
+Text Generation With LSTM Recurrent Neural Networks in Python with Keras
+https://machinelearningmastery.com/text-generation-lstm-recurrent-neural-networks-python-keras/
+
+How to Develop a Word-Level Neural Language Model and Use it to Generate Text
+https://machinelearningmastery.com/how-to-develop-a-word-level-neural-language-model-in-keras/
+
+How to Use the TimeDistributed Layer in Keras
+https://machinelearningmastery.com/timedistributed-layer-for-long-short-term-memory-networks-in-python/
+
+How to implement Seq2Seq LSTM Model in Keras #ShortcutNLP
+https://towardsdatascience.com/how-to-implement-seq2seq-lstm-model-in-keras-shortcutnlp-6f355f3e5639
+
+Skymind | A Beginner's Guide to Generative Adversarial Networks (GANs)
+https://skymind.com/wiki/generative-adversarial-network-gan
+
+jakezhaojb/ARAE: Code for the paper "Adversarially Regularized Autoencoders (ICML 2018)" by Zhao, Kim, Zhang, Rush and LeCun
+https://github.com/jakezhaojb/ARAE
+
+You searched for multi class - Machine Learning Mastery
+https://machinelearningmastery.com/?s=multi+class&post_type=post&submit=Search
+
+Precision and recall - Wikipedia
+https://en.wikipedia.org/wiki/Precision_and_recall
+
+One Shot Learning with Siamese Networks using Keras
+https://towardsdatascience.com/one-shot-learning-with-siamese-networks-using-keras-17f34e75bb3d
+
+Deep Learning Archives - Machine Learning Mastery
+https://machinelearningmastery.com/category/deep-learning/
+
+tensorflow - How to connect LSTM layers in Keras, RepeatVector or return_sequence=True? - Stack Overflow
+https://stackoverflow.com/questions/51749404/how-to-connect-lstm-layers-in-keras-repeatvector-or-return-sequence-true
+
+Optimizers - Keras Documentation
+https://keras.io/optimizers/
+
+Losses - Keras Documentation
+https://keras.io/losses/
+
+Optimizers - Keras Documentation
+https://keras.io/optimizers/
+
+How to Avoid Exploding Gradients With Gradient Clipping
+https://machinelearningmastery.com/how-to-avoid-exploding-gradients-in-neural-networks-with-gradient-clipping/
+
+keras 1 layer lstm decoder - Google Search
+https://www.google.com/search?q=keras+1+layer+lstm+decoder&rlz=1C1GCEA_enDE790DE790&oq=keras+1+layer+lstm+decoder&aqs=chrome..69i57j69i64.6323j0j7&sourceid=chrome&ie=UTF-8
+
+Lstm seq2seq - Keras Documentation
+https://keras.io/examples/lstm_seq2seq/
+
+keras decoder lstm training=True or False - Google Search
+https://www.google.com/search?rlz=1C1GCEA_enDE790DE790&ei=uehfXbbiDJH7kwWYy4HYCw&q=keras+decoder+lstm+training%3DTrue+or+False&oq=keras+decoder+lstm+training%3DTrue+or+False&gs_l=psy-ab.3...19216.28731..28990...2.2..0.289.2469.7j8j3......0....1..gws-wiz.......0i71j33i160j33i21.44CBwu0i_A0&ved=0ahUKEwj2otCmi5nkAhWR_aQKHZhlALsQ4dUDCAo&uact=5
+
+neural network - Seq2Seq Bidirectional Encoder Decoder in Keras - Stack Overflow
+https://stackoverflow.com/questions/50815354/seq2seq-bidirectional-encoder-decoder-in-keras
+
+machine learning training accuracy decrease validation accuracy increase - Google Search
+https://www.google.com/search?rlz=1C1GCEA_enDE790DE790&ei=IfBfXdHgPP6Ik74P_8Sp6A8&q=machine+learning+training+accuracy+decrease+validation+accuracy+increase&oq=machine+learning+training+accuracy+decrease+validation+accuracy+increase&gs_l=psy-ab.3...20057.42081..42643...6.2..0.443.6389.13j40j4-1......0....1..gws-wiz.......0i71j33i160j33i21j33i10.pvSg9aPU-xw&ved=0ahUKEwiR9YqvkpnkAhV-xMQBHX9iCv0Q4dUDCAo&uact=5
+
+When can Validation Accuracy be greater than Training Accuracy for Deep Learning Models?
+https://www.researchgate.net/post/When_can_Validation_Accuracy_be_greater_than_Training_Accuracy_for_Deep_Learning_Models
+
+A detailed example of data generators with Keras
+https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
+
+Layer wrappers - Keras Documentation
+https://keras.io/layers/wrappers/
+
+One simple trick to train Keras model faster with Batch Normalization | DLology
+https://www.dlology.com/blog/one-simple-trick-to-train-keras-model-faster-with-batch-normalization/
+
+Encoder-Decoder Models for Text Summarization in Keras
+https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
+
+How to Accelerate Learning of Deep Neural Networks With Batch Normalization
+https://machinelearningmastery.com/how-to-accelerate-learning-of-deep-neural-networks-with-batch-normalization/
+
+keras embedding generator - Google Search
+https://www.google.com/search?q=keras+embedding+generator&rlz=1C1GCEA_enDE790DE790&oq=keras+embedding+generator&aqs=chrome..69i57j69i64.6391j0j7&sourceid=chrome&ie=UTF-8
+
+Using pre-trained word embeddings in a Keras model
+https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html
+
+About Train, Validation and Test Sets in Machine Learning
+https://towardsdatascience.com/train-validation-and-test-sets-72cb40cba9e7
+
+Cross-validation (statistics) - Wikipedia
+https://en.wikipedia.org/wiki/Cross-validation_(statistics)
+
+Backend - Keras Documentation
+https://keras.io/backend/#concatenate
+
+How to One Hot Encode Sequence Data in Python
+https://machinelearningmastery.com/how-to-one-hot-encode-sequence-data-in-python/
+
+How to Use Word Embedding Layers for Deep Learning with Keras
+https://machinelearningmastery.com/use-word-embedding-layers-deep-learning-keras/
+
+Multi-Class Text Classification Model Comparison and Selection
+https://towardsdatascience.com/multi-class-text-classification-model-comparison-and-selection-5eb066197568
+
+keras tokenizer word to index - Google Search
+https://www.google.com/search?q=keras+tokenizer+word+to+index&rlz=1C1GCEA_enDE790DE790&oq=keras+tokenizer+word+to+index&aqs=chrome..69i57j69i64.7519j0j7&sourceid=chrome&ie=UTF-8
+
+Optimizers - Keras Documentation
+https://keras.io/optimizers/#parameters-common-to-all-keras-optimizers
+
+How to Prepare Text Data for Deep Learning with Keras
+https://machinelearningmastery.com/prepare-text-data-deep-learning-keras/
+

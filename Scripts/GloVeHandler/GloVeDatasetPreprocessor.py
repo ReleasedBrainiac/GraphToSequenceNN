@@ -3,6 +3,7 @@ import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from DatasetHandler.ContentSupport import isNotNone
+from Plotter.PlotBarChart import BarChart
 
 class GloVeDatasetPreprocessor:
     """
@@ -33,27 +34,31 @@ class GloVeDatasetPreprocessor:
         try:
             print('~~~~~~ GloVe Dataset Preprocessor ~~~~~')
 
-            self.node_words_list = None
-            self.edge_matrices_fw = None
-            self.edge_matrices_bw = None
+            self._node_words_list:list = None
+            self._edge_matrices_fw:list = None
+            self._edge_matrices_bw:list = None
 
-            self.sentences_dec_in = None
-            self.sentences_tar_in = None
-            self.word_index = None
-            self.tokenizer_words = None
-            self.show_response = show_feedback               
+            self._min:int = -1
+            self._max:int = -1
+            self._word_to_none_ratios:dict = {}
+
+            self._sentences_dec_in:list = None
+            self._sentences_tar_in:list = None
+            self._word_index = None
+            self._tokenizer_words = None
+            self._show_response = show_feedback               
 
             self.MAX_SEQUENCE_LENGTH = max_sequence_length  if (max_sequence_length > 0) else 1000
-            self.tokenizer = None if (vocab_size < 1) else Tokenizer(num_words=vocab_size, split=' ', char_level=False, filters='')
+            self._tokenizer = None if (vocab_size < 1) else Tokenizer(num_words=vocab_size, split=' ', char_level=False, filters='')
 
             print('Input/padding:\t\t => ', self.MAX_SEQUENCE_LENGTH)
             print('Vocab size:\t\t => ', vocab_size)
             
             if isNotNone(nodes_context): 
                 self.CollectDatasamples(nodes_context)
-                if self.show_response: 
-                    print('Collected decoder samples:\t => ', len(self.sentences_dec_in))
-                    print('Generated target samples:\t => ', len(self.sentences_tar_in)) 
+                if self._show_response: 
+                    print('Collected decoder samples:\t => ', len(self._sentences_dec_in))
+                    print('Generated target samples:\t => ', len(self._sentences_tar_in)) 
 
                 
         except Exception as ex:
@@ -85,24 +90,33 @@ class GloVeDatasetPreprocessor:
             :param datasets:list: pairs of cleaned amr datasets
         """   
         try:
-            self.node_words_list = []
-            self.edge_matrices_fw = []
-            self.edge_matrices_bw = []
-            self.sentences_dec_in = []
-            self.sentences_tar_in = []
+            self._node_words_list = []
+            self._edge_matrices_fw = []
+            self._edge_matrices_bw = []
+            self._sentences_dec_in = []
+            self._sentences_tar_in = []
+            self._word_to_none_ratios = {}
 
             for dataset in datasets: 
                 if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
-                    self.node_words_list.append(dataset[1][1])
-                    self.edge_matrices_fw.append(dataset[1][0][0])
-                    self.edge_matrices_bw.append(dataset[1][0][1])
+                    node_words = dataset[1][1]
+                    self._node_words_list.append(node_words)
+
+                    # Collect the none ratio values for bar chart
+                    summed_nones = sum(x is not None for x in node_words)
+                    self._min = min(self._min, summed_nones) 
+                    self._max = min(self._max, summed_nones) 
+                    self._word_to_none_ratios[len(node_words)] = summed_nones
+
+                    self._edge_matrices_fw.append(dataset[1][0][0])
+                    self._edge_matrices_bw.append(dataset[1][0][1])
 
                     input_t_0 = self.ReplaceSentenceFlagAndDialogElements(dataset[0])
                     input_t_minus_1 = input_t_0.split(' ', 1)[1]
 
-                    self.sentences_dec_in.append(input_t_0)
-                    self.sentences_tar_in.append(input_t_minus_1)
-            assert (len(self.sentences_dec_in) == len(self.sentences_tar_in)), "Dataset Error! Inputs counter doesn't match targets counter"
+                    self._sentences_dec_in.append(input_t_0)
+                    self._sentences_tar_in.append(input_t_minus_1)
+            assert (len(self._sentences_dec_in) == len(self._sentences_tar_in)), "Dataset Error! Inputs counter doesn't match targets counter"
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.CollectDatasamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -113,11 +127,11 @@ class GloVeDatasetPreprocessor:
         This function tokenizes the collected vocab (sentences, targets) and set the global word index list.
         """   
         try:
-            if self.show_response: print('Tokenize vocab!')
-            self.tokenizer.fit_on_texts(self.sentences_dec_in)
-            sequences_in_dec = self.tokenizer.texts_to_sequences(self.sentences_dec_in)
-            sequences_in_tar = self.tokenizer.texts_to_sequences(self.sentences_tar_in)
-            self.word_index = self.tokenizer.word_index
+            if self._show_response: print('Tokenize vocab!')
+            self._tokenizer.fit_on_texts(self._sentences_dec_in)
+            sequences_in_dec = self._tokenizer.texts_to_sequences(self._sentences_dec_in)
+            sequences_in_tar = self._tokenizer.texts_to_sequences(self._sentences_tar_in)
+            self._word_index = self._tokenizer.word_index
             return sequences_in_dec, sequences_in_tar
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.TokenizeVocab]. Arguments:\n{1!r}"
@@ -130,7 +144,7 @@ class GloVeDatasetPreprocessor:
             :param node_lists:list: list of node lists
         """   
         try:
-            look_up = {y:x for x,y in self.tokenizer.index_word.items()} 
+            look_up = {y:x for x,y in self._tokenizer.index_word.items()} 
             tokenized_nodes_all = []
 
             for nodes in node_lists:
@@ -153,7 +167,7 @@ class GloVeDatasetPreprocessor:
             :param tokenized_sequences:list: tokenized vocab samples
         """   
         try:
-            if self.show_response: print('Vectorize vocab!')
+            if self._show_response: print('Vectorize vocab!')
             padded_sequences = pad_sequences(tokenized_sequences, padding='post', maxlen=self.MAX_SEQUENCE_LENGTH)
             indices = np.arange(padded_sequences.shape[0])
             return padded_sequences, indices
@@ -170,24 +184,24 @@ class GloVeDatasetPreprocessor:
         try:
             print('~~~~~~~~~~~~~ Prepare Data ~~~~~~~~~~~~')
             tokenized_dec_ins, tokenized_tar_ins = self.TokenizeVocab()
-            if self.show_response: print('\t=> Found %s unique tokens.' % len(self.word_index))
+            if self._show_response: print('\t=> Found %s unique tokens.' % len(self._word_index))
 
             vectorized_dec_ins, indices_dec = self.VectorizeVocab(tokenized_dec_ins)
-            if self.show_response: 
+            if self._show_response: 
                 print('\t=> Fixed',vectorized_dec_ins.shape,'decoder input tensor.')
 
             vectorized_tar_ins, indices_tar = self.VectorizeVocab(tokenized_tar_ins)
-            if self.show_response: 
+            if self._show_response: 
                 print('\t=> Fixed',vectorized_tar_ins.shape,'decoder target tensor.')
 
             assert (indices_dec.all() == indices_tar.all()), "Indices missmatch for vectorized decoder inputs and targets!"
-            self.tokenizer_words = self.tokenizer.word_index.items()
-            self.edge_matrices_fw = np.array(self.edge_matrices_fw)
-            self.edge_matrices_bw = np.array(self.edge_matrices_bw)
+            self._tokenizer_words = self._tokenizer.word_index.items()
+            self._edge_matrices_fw = np.array(self._edge_matrices_fw)
+            self._edge_matrices_bw = np.array(self._edge_matrices_bw)
 
             print('Result structure! \n\t=> [RawTextDecIn, RawTextTarIn, EdgesFw, EdgesBW, VectorizedDecIn, VectorizedTarIn, GraphNodesValuesList, VectorizedInputsIndices]')
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-            return [self.sentences_dec_in, self.sentences_tar_in, self.edge_matrices_fw, self.edge_matrices_bw, vectorized_dec_ins, vectorized_tar_ins, self.node_words_list, indices_dec]
+            return [self._sentences_dec_in, self._sentences_tar_in, self._edge_matrices_fw, self._edge_matrices_bw, vectorized_dec_ins, vectorized_tar_ins, self._node_words_list, indices_dec]
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -198,8 +212,8 @@ class GloVeDatasetPreprocessor:
         This function set sentences_dec_in and  sentences_tar_in to None.
         """
         try:
-            self.sentences_dec_in = None
-            self.sentences_tar_in = None
+            self._sentences_dec_in = None
+            self._sentences_tar_in = None
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.FreeUnusedResources]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -218,6 +232,26 @@ class GloVeDatasetPreprocessor:
                 if t!=0: print ("%d ----> %s" % (t, lang.index_word[t]))
         except Exception as ex:
             template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.Convert]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+
+    def PlotNoneRatio(self, path:str = None):
+        """
+        This method plot the word values to none values ratio collect from the nodes lists.
+            :param path:str: path combined with filename for file image storing
+        """
+        try:
+            BarChart(   dataset = self._word_to_none_ratios, 
+                        min = self._min,
+                        max = self._max, 
+                        title = 'None value occurences in graph nodes', 
+                        short_title = 'Occurence min and max', 
+                        x_label = 'Node values', 
+                        y_label = 'Found None values',
+                        path = path)
+            return None
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [GloVeDatasetPreprocessor.PlotNoneRatio]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
                 

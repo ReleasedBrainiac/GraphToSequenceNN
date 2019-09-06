@@ -92,7 +92,7 @@ class NumpyDatasetHandler():
             print(message)
             print(ex)
 
-    #TODO: This could be used for the fit generator as generator pipe -> needs more attention and changes!
+    #TODO: This could be used for the fit generator as generator pipe -> needs changes!
     def LoadTeacherForcingDS(self):
         """
         This method allow to load the teacher forcing dataset parts.
@@ -134,6 +134,7 @@ class NumpyDatasetPreprocessor():
     def PreprocessTeacherForcingDS(self, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_sentences:np.ndarray, vecs_target_sentences:np.ndarray, save:bool = False, use_padded_vecs:bool = True):
         """
         This method preprocess the dataset to provide astructure for teacher forcing -> sentences will be split into words -> generate sample for each word instead each sentence.
+        Additionally the converted data can be save to files.
             :param nodes_embedding:np.ndarray: node embedding numpy array
             :param fw_look_up:np.ndarray: forward look up numpy array
             :param bw_look_up:np.ndarray: backward look up numpy array
@@ -143,16 +144,48 @@ class NumpyDatasetPreprocessor():
             :param use_padded_vecs:bool: the given sentence input and targets are only padded vecs not embedded
         """
         try:
-            dataset_len = len(vecs_input_sentences)
-            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences):        
+            print("Start Dataset Generator")
+            nodes_embedding, fw_look_up, bw_look_up, vecs_input_words, vecs_target_words = self.CollectTeacherForcingWordWiseSamples(   len(vecs_input_sentences), 
+                                                                                                                                        nodes_embedding, 
+                                                                                                                                        fw_look_up, 
+                                                                                                                                        bw_look_up, 
+                                                                                                                                        vecs_input_sentences, 
+                                                                                                                                        vecs_target_sentences)
+            vecs_input_sentences = None
+            vecs_target_sentences = None
 
-                nodes_emb = []
-                forward_look_up = []
-                backward_look_up = []
-                vecs_input_words = []
-                vecs_target_words = []
+            if save:
+                NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[0])).Save3DNdArrayToTxt(array=nodes_embedding)
+                NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[1])).Save3DNdArrayToTxt(array=fw_look_up)
+                NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[2])).Save3DNdArrayToTxt(array=bw_look_up)
+                NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[3])).Save2DNdArrayToTxt(array=vecs_input_words)
+                NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[4])).Save2DNdArrayToTxt(array=vecs_target_words)
+            return nodes_embedding, fw_look_up, bw_look_up, vecs_input_words, vecs_target_words
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [NumpyDatasetPreprocessor.GenerateDatasetTeacherForcing]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+            print(ex)
 
-                print("Start Dataset Generator")
+    def CollectTeacherForcingWordWiseSamples(self, dataset_len:int, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_sentences:np.ndarray, vecs_target_sentences:np.ndarray, use_padded_vecs:bool = True):
+        """
+        This method collect all sample fragments for teacher forcing by word wise splitting of sentence wise datasets.
+            :param dataset_len:int: length of the dataset it self
+            :param nodes_embedding:np.ndarray: node embedding numpy array
+            :param fw_look_up:np.ndarray: forward look up numpy array
+            :param bw_look_up:np.ndarray: backward look up numpy array
+            :param vecs_input_sentences:np.ndarray: input sentences vector numpy array -> they will be word level seperated
+            :param vecs_target_sentences:np.ndarray: target sentences vector numpy array
+            :param use_padded_vecs:bool: the given sentence input and targets are only padded vecs not embedded
+        """
+        try:
+            nodes_emb = []
+            forward_look_up = []
+            backward_look_up = []
+            vecs_input_words = []
+            vecs_target_words = []
+
+            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences):
                 for s_idx in range(dataset_len):
 
                     if use_padded_vecs:
@@ -167,30 +200,15 @@ class NumpyDatasetPreprocessor():
                     nodes_emb.append(RepeatNTimsNdArray(times=qualified_entries, array=nodes_embedding[s_idx]))
                     forward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=fw_look_up[s_idx]))
                     backward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=bw_look_up[s_idx]))
-                    vecs_input_words.append( tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1] )
-                    vecs_target_words.append( tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)) )
+                    vecs_input_words.append(tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1])
+                    vecs_target_words.append(tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)))
 
                     if (self._show_feedback): StatusReport(run_index=s_idx, max_index=dataset_len, steps=500)
-
-                nodes_emb = ConcatenateNdArrays(nodes_emb)
-                forward_look_up = ConcatenateNdArrays(forward_look_up)
-                backward_look_up = ConcatenateNdArrays(backward_look_up)
-                vecs_input_words = ConcatenateNdArrays(vecs_input_words)
-                vecs_target_words = ConcatenateNdArrays(vecs_target_words)
-
-                if save:
-                    NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[0])).Save3DNdArrayToTxt(array=nodes_emb)
-                    NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[1])).Save3DNdArrayToTxt(array=forward_look_up)
-                    NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[2])).Save3DNdArrayToTxt(array=backward_look_up)
-
-                    NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[3])).Save2DNdArrayToTxt(array=vecs_input_words)
-                    NumpyDatasetHandler(path=(self._folder_path + self._np_file_names[4])).Save2DNdArrayToTxt(array=vecs_target_words)
-
-                return nodes_emb, forward_look_up, backward_look_up, vecs_input_words, vecs_target_words
             else:
                 assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences)), "The given inputs of GenerateDatasetTeacherForcing aren't machting at first dimension!"
+            return nodes_emb, forward_look_up, backward_look_up, vecs_input_words, vecs_target_words
         except Exception as ex:
-            template = "An exception of type {0} occurred in [NumpyDatasetPreprocessor.GenerateDatasetTeacherForcing]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [NumpyDatasetPreprocessor.CollectTeacherForcingWordWiseSamples]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)

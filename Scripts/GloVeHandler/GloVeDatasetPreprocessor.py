@@ -1,4 +1,4 @@
-import collections, sys
+import collections, sys, statistics
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -100,13 +100,18 @@ class GloVeDatasetPreprocessor:
             for dataset in datasets: 
                 if isNotNone(dataset[1][0]) and len(dataset[1][0]) == 2 and len(dataset[1][0][0]) == len(dataset[1][0][1]):
                     node_words = dataset[1][1]
+                    key = len(node_words)
                     self._node_words_list.append(node_words)
 
                     # Collect the none ratio values for bar chart
-                    summed_nones = sum(x is not None for x in node_words)
+                    summed_nones:int = sum(x is None for x in node_words)
                     self._min = min(self._min, summed_nones) 
                     self._max = max(self._max, summed_nones) 
-                    self._word_to_none_ratios[len(node_words)] = summed_nones
+
+                    if not key in self._word_to_none_ratios:
+                        self._word_to_none_ratios[key] = [summed_nones]
+                    else:
+                        self._word_to_none_ratios[key].append(summed_nones)
 
                     self._edge_matrices_fw.append(dataset[1][0][0])
                     self._edge_matrices_bw.append(dataset[1][0][1])
@@ -241,7 +246,12 @@ class GloVeDatasetPreprocessor:
             :param path:str: path combined with filename for file image storing
         """
         try:
-            BarChart(   dataset = self._word_to_none_ratios, 
+            
+            mean_word_to_none_ratios = {}
+            for key in self._word_to_none_ratios:
+                mean_word_to_none_ratios[key] = statistics.mean(self._word_to_none_ratios[key])
+
+            BarChart(   dataset = mean_word_to_none_ratios, 
                         min_value = self._min,
                         max_value = self._max, 
                         title = 'None value occurences in graph nodes', 

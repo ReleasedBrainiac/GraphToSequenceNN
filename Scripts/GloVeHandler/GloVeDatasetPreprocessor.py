@@ -38,7 +38,7 @@ class GloVeDatasetPreprocessor:
             self._edge_matrices_fw:list = None
             self._edge_matrices_bw:list = None
 
-            self._min:int = sys.maxint
+            self._min:int = sys.maxsize
             self._max:int = -1
             self._word_to_none_ratios:dict = {}
 

@@ -76,7 +76,9 @@ class Graph2SeqInKeras():
     """
     #System
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    MULTI_RUN = False
+    MULTI_RUN:bool = False
+    CPUS:int = os.cpu_count()
+    GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
     #Logging
     SHOW_GLOBAL_FEEDBACK:bool = True
@@ -121,7 +123,6 @@ class Graph2SeqInKeras():
     _last_activation:str = 'relu'
     _optimizer:str ='adam'
     _use_stated_encoder:bool = False
-    _available_gpus = None
     
     _predict_split_value:int = -1
     _dataset_size:int = -1
@@ -174,7 +175,6 @@ class Graph2SeqInKeras():
                 return False
 
             sys.stdout = FACLogger(self.FOLDERNAME, self._fname + "_Log")
-            self._available_gpus = KTFGPUHandler().GetAvailableGPUs()
 
             print("\n#######################################")
             print("######## Graph to Sequence ANN ########")
@@ -188,7 +188,9 @@ class Graph2SeqInKeras():
             print("Machine:\t\t=> ", pf.machine())
             print("Platform:\t\t=> ", pf.platform())
             print("CPU:\t\t\t=> ", pf.processor())
-            print("GPUs:\t\t\t=> ", self._available_gpus)
+            print("CPUs:\t\t\t=> ", self.CPUS)
+            
+            print("GPUs:\t\t\t=> ", self.GPUS)
             print("Python Version:\t\t=> ", pf.python_version())
             print("Tensorflow version: \t=> ", tf.__version__)
             print("Keras version: \t\t=> ", keras.__version__, '\n')

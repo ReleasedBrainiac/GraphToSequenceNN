@@ -212,6 +212,7 @@ class Graph2SeqInKeras():
                                     keep_edges=keep_edges,
                                     min_cardinality=self.MIN_NODE_CARDINALITY, 
                                     max_cardinality=self.MAX_NODE_CARDINALITY,
+                                    cpu_cores=self.CPUS,
                                     saving_cleaned_data=False,
                                     stringified_amr=semantic_amr_string)
 

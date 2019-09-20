@@ -71,8 +71,7 @@ class KTFGPUHandler():
                 gpus = desc_gpus
 
             return gpus
-
         except Exception as ex:
-            template = "An exception of type {0} occurred in [KTFGPUHandler.GetAvailableGPUs]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [KTFGPUHandler.GetAvailableGPUsTF2]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 

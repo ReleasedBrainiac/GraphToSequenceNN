@@ -60,4 +60,19 @@ class KTFGPUHandler():
             template = "An exception of type {0} occurred in [KTFGPUHandler.GetAvailableGPUs]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
-        
+    
+    def GetAvailableGPUsTF2(self, as_readable:bool = True):
+        try:
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+
+            if as_readable:
+                desc_gpus:list = []
+                for gpu in gpus: desc_gpus.append(("[", gpu.name, " | ", gpu.device_type, "]"))
+                gpus = desc_gpus
+
+            return gpus
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred in [KTFGPUHandler.GetAvailableGPUs]. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message) 

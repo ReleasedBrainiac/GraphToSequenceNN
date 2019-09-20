@@ -219,12 +219,14 @@ class DatasetPipeline:
             reader = Reader(self._in_path)
 
             if ".txt" in self._in_path:
+                print('Loading txt file...')
                 dataset = reader.GroupReadAMR()
                 dataset=dataset[1:len(dataset)]
                 sentence_lengths, semantic_lengths, pairs = Extractor(  in_content=dataset, 
                                                                         sentence_restriction=self._restriction_chars_sentence, 
                                                                         semantics_restriction=self._restriction_chars_semantic).Extract()
             else:
+                print('Loading json file...')
                 sentence_lengths, semantic_lengths, pairs = reader.LoadJson()
 
             mean_sentences = CalculateMeanValue(str_lengths=sentence_lengths)

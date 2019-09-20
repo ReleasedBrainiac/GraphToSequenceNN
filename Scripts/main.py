@@ -83,10 +83,10 @@ class Graph2SeqInKeras():
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
 
     #Network
-    EPOCHS:int = 4
+    EPOCHS:int = 15
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 4
+    BATCH_SIZE:int = 32
     HOP_STEPS:int = 6
     WORD_WISE:bool = True
     USE_GLOVE:bool = False
@@ -98,14 +98,14 @@ class Graph2SeqInKeras():
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
-    DATASET_NAME:str = 'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #
+    DATASET_NAME:str = '2mAMR/2m.json' #'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #
     _fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
     MAX_LENGTH_DATA:int = -1
     KEEP_EDGES:bool = True
-    MIN_NODE_CARDINALITY:int = 15
-    MAX_NODE_CARDINALITY:int = 35
+    MIN_NODE_CARDINALITY:int = 3
+    MAX_NODE_CARDINALITY:int = 200
     USE_PREPARED_DATASET:bool = False
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
     SHUFFLE_DATASET:bool = True
@@ -131,10 +131,10 @@ class Graph2SeqInKeras():
        
     
     # Multi Run Setup!
-    _datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
-    _multi_epochs:list = [10, 15, 20, 10, 15, 20]
-    _multi_hops:list = [4, 5, 7, 4, 5, 7]
-    _multi_val_split:list = [0.10, 0.15, 0.20, 0.10, 0.15, 0.20]
+    _datasets:list = ['2mAMR/2m.json', 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
+    _multi_epochs:list = [10, 15]
+    _multi_hops:list = [6, 9]
+    _multi_val_split:list = [0.10, 0.20]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):
@@ -210,6 +210,7 @@ class Graph2SeqInKeras():
                                     keep_edges=keep_edges,
                                     min_cardinality=self.MIN_NODE_CARDINALITY, 
                                     max_cardinality=self.MAX_NODE_CARDINALITY,
+                                    saving_cleaned_data=True,
                                     stringified_amr=semantic_amr_string)
 
             datapairs = pipe.ProvideData()

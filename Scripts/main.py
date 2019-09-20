@@ -107,7 +107,7 @@ class Graph2SeqInKeras():
     MAX_LENGTH_DATA:int = -1
     KEEP_EDGES:bool = True
     MIN_NODE_CARDINALITY:int = 3
-    MAX_NODE_CARDINALITY:int = 200
+    MAX_NODE_CARDINALITY:int = 35
     USE_PREPARED_DATASET:bool = False
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
     SHUFFLE_DATASET:bool = True
@@ -212,7 +212,7 @@ class Graph2SeqInKeras():
                                     keep_edges=keep_edges,
                                     min_cardinality=self.MIN_NODE_CARDINALITY, 
                                     max_cardinality=self.MAX_NODE_CARDINALITY,
-                                    saving_cleaned_data=True,
+                                    saving_cleaned_data=False,
                                     stringified_amr=semantic_amr_string)
 
             datapairs = pipe.ProvideData()

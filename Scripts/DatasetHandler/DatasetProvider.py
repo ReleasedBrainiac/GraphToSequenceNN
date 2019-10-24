@@ -156,8 +156,8 @@ class DatasetPipeline:
 
     def HandleSingleDataPair(self, pair):
         """
-        This method process a single dataset. It'll be passed to the AMR cleaner pipe, the length restriction will be bypassed and the cardinalities will be collected.
-            :param pair: 
+        This method process a single dataset. It'll be passed to the AMR cleaner pipe, the length restriction will be processed.
+            :param pair: a dataset pair
         """
         try:
             data_pair = self.CollectDatasetPair(pair)
@@ -165,10 +165,7 @@ class DatasetPipeline:
                 if(not self._stringified_amr):
                     edges_dim = data_pair[1][0][0].shape[0]
                     if (self._min_cardinality <= edges_dim and edges_dim <= self._max_cardinality):
-                        self.CollectCardinalities(edges_dim)
-                        if (self._max_chars_sentences < len(data_pair[0])): self._max_chars_sentences = len(data_pair[0])
-                        if (self._max_words_sentences < len(data_pair[0].split(" "))): self._max_words_sentences = len(data_pair[0].split(" "))
-                        return data_pair
+                        return (data_pair, edges_dim, len(data_pair[0]), len(data_pair[0].split(" "))) # Return structure [datapair, pair_cardinality, pair_max_chars, pair_max_words]
                 else:
                     return data_pair
         except Exception as ex:
@@ -181,18 +178,34 @@ class DatasetPipeline:
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
+        Also the cardinalities will be collected.
             :param data_pairs:list: array of amr data pairs
         """
         try:
             self._max_chars_sentences = 0
+            self._max_words_sentences = 0
+            placeholder_pairs = []
             dataset_pairs_sent_sem = []
 
             if self._cpu_cores > 1:
                 with Pool(self._cpu_cores) as p:
-                    dataset_pairs_sent_sem = p.map(self.HandleSingleDataPair, data_pairs)
+                    placeholder_pairs = p.map(self.HandleSingleDataPair, data_pairs)
             else:
                 for pair in data_pairs:
-                    dataset_pairs_sent_sem.append(self.HandleSingleDataPair(pair))
+                    placeholder_pairs.append(self.HandleSingleDataPair(pair))
+
+
+            if (self._stringified_amr):
+                return placeholder_pairs
+
+            else:
+                while placeholder_pairs:
+                    data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = placeholder_pairs.pop(0)
+                    dataset_pairs_sent_sem.append(data_pair)
+                    self.CollectCardinalities(edges_dim)
+                    if (self._max_chars_sentences < pair_sent_chars_count): self._max_chars_sentences = pair_sent_chars_count
+                    if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
+
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"

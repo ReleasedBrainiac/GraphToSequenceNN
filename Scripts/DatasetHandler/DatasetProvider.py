@@ -169,8 +169,6 @@ class DatasetPipeline:
                         if (self._max_chars_sentences < len(data_pair[0])): self._max_chars_sentences = len(data_pair[0])
                         if (self._max_words_sentences < len(data_pair[0].split(" "))): self._max_words_sentences = len(data_pair[0].split(" "))
                         return data_pair
-                    else:
-                        return None
                 else:
                     return data_pair
         except Exception as ex:
@@ -191,12 +189,10 @@ class DatasetPipeline:
 
             if self._cpu_cores > 1:
                 with Pool(self._cpu_cores) as p:
-                    data_pair = p.map(self.HandleSingleDataPair, data_pairs)
-                    if isNotNone(data_pair): dataset_pairs_sent_sem.append(data_pair)
+                    dataset_pairs_sent_sem = p.map(self.HandleSingleDataPair, data_pairs)
             else:
-                for pair in data_pairs: 
-                    data_pair = self.HandleSingleDataPair(pair)
-                    if isNotNone(data_pair): dataset_pairs_sent_sem.append(data_pair)
+                for pair in data_pairs:
+                    dataset_pairs_sent_sem.append(self.HandleSingleDataPair(pair))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"

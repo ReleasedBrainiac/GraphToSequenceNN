@@ -216,22 +216,28 @@ class Graph2SeqInKeras():
                                     stringified_amr=semantic_amr_string)
 
             datapairs = pipe.ProvideData()
-            max_cardinality = pipe._max_observed_nodes_cardinality
-            self._dataset_size = len(datapairs)
 
-            pipe.PlotCardinalities(self.MODEL_DESC)
-            if self.SHOW_GLOBAL_FEEDBACK:
-                print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
+            # This part will only be executed if the dataset is provided as matrices.
+            if (not semantic_amr_string):
+                max_cardinality = pipe._max_observed_nodes_cardinality
+                self._dataset_size = len(datapairs)
 
-            MatrixHandler().DatasetLookUpEqualization(datapairs, max_cardinality)
-            self._max_sequence_len = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
+                pipe.PlotCardinalities(self.MODEL_DESC)
+                if self.SHOW_GLOBAL_FEEDBACK:
+                    print('Found Datapairs:\n\t=> [', self._dataset_size, '] for allowed graph node cardinality interval [',self.MIN_NODE_CARDINALITY,'|',self.MAX_NODE_CARDINALITY,']')
 
-            if self.SHOW_GLOBAL_FEEDBACK:
-                print("~~~~~~ Example Target Data Pipe ~~~~~~~")
-                print("Target 0", datapairs[0][0])
-                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+                MatrixHandler().DatasetLookUpEqualization(datapairs, max_cardinality)
+                self._max_sequence_len = (max_cardinality * 2) if max_cardinality != pipe._max_words_sentences else -1
 
-            return [max_cardinality, datapairs]
+                if self.SHOW_GLOBAL_FEEDBACK:
+                    print("~~~~~~ Example Target Data Pipe ~~~~~~~")
+                    print("Target 0", datapairs[0][0])
+                    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+                return [max_cardinality, datapairs]
+            else:
+                print("Prozess of cleaned stringified AMR has ended!")
+                sys.exit(0)
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.DatasetPreprocessor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

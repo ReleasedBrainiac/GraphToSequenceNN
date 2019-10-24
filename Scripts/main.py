@@ -96,11 +96,11 @@ class Graph2SeqInKeras():
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.200d.txt'
     GLOVE_OUTPUT_DIM:int = 200
-    GLOVE_VOCAB_SIZE:int = 10000
+    GLOVE_VOCAB_SIZE:int = 15000
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
-    DATASET_NAME:str = '2mAMR/2m.json' #'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #
+    DATASET_NAME:str =  'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'2mAMR/2m.json'
     _fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
@@ -189,7 +189,6 @@ class Graph2SeqInKeras():
             print("Platform:\t\t=> ", pf.platform())
             print("CPU:\t\t\t=> ", pf.processor())
             print("CPUs:\t\t\t=> ", self.CPUS)
-            
             print("GPUs:\t\t\t=> ", self.GPUS)
             print("Python Version:\t\t=> ", pf.python_version())
             print("Tensorflow version: \t=> ", tf.__version__)

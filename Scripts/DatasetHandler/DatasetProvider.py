@@ -165,7 +165,7 @@ class DatasetPipeline:
                 if(not self._stringified_amr):
                     edges_dim = data_pair[1][0][0].shape[0]
                     if (self._min_cardinality <= edges_dim and edges_dim <= self._max_cardinality):
-                        return (data_pair, edges_dim, len(data_pair[0]), len(data_pair[0].split(" "))) # Return structure [datapair, pair_cardinality, pair_max_chars, pair_max_words]
+                        return [data_pair, edges_dim, len(data_pair[0]), len(data_pair[0].split(" "))] # Return structure [datapair, pair_cardinality, pair_max_chars, pair_max_words]
                 else:
                     return data_pair
         except Exception as ex:
@@ -199,6 +199,7 @@ class DatasetPipeline:
                 return placeholder_pairs
 
             else:
+                print("Collect sample informations!")
                 while placeholder_pairs:
                     data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = placeholder_pairs.pop(0)
                     dataset_pairs_sent_sem.append(data_pair)

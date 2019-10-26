@@ -187,8 +187,8 @@ class DatasetPipeline:
         try:
             self._max_chars_sentences = 0
             self._max_words_sentences = 0
-            placeholder_pairs = []
-            dataset_pairs_sent_sem = []
+            placeholder_pairs:list = []
+            dataset_pairs_sent_sem:list = []
 
             if self._cpu_cores > 1:
                 with Pool(self._cpu_cores) as p:
@@ -214,8 +214,6 @@ class DatasetPipeline:
                         if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
                     else: 
                         continue;
-
-            print("Found pairs: ", len(dataset_pairs_sent_sem))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -284,6 +282,7 @@ class DatasetPipeline:
             print('[Count]:\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
             print('[Extensions]:\t\t', len(self._extension_dict))
             print('[Path]:\t\t\t', self._in_path)
+            print('[Count]:\t Pairs', len(data_pairs))
             print('[Dropouts]:\t\t', self._dataset_drop_outs)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 

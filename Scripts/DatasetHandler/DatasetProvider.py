@@ -1,6 +1,6 @@
 import re
 from multiprocessing import Pool
-from DatasetHandler.ContentSupport import isStr, isInt, isNotNone, setOrDefault, CalculateMeanValue
+from DatasetHandler.ContentSupport import isStr, isInt, isNotNone, setOrDefault, CalculateMeanValue, isNone
 from DatasetHandler.FileReader import Reader
 from DatasetHandler.FileWriter import Writer
 from DatasetHandler.DatasetExtractor import Extractor
@@ -153,7 +153,6 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-
     def HandleSingleDataPair(self, pair):
         """
         This method process a single dataset. It'll be passed to the AMR cleaner pipe, the length restriction will be processed.
@@ -166,8 +165,12 @@ class DatasetPipeline:
                     edges_dim = data_pair[1][0][0].shape[0]
                     if (self._min_cardinality <= edges_dim and edges_dim <= self._max_cardinality):
                         return [data_pair, edges_dim, len(data_pair[0]), len(data_pair[0].split(" "))] # Return structure [datapair, pair_cardinality, pair_max_chars, pair_max_words]
+                    else:
+                        return None
                 else:
                     return data_pair
+            else:
+                return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.HandleSingleDataPair]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -201,12 +204,18 @@ class DatasetPipeline:
             else:
                 print("Collect sample informations!")
                 while placeholder_pairs:
-                    data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = placeholder_pairs.pop(0)
-                    dataset_pairs_sent_sem.append(data_pair)
-                    self.CollectCardinalities(edges_dim)
-                    if (self._max_chars_sentences < pair_sent_chars_count): self._max_chars_sentences = pair_sent_chars_count
-                    if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
+                    entry = placeholder_pairs.pop(0)
 
+                    if isNotNone(entry):
+                        data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = entry
+                        dataset_pairs_sent_sem.append(data_pair)
+                        self.CollectCardinalities(edges_dim)
+                        if (self._max_chars_sentences < pair_sent_chars_count): self._max_chars_sentences = pair_sent_chars_count
+                        if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
+                    else: 
+                        continue;
+
+            print("Found pairs: ", len(dataset_pairs_sent_sem))
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -272,7 +281,7 @@ class DatasetPipeline:
             print('[Size Restriction]:\t Sentence =', self._restriction_chars_sentence, '| Semantic = ', self._restriction_chars_semantic)
             print('[Size Mean]:\t\t Sentences =', mean_sentences, '| Semantics = ', mean_semantics)
             print('[Size Max Chars]:\t\t Sentences =', self._max_chars_sentences)
-            print('[Count]:\t\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
+            print('[Count]:\t Sentences =', len(sentence_lengths), '| Semantics = ', len(semantic_lengths))
             print('[Extensions]:\t\t', len(self._extension_dict))
             print('[Path]:\t\t\t', self._in_path)
             print('[Dropouts]:\t\t', self._dataset_drop_outs)

@@ -21,8 +21,8 @@ class MatrixBuilder:
             self.constants = Constants()
             self.graph_nodes = OrderedDict()
 
-            #TODO this is optional implemented maybe remove it
-            self.nodes_as_dict = False
+            # THIS IS DEPRECATED!
+            #self.nodes_as_dict = False
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Constructor]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -157,11 +157,14 @@ class MatrixBuilder:
                 print('Cons.:\n',connections_list)
                 print('Vertices:\n', verticies)
                 print('Edges:\n', edge_pairs)
+
+            return [edge_pairs, list(self.graph_nodes.values())]
             
-            if self.nodes_as_dict:
-                return [edge_pairs, self.graph_nodes]
-            else:
-                return [edge_pairs, list(self.graph_nodes.values())]
+            # THIS IS DEPRECATED!
+            #if self.nodes_as_dict:
+            #    return [edge_pairs, self.graph_nodes]
+            #else:
+            #    return [edge_pairs, list(self.graph_nodes.values())]
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [SemanticMatricBuilder.Execute]. Arguments:\n{1!r}"

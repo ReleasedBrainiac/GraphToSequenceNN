@@ -92,7 +92,7 @@ class NumpyDatasetHandler():
             print(message)
             print(ex)
 
-    #TODO: This could be used for the fit generator as generator pipe -> needs changes!
+    #TODO: This could be used for the fit generator as generator pipe but needs changes then!
     def LoadTeacherForcingDS(self):
         """
         This method allow to load the teacher forcing dataset parts.
@@ -179,6 +179,8 @@ class NumpyDatasetPreprocessor():
             :param use_padded_vecs:bool: the given sentence input and targets are only padded vecs not embedded
         """
         try:
+            #TODO: If i have to much time. Then i should parallelize this!
+
             nodes_emb = []
             forward_look_up = []
             backward_look_up = []

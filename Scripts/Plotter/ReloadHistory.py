@@ -6,7 +6,6 @@ class HistoryLoader():
     """
     This class provides a history loader.
     It contains the context collection of console logged history callbacks.
-    #TODO later also from pickle.dumps
     """
 
     TRAIN_FLAG:str = 'train'

@@ -4,9 +4,10 @@ import keras.backend.tensorflow_backend as KTF
 from tensorflow.python.client import device_lib
 
 class KTFGPUHandler():
+    """
+    This class allow to handle the gpu usage ratio.
+    """
     
-    #TODO: missing class description
-
     ENV_THREAD_VAR:str = 'OMP_NUM_THREADS'
     DEVICE_TYPE:str = 'GPU'
 

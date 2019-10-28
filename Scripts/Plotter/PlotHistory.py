@@ -22,7 +22,7 @@ class HistoryPlotter(object):
     _learning_rates:list = None
     _epochs:int = 0
 
-    #TODO: File history plotting is not yet implemented
+    #TODO: Log file history plotting is not yet implemented
 
     def __init__(self, model_description:str, path:str = None, history = None, save_it:bool = True, new_style:bool = False):
         """
@@ -57,7 +57,8 @@ class HistoryPlotter(object):
 
     def PlotHistory(self):
         """
-        Thise method allow to plot a history from log or directly a keras history. 
+        Thise method allow to plot a history from directly a keras history. 
+        Plotting from log is  not yet implemented!
         """   
         try:
             if self._using_history:
@@ -157,49 +158,56 @@ class HistoryPlotter(object):
         This method helps to plot a keras history containing losses, accuracy and possibly least learning rates.
         """   
         try:
+            fig_num:int = 1
+
             ## Loss
-            self.AccOrLossPlot( fig_num = 1, 
+            self.AccOrLossPlot( fig_num = fig_num, 
                                 title = 'Model loss', 
                                 metric = 'loss', 
                                 axis_labels = ['train', 'validation'], 
                                 history_labels = ['Loss', 'Epoch'], 
                                 extender = 'loss_epoch_plot',
                                 train_val_lists = [self._losses, self._val_losses])
+            fig_num += 1
 
             ## Top k Categorical Crossentropy
             if ('top_k_categorical_accuracy' in self._history_keys) and isNotNone(self._acc_topkcc_list) and isNotNone(self._val_acc_topkcc_list):
-                self.AccOrLossPlot( fig_num = 2, 
+                self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Top k Categorical Accuracy', 
                                     metric = 'top_k_categorical_accuracy', 
                                     axis_labels = ['train', 'validation'], 
                                     history_labels = ['Top k Categorical Accuracy', 'Epoch'], 
                                     extender = 'top_k_categoriacal_epoch_plot',
                                     train_val_lists = [self._acc_topkcc_list, self._val_acc_topkcc_list])
+                fig_num += 1
 
             ## Categorical Crossentropy
             if 'categorical_accuracy' in self._history_keys and isNotNone(self._acc_stdcc_list) and isNotNone(self._val_acc_stdcc_list):
-                self.AccOrLossPlot( fig_num = 3, 
+                self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Categorical Accuracy', 
                                     metric = 'categorical_accuracy', 
                                     axis_labels = ['train', 'validation'], 
                                     history_labels = ['Categorical Accuracy', 'Epoch'], 
                                     extender = 'categoriacal_epoch_plot',
                                     train_val_lists = [self._acc_stdcc_list, self._val_acc_stdcc_list])
+                fig_num += 1
                 
             ## General
             if 'acc' in self._history_keys and isNotNone(self._acc_stdcc_list) and isNotNone(self._val_acc_stdcc_list):
-                self.AccOrLossPlot( fig_num = 3, 
+                self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Accuracy', 
                                     metric = 'accuracy', 
                                     axis_labels = ['train', 'validation'], 
                                     history_labels = ['Accuracy', 'Epoch'], 
                                     extender = 'accuracy_epoch_plot',
                                     train_val_lists = [self._acc_stdcc_list, self._val_acc_stdcc_list])
+                fig_num += 1
             
 
             if 'lr' in self._history_keys and isNotNone(self._learning_rates):
-                self.LearningPlot(  fig_num = 4,
+                self.LearningPlot(  fig_num = fig_num,
                                     title = 'Model Learning Rate')
+                fig_num += 1
 
         except Exception as ex:
                 template = "An exception of type {0} occurred in [HistoryPlotter.DirectPlotHistory]. Arguments:\n{1!r}"
@@ -211,32 +219,38 @@ class HistoryPlotter(object):
         This method plot the history in the old way.
         """   
         try:
-            self.AccOrLossPlot( fig_num = 1, 
+            fig_num:int = 1
+
+            self.AccOrLossPlot( fig_num = fig_num, 
                                 title = 'Model loss', 
                                 metric = 'loss', 
                                 axis_labels = ['train', 'validation'], 
                                 history_labels = ['Loss', 'Epoch'], 
                                 extender = 'loss_epoch_plot')
+            fig_num += 1
 
             if 'top_k_categorical_accuracy' in self._history_keys:
-                self.AccOrLossPlot( fig_num = 2, 
+                self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Top k Categorical Accuracy', 
                                     metric = 'top_k_categorical_accuracy', 
                                     axis_labels = ['train', 'validation'], 
                                     history_labels = ['Top k Categorical Accuracy', 'Epoch'], 
                                     extender = 'top_k_categoriacal_epoch_plot')
+                fig_num += 1
 
             if 'categorical_accuracy' in self._history_keys:
-                self.AccOrLossPlot( fig_num = 3, 
+                self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Categorical Accuracy', 
                                     metric = 'categorical_accuracy', 
                                     axis_labels = ['train', 'validation'], 
                                     history_labels = ['Categorical Accuracy', 'Epoch'], 
                                     extender = 'categoriacal_epoch_plot')
+                fig_num += 1
 
             if 'lr' in self._history_keys:
-                self.LearningPlot(  fig_num = 4,
+                self.LearningPlot(  fig_num = fig_num,
                                     title = 'Model Learning Rate')
+                fig_num += 1
 
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistoryPlotter.OldPlotHistory]. Arguments:\n{1!r}"

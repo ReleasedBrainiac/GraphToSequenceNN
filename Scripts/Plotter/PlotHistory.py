@@ -22,8 +22,6 @@ class HistoryPlotter(object):
     _learning_rates:list = None
     _epochs:int = 0
 
-    #TODO: Log file history plotting is not yet implemented
-
     def __init__(self, model_description:str, path:str = None, history = None, save_it:bool = True, new_style:bool = False):
         """
         The class constructor. 
@@ -67,6 +65,8 @@ class HistoryPlotter(object):
                     self.DirectPlotHistory()
                 else:
                     self.OldPlotHistory()
+
+            #TODO: Log file history plotting is not yet implemented
             #else:
             #    self.PlotHistoryFromLog()
         except Exception as ex:
@@ -74,21 +74,26 @@ class HistoryPlotter(object):
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             
-    def CollectAccFromHistory(self, name:str, train_val_list:list):
+    def CollectAccFromHistory(self, name:str):
         """
-         This method collect the accuracy data from the history into 2 plceholder lists.
+         This method collect the accuracy data from the history into 2 lists.
             :param name:str: name of the used acc metric
-            :param train_val_list:list: 2 placeholder lists with order 0 = train and 1 = validation
         """   
         try:
+            acc_list:list = []
+            val_acc_list:list = []
+
             name = re.sub('val_', '', name)
             if name in self._history_keys:
-                train_val_list[0] = [s for s in self._history_keys if (name == s)]
-                train_val_list[1] = [s for s in self._history_keys if ('val_'+name == s)]
-                if isNotNone(train_val_list[0]) and isNotNone(train_val_list[1]):
+                acc_list = [s for s in self._history_keys if (name == s)]
+                val_acc_list = [s for s in self._history_keys if ('val_'+name == s)]
+
+                if isNotNone(acc_list) and isNotNone(val_acc_list):
                     self._history_keys_list.remove(name)
                     self._history_keys_list.remove('val_'+name)
                     print("Found accuracy metrics in history!")
+
+            return acc_list, val_acc_list
         except Exception as ex:
             template = "An exception of type {0} occurred in [HistoryPlotter.CollectAccFromHistory]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -138,14 +143,19 @@ class HistoryPlotter(object):
             print(message)
 
     def CollectFromHistory(self):
+        """
+        This method collect all necessary train informations from the history.
+        """   
         if self._using_history:
             try:
+                print("Collect losses from history...")
                 self.CollectLossFromHistory()
+                print("Collect learning rate from history...")
                 self.CollectLearningRatesFromHistory()
-
-
-                self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_stdcc_list, self._val_acc_stdcc_list])
-                self.CollectAccFromHistory(name=self._history_keys_list[0], train_val_list = [self._acc_topkcc_list, self._val_acc_topkcc_list])
+                print("Collect ", self._history_keys_list[0], " from history...")
+                self._acc_stdcc_list, self._val_acc_stdcc_list = self.CollectAccFromHistory(name=self._history_keys_list[0])
+                print("Collect ", self._history_keys_list[0], " from history...")
+                self._acc_topkcc_list, self._val_acc_topkcc_list = self.CollectAccFromHistory(name=self._history_keys_list[0])
             except Exception as ex:
                 template = "An exception of type {0} occurred in [HistoryPlotter.CollectFromHistory]. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)

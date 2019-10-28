@@ -300,7 +300,8 @@ class DatasetPipeline:
         try:
             datapairs = self.Pipeline()
 
-            if(self._is_saving): 
+            #TODO: This functionality is currently implemented for stringified amr only, not numpy arrays.
+            if(self._is_saving and self._stringified_amr): 
                 Writer(self._in_path, self._out_path_extender, datapairs)
                 print('Finished storing process!')
 

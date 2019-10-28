@@ -2,6 +2,7 @@ import sys, re
 from DatasetHandler.FileReader import Reader
 from DatasetHandler.ContentSupport import isNotNone
 
+#TODO: Not yet finalized and tested!
 class HistoryLoader():
     """
     This class provides a history loader.

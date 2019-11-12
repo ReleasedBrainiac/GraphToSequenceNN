@@ -216,9 +216,18 @@ class NumpyDatasetPreprocessor():
                     # Reduce processable samples count 
                     dataset_len -= 1
 
-                    if (self._show_feedback): StatusReport(run_index=dataset_len, max_index=max_values, steps=500)
+                    if (self._show_feedback): StatusReport(run_index=(max_values - dataset_len), max_index=max_values, steps=500)
+
+                nodes_emb = np.asarray(nodes_emb)
+                forward_look_up = np.asarray(forward_look_up)
+                backward_look_up = np.asarray(backward_look_up)
+                vecs_input_words = np.asarray(vecs_input_words)
+                vecs_target_words = np.asarray(vecs_target_words)
             else:
                 assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences)), "The given inputs of GenerateDatasetTeacherForcing aren't machting at first dimension!"
+
+            if self._show_feedback:
+                print("Teacher Forcing: Result structure [{}{}{}{}{}]".format(type(nodes_emb), type(forward_look_up), type(backward_look_up), type(vecs_input_words), type(vecs_target_words)))
             return nodes_emb, forward_look_up, backward_look_up, vecs_input_words, vecs_target_words
         except Exception as ex:
             template = "An exception of type {0} occurred in [NumpyDatasetPreprocessor.CollectTeacherForcingWordWiseSamples]. Arguments:\n{1!r}"

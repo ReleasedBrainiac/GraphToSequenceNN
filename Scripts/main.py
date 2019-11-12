@@ -409,11 +409,11 @@ class Graph2SeqInKeras():
             vectorized_targets = None
 
             if self.SHOW_GLOBAL_FEEDBACK:
-                print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
-                print("Test X: ", test_x[0].shape, test_x[1].shape, test_x[2].shape, test_x[3].shape)
+                print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape, train_x[3][0].shape)
+                print("Test X: ", test_x[0][0].shape, test_x[1][0].shape, test_x[2][0].shape, test_x[3][0].shape)
                 if self.WORD_WISE:
-                    print("Train Y: ", train_y.shape)
-                    print("Test Y: ", test_y.shape)
+                    print("Train Y: ", train_y[0].shape)
+                    print("Test Y: ", test_y[0].shape)
                 else:
                     print("Train Y: (" +  str(len(train_y)) + ", " + str(len(train_y[0])) + ")")
                     print("Test Y: (" + str(len(test_y)) + ", " + str(len(test_y[0])) + ")")

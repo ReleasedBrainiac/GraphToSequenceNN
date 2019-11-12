@@ -140,6 +140,13 @@ def isLambda(input):
     """
     return isinstance(input, types.LambdaType)
 
+def isNdarray(input):
+    """
+    This function check the input is a numpy ndarray type.
+        :param input. unknown type object
+    """
+    return isinstance(input, np.ndarray)
+
 
 # Content control statements must return bool
 def isXTypeEqualY(object_x, object_y):

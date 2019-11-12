@@ -1,7 +1,7 @@
 import numpy as np
 import re
 import sys
-from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray
+from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray, MultiDimNdArrayToListedNdArrays, isNdarray, ValueReport
 from Configurable.ProjectConstants import Constants
 
 class NumpyDatasetHandler():
@@ -180,32 +180,43 @@ class NumpyDatasetPreprocessor():
         """
         try:
             #TODO: If i have to much time. Then i should parallelize this!
-
+            max_values = dataset_len
             nodes_emb = []
             forward_look_up = []
             backward_look_up = []
             vecs_input_words = []
             vecs_target_words = []
 
-            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences):
-                for s_idx in range(dataset_len):
+            if(isNdarray(nodes_embedding)): nodes_embedding = MultiDimNdArrayToListedNdArrays(nodes_embedding)
+            if(isNdarray(fw_look_up)): fw_look_up = MultiDimNdArrayToListedNdArrays(fw_look_up)
+            if(isNdarray(bw_look_up)): bw_look_up = MultiDimNdArrayToListedNdArrays(bw_look_up)
+            if(isNdarray(vecs_target_sentences)): vecs_target_sentences = MultiDimNdArrayToListedNdArrays(vecs_target_sentences)
+            if(isNdarray(vecs_input_sentences)): vecs_input_sentences = MultiDimNdArrayToListedNdArrays(vecs_input_sentences)
+
+            if len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences) == len(vecs_input_sentences):
+                while (dataset_len > 0):
+                    s_idx = (dataset_len-1)
 
                     if use_padded_vecs:
-                        tmp_vecs_input_words = np.trim_zeros(vecs_input_sentences[s_idx])
-                        tmp_vecs_target_words = np.trim_zeros(vecs_target_sentences[s_idx])
+                        tmp_vecs_input_words = np.trim_zeros(vecs_input_sentences.pop(s_idx))
+                        tmp_vecs_target_words = np.trim_zeros(vecs_target_sentences.pop(s_idx))
                         qualified_entries = np.count_nonzero(tmp_vecs_input_words) - 1      #The -1 mean i will not include the the first copy since we keep the initial as well!
                     else:
-                        tmp_vecs_input_words = vecs_input_sentences[s_idx]
-                        tmp_vecs_target_words = vecs_target_sentences[s_idx]
+                        tmp_vecs_input_words = vecs_input_sentences.pop(s_idx)
+                        tmp_vecs_target_words = vecs_target_sentences.pop(s_idx)
                         qualified_entries = len(tmp_vecs_input_words) - 1
 
-                    nodes_emb.append(RepeatNTimsNdArray(times=qualified_entries, array=nodes_embedding[s_idx]))
-                    forward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=fw_look_up[s_idx]))
-                    backward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=bw_look_up[s_idx]))
+                    # Result appendings
+                    nodes_emb.append(RepeatNTimsNdArray(times=qualified_entries, array=nodes_embedding.pop(s_idx)))
+                    forward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=fw_look_up.pop(s_idx)))
+                    backward_look_up.append(RepeatNTimsNdArray(times=qualified_entries, array=bw_look_up.pop(s_idx)))
                     vecs_input_words.append(tmp_vecs_input_words.reshape((tmp_vecs_input_words.shape[0],))[:-1])
                     vecs_target_words.append(tmp_vecs_target_words.reshape((tmp_vecs_target_words.shape[0],)))
 
-                    if (self._show_feedback): StatusReport(run_index=s_idx, max_index=dataset_len, steps=500)
+                    # Reduce processable samples count 
+                    dataset_len -= 1
+
+                    if (self._show_feedback): StatusReport(run_index=dataset_len, max_index=max_values, steps=500)
             else:
                 assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == dataset_len == len(vecs_target_sentences)), "The given inputs of GenerateDatasetTeacherForcing aren't machting at first dimension!"
             return nodes_emb, forward_look_up, backward_look_up, vecs_input_words, vecs_target_words

@@ -354,6 +354,17 @@ def ReorderListByIndices(reorder_list:list, ordering_indices:list):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def MultiDimNdArrayToListedNdArrays(array:np.ndarray):
+    try:
+        if len(array.shape) > 2:
+            return [elem for elem in array]
+        else: 
+            return array.tolist()
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.MultiDimNdArrayToListedNdArrays]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 def RepeatNTimsNdArray(times:int, array:np.ndarray, axis:int = 0):
     """
     This function repeats a given numpy.ndarray desired times and return a 

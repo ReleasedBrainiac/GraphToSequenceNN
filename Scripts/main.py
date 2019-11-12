@@ -13,7 +13,7 @@ from time import gmtime, strftime
 from Logger.Logger import FACLogger, FolderCreator
 from Configurable.ProjectConstants  import Constants
 from DatasetHandler.DatasetProvider import DatasetPipeline
-from DatasetHandler.ContentSupport import DatasetSplitIndex, isNone
+from DatasetHandler.ContentSupport import DatasetSplitIndex, isNone, isList
 from GloVeHandler.GloVeDatasetPreprocessor import GloVeDatasetPreprocessor
 from GloVeHandler.GloVeEmbedding import GloVeEmbedding
 from DatasetHandler.FileWriter import Writer
@@ -24,11 +24,13 @@ from DatasetHandler.NumpyHandler import NumpyDatasetHandler, NumpyDatasetPreproc
 from GraphHandler.SemanticMatrixBuilder import MatrixHandler
 from keras.utils import to_categorical
 
+
 #TODO bset tutorial => https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention
 #TODO K-Fold Keras => https://machinelearningmastery.com/evaluate-performance-deep-learning-models-keras/
 #TODO many-to-many => https://github.com/keras-team/keras/issues/1029
 #TODO another resource => https://data-science-blog.com/blog/2017/12/20/maschinelles-lernen-klassifikation-vs-regression/
-#TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page---------------------------
+#TODO  IN MA => erläuterung => https://www.tensorflow.org/tutorials/structured_data/feature_columns
+#TODO IN MA => Code Next Level => https://github.com/enriqueav/lstm_lyrics/blob/master/lstm_train_embedding.py?source=post_page
 #TODO IN MA => Next Level 1 => https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
 #TODO IN MA => Next Level 2 => http://proceedings.mlr.press/v48/niepert16.pdf
 #TODO IN MA => Ausblick => https://github.com/philipperemy/keras-attention-mechanism
@@ -100,7 +102,7 @@ class Graph2SeqInKeras():
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
-    DATASET_NAME:str =  'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'2mAMR/2m.json'
+    DATASET_NAME:str =    'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt' #'2mAMR/2m.json'
     _fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
@@ -254,7 +256,7 @@ class Graph2SeqInKeras():
                                                                 max_sequence_length=max_sequence_len,
                                                                 show_feedback=show_processor_feedback)
             _, _, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding, _ = glove_dataset_processor.Execute()
-            self._unique_words = len(glove_dataset_processor._word_index)
+            self._unique_words = len(glove_dataset_processor._word_index)+1
 
             if self.SHOW_GLOBAL_FEEDBACK:
                 print("Reminder: [1 ----> <go>] and [2 ----> <eos>]")
@@ -302,6 +304,10 @@ class Graph2SeqInKeras():
             if nodes_to_embedding:
                 vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
                 vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
+
+            if self.SHOW_GLOBAL_FEEDBACK: 
+                print("Glove: Result structure [{}{}{}{}]".format(type(nodes_embedding), type(vectorized_inputs), type(vectorized_targets), type(embedding_layer)))
+
             return [nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.GloveEmbedding]. Arguments:\n{1!r}"
@@ -327,17 +333,13 @@ class Graph2SeqInKeras():
             input_len:int = 1 if embedding_input_wordwise else max_sequence_len
             embedding_layer = Embedding(in_vocab_size, out_dim_emb, input_length=input_len)
 
-            if self.SHOW_GLOBAL_FEEDBACK:
-                print("Nodes example: ", nodes_embedding[0])
+            if self.SHOW_GLOBAL_FEEDBACK: print("Nodes example: ", nodes_embedding[0])
 
             nodes_embedding = tokenizer.TokenizeNodes(nodes_embedding)
             nodes_embedding = [to_categorical(y=node_vec, num_classes=self._unique_words) for node_vec in nodes_embedding]
 
-            if self.SHOW_GLOBAL_FEEDBACK:
-                print("Nodes example: ", nodes_embedding[0])
-                print("Inputs example: ", vectorized_inputs[0])
-                print("Targetss example: ", vectorized_targets[0])
-                print("Embedding layer shape: ", embedding_layer)
+            if self.SHOW_GLOBAL_FEEDBACK: 
+                print("Categorical: Result structure [{}{}{}{}]".format(type(nodes_embedding), type(vectorized_inputs), type(vectorized_targets), type(embedding_layer)))
 
             return [nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer]
         except Exception as ex:
@@ -383,6 +385,15 @@ class Graph2SeqInKeras():
             self._dataset_size = len(nodes_embedding)
             self._predict_split_value = DatasetSplitIndex(self._dataset_size, self.PREDICT_SPLIT)
 
+            
+            if isList(nodes_embedding): nodes_embedding = np.asarray(nodes_embedding)
+            if isList(fw_look_up): fw_look_up = np.asarray(fw_look_up)
+            if isList(bw_look_up): bw_look_up = np.asarray(bw_look_up)
+            if isList(vectorized_inputs): vectorized_inputs = np.asarray(vectorized_inputs)
+            if isList(vectorized_targets): vectorized_targets = np.asarray(vectorized_targets)
+            
+
+            # Inputs are numpy.ndarrays and a splitting integer
             train_x, train_y, test_x, test_y = generator.NetworkInputPreparation(   nodes_embedding, 
                                                                                     fw_look_up, 
                                                                                     bw_look_up, 
@@ -396,6 +407,17 @@ class Graph2SeqInKeras():
             bw_look_up = None
             vectorized_inputs = None
             vectorized_targets = None
+
+            if self.SHOW_GLOBAL_FEEDBACK:
+                print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
+                print("Test X: ", test_x[0].shape, test_x[1].shape, test_x[2].shape, test_x[3].shape)
+                if self.WORD_WISE:
+                    print("Train Y: ", train_y.shape)
+                    print("Test Y: ", test_y.shape)
+                else:
+                    print("Train Y: (" +  str(len(train_y)) + ", " + str(len(train_y[0])) + ")")
+                    print("Test Y: (" + str(len(test_y)) + ", " + str(len(test_y[0])) + ")")
+                print("Network Input: Result structure [{}{}{}{}]".format(type(train_x), type(train_y), type(test_x), type(test_y)))
 
             return [train_x, train_y, test_x, test_y]
         except Exception as ex:
@@ -519,7 +541,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)  
     
-    def NetworkPredict(self, model, test_x, test_y):
+    def NetworkPredict(self, model, test_x:list, test_y:np.ndarray):
         try:
             print("#######################################\n")
             print("########### Predict  Results ##########")
@@ -597,16 +619,6 @@ class Graph2SeqInKeras():
                                                                     bw_look_up=bw_look_up, 
                                                                     vectorized_inputs=vectorized_inputs, 
                                                                     vectorized_targets=vectorized_targets)
-
-            if self.SHOW_GLOBAL_FEEDBACK:
-                print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
-                print("Test X: ", test_x[0].shape, test_x[1].shape, test_x[2].shape, test_x[3].shape)
-                if self.WORD_WISE:
-                    print("Train Y: ", train_y.shape)
-                    print("Test Y: ", test_y.shape)
-                else:
-                    print("Train Y: (" +  str(len(train_y)) + ", " + str(len(train_y[0])) + ")")
-                    print("Test Y: (" + str(len(test_y)) + ", " + str(len(test_y[0])) + ")")
 
             model = self.NetworkConstruction(   target_shape=vectorized_targets.shape, 
                                                 max_cardinality=max_cardinality, 

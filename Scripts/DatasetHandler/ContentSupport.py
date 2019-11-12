@@ -466,6 +466,14 @@ def RoundUpRestricted(in_value:int, given_dim:int =100, isBidrectional:bool =Tru
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def ValueReport(var_name:str, value):
+    try:
+        print("{}: \n{}\n".format(var_name, value))
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.ValueReport]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 def StatusReport(run_index:int, max_index:int, steps:int):
     """
     This function allow to easy provide a verbose report for iteration based steps.

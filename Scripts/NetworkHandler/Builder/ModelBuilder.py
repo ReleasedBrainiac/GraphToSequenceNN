@@ -1,4 +1,5 @@
 import types
+import tensorflow as tf
 from keras.models import Model
 from keras.utils import plot_model
 from keras.engine import training
@@ -251,7 +252,13 @@ class ModelBuilder:
             attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
 
             embedding_lstm = LSTM(attention_reshaped.shape[-1].value, batch_size=self.batch_size, return_sequences=True, name="attention_activate")(sequence_embedding)
+
+            print("attention: ", attention_reshaped.shape)
+            print("embedding: ", embedding_lstm.shape)
+
             stated_att_encoder = concatenate([attention_reshaped,embedding_lstm], name="att_emb_concatenation", axis=-1)
+
+            print("result: ", stated_att_encoder.shape)
 
             return units, stated_att_encoder, enc_h, enc_c, att_weights
         except Exception as ex:
@@ -293,19 +300,25 @@ class ModelBuilder:
 
     ######################################################################################
 
-    def BuildBahdanauAttentionPipe(self, units:int, sample_outs, sample_state):
+    def BuildBahdanauAttentionPipe(self, units:int, sample_outs:Layer, sample_state:Layer):
         """
         This method implements the functionality of the "BahdanauAttention". 
         It is an abstaction from https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention example.
             :param units:int: dense units for the given sample out and hidden
-            :param sample_outs: encoder or decoder sample outs
-            :param sample_state: encoder or decoder hidden states
+            :param sample_outs:Layer: encoder or decoder sample outs
+            :param sample_state:Layer: encoder or decoder hidden states
         """
         try:
+
+            #TODO: Remove prints!
+            print("hidden: ", sample_state.shape)
+            print("output: ", sample_outs.shape)
+            print("units: ", units)
+
             hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="expand_time_axis")(sample_state)
             outs = Dense(units, name="dense_sample_outs")(sample_outs)
             hidd = Dense(units, name="dense_hidden_outs")(hidden_with_time_axis)
-            score = Activation("tanh", name="tanh_bahdanau")(add([outs, hidd]))
+            score = Dense(1, name="dense_score")(Activation("tanh", name="tanh_bahdanau")(add([outs, hidd])))
             attention_weights = Activation("softmax", name="softmax_bahdanau")(score)
             context_vector = Lambda(lambda z: K.sum(z, axis=1), name="lambda_context_vector")(multiply([attention_weights, sample_outs]))
             return context_vector, attention_weights

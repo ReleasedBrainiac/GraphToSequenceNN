@@ -30,6 +30,9 @@ class TestNeigh():
 
     def TestBahdanau(self):
 
+        # From = > https://www.tensorflow.org/tutorials/text/nmt_with_attention
+        
+
         dummy_hidden = K.zeros((64, 1024))
         dummy_outs = K.zeros((64, 16, 1024))
 

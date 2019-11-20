@@ -92,7 +92,7 @@ class Graph2SeqInKeras():
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
     BATCH_SIZE:int = 32
     HOP_STEPS:int = 6
-    WORD_WISE:bool = True
+    WORD_WISE:bool = False
     USE_GLOVE:bool = False
 
     #GLOVE
@@ -124,7 +124,7 @@ class Graph2SeqInKeras():
     _loss_function:str = 'mae'
     _last_activation:str = 'relu'
     _optimizer:str ='adam'
-    _use_stated_encoder:bool = False
+    _use_stated_encoder:bool = True
     
     _predict_split_value:int = -1
     _dataset_size:int = -1

@@ -31,10 +31,10 @@ class TestNeigh():
     def TestBahdanau(self):
 
         # From = > https://www.tensorflow.org/tutorials/text/nmt_with_attention
-        
 
-        dummy_hidden = K.zeros((64, 1024))
-        dummy_outs = K.zeros((64, 16, 1024))
+
+        dummy_hidden = K.zeros((32, 400))
+        dummy_outs = K.zeros((32, 1, 400))
 
         print ('Encoder output shape: (batch size, sequence length, units) {}'.format(dummy_outs.shape))
         print ('Encoder hidden state shape: (batch size, units) {}'.format(dummy_hidden.shape))

@@ -162,18 +162,15 @@ class ModelBuilder:
             AssertNotNone(forward_layer, 'forward_layer')
             AssertNotNone(backward_layer, 'backward_layer')
             concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
-            #hidden_dim = 2* hidden_dim
 
-            
-            hidden = Dense( hidden_dim, 
+            """hidden = Dense( hidden_dim, 
                             kernel_initializer=kernel_init,
                             activation=act,
                             kernel_regularizer=kernel_regularizer,
                             activity_regularizer=activity_regularizer,
-                            name="concatenation_act")(concat)
+                            name="concatenation_act")(concat)"""
             
-            
-            #hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
+            hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
 
             concat_pool = None
             if(not self.input_is_2d):
@@ -205,9 +202,9 @@ class ModelBuilder:
         """ 
         try:
             extension = "_dense_act"
-            out_shape_lambda = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
+            out_shape = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
             features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute()
+            neighbourhood_func = lambda x: Nhood(x[0], x[1], batch_sz=self.batch_size,aggregator=aggregator, is_2d=self.input_is_2d).Execute()
 
             forward = features_inputs 
             backward = features_inputs 
@@ -215,12 +212,11 @@ class ModelBuilder:
             for i in range(hops):
                 fw_name = ("fw_"+str(i))
                 bw_name = ("bw_"+str(i))
-                
-                
-                forward = self.NhoodLambdaLayer(forward,  fw_look_up_inputs, i,  neighbourhood_func, fw_name, out_shape_lambda)
-                forward = Dense(units=hidden_dim, activation=act, name=fw_name+extension)(forward)
 
-                backward = self.NhoodLambdaLayer(backward,  bw_look_up_inputs, i,  neighbourhood_func, bw_name, out_shape_lambda)
+                forward = self.NhoodLambdaLayer(forward, fw_look_up_inputs, i, neighbourhood_func, fw_name, out_shape)
+                forward = Dense(units=hidden_dim, activation=act, name=fw_name+extension)(forward)
+                
+                backward = self.NhoodLambdaLayer(backward, bw_look_up_inputs, i, neighbourhood_func, bw_name, out_shape)
                 backward = Dense(units=hidden_dim, activation=act, name=bw_name+extension)(backward)
 
             return self.BuildGraphEmeddingConcatenation(forward,backward, hidden_dim=hidden_dim)

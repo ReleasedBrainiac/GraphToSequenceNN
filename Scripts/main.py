@@ -80,7 +80,7 @@ class Graph2SeqInKeras():
     TF_CPP_MIN_LOG_LEVEL:str = '2'
     MULTI_RUN:bool = False
     CPUS:int = os.cpu_count()
-    GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
+    GPUS = None #TODO: Bug on no old TF versions: KTFGPUHandler().GetAvailableGPUsTF2()
 
     #Logging
     SHOW_GLOBAL_FEEDBACK:bool = True
@@ -96,8 +96,8 @@ class Graph2SeqInKeras():
     USE_GLOVE:bool = True
 
     #GLOVE
-    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
-    GLOVE_OUTPUT_DIM:int = 200
+    GLOVE_OUTPUT_DIM:int = 100
+    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(GLOVE_OUTPUT_DIM)+'d.txt'
     GLOVE_VOCAB_SIZE:int = 15000
 
     #Dataset

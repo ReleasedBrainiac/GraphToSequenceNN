@@ -94,7 +94,8 @@ class TestNeigh():
 
             n = nodes[run:(end)]
             f = fw[run:(end)]
-            Nhood(n, f, aggregator=aggregator, is_2d=False).Execute()
+            result = Nhood(n, f, aggregator=aggregator, is_2d=False).Execute()
+            print(result)
             counter -= batch_size
             run += batch_size +1
 

@@ -91,7 +91,7 @@ class Graph2SeqInKeras():
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
     BATCH_SIZE:int = 32
-    HOP_STEPS:int = 6
+    HOP_STEPS:int = 3
     WORD_WISE:bool = False
     USE_GLOVE:bool = True
 
@@ -438,6 +438,7 @@ class Graph2SeqInKeras():
                                     input_dec_dim=input_dec_dim,
                                     batch_size=self.BATCH_SIZE)
 
+            print("Build Neighbourhood Submodel!")
             graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.GLOVE_OUTPUT_DIM)
             sequence_embedding = embedding_layer(builder.get_decoder_inputs())
 

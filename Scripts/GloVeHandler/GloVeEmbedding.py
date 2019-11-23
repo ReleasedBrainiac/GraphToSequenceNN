@@ -137,9 +137,9 @@ class GloVeEmbedding:
         Note, that words not found in embedding index, will be zeros.
         """   
         try:
-            self.NUMBER_WORDS = min(self.MAX_NUM_WORDS, len(self.tokenizer.word_index)) + 1
+            self.NUMBER_WORDS = min(self.MAX_NUM_WORDS, len(self.tokenizer._word_index)) + 1
             embedding_matrix = zeros((self.NUMBER_WORDS, self.EMBEDDING_DIM))
-            for word, i in self.tokenizer.word_index.items():
+            for word, i in self.tokenizer._word_index.items():
                 if i > self.MAX_NUM_WORDS: continue
                 embedding_vector = self.embedding_indices.get(word)
 

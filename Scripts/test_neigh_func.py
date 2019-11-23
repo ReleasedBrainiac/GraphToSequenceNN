@@ -69,5 +69,34 @@ class TestNeigh():
         stated_att_encoder = concatenate([context_vector,embedding], name="att_emb_concatenation", axis=-1)
         print("Stated Encoder result shape: (batch size, units) {}".format(stated_att_encoder.shape))
 
+    def TestNhoodBatched(self):
+        aggregator:str = 'mean'
+        
+        run:int = 0
+        words:int = 32
+        samples:int = 44
+        counter:int = samples
+        batch_size:int = 32
+        encoded_words:int  = 100
+        
+        nodes_lookup = (samples, batch_size, encoded_words)
+        navi_lookup = (samples, batch_size, words)
+
+        nodes = K.zeros(nodes_lookup)
+        fw = K.zeros(navi_lookup)
+
+        while ( samples >= run):
+            print("Samples [", samples, "] >= Run [", run, "]")
+
+            end = batch_size + run
+            if (end > samples): end = (samples -1)
+            print("S[",run,"] | E[",end,"]")
+
+            n = nodes[run:(end)]
+            f = fw[run:(end)]
+            Nhood(n, f, aggregator=aggregator, is_2d=False).Execute()
+            counter -= batch_size
+            run += batch_size +1
+
 if __name__ == "__main__":
-    TestNeigh().TestBahdanau()
+    TestNeigh().TestNhoodBatched()

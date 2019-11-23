@@ -80,20 +80,18 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def GetAllSamplesAggregatedFeatures(self, sample_size:int):
+    def GetAllSamplesAggregatedFeatures(self):
         """
         This function collects and aggregates all given features next hop neighbourhood feature vectors for all samples.
         Attention!
             => since the neighbourhood tensors have to be for each sample an (MxM) matrix i collect the dim from last shape value!
-
-            :param sample_size:int: amount of samples
         """   
         try:
             samples_results = []
             dims = len(self.neighbouring.shape)
             vecs = self.neighbouring.shape[dims-1]
 
-            for sample in range(sample_size):
+            for sample in range(self.features.shape[0]):
                 
                 sample_concatenate = None
                 sample_features = self.features[sample,:,:] if (dims > 2) else self.features
@@ -112,18 +110,17 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def InputStrategySelection(self, batch_sz:int=1):
+    def InputStrategySelection(self):
         """
         This function processes the neighbourhood collection and selects a dimension conversion strategy for the desired returning dimension (2D or 3D)
-            :parama batch_sz:int: defines the batch size
         """
         try:
-            samples_results = self.GetAllSamplesAggregatedFeatures(sample_size=batch_sz)
+            samples_results = self.GetAllSamplesAggregatedFeatures()
 
             if self.is_2d:
                 return samples_results[0]
             else:
-                if(batch_sz == 1):
+                if(self.features.shape[0] == 1):
                     return K.expand_dims(samples_results[0], axis=0)
                 else:  
                     return K.stack(samples_results)
@@ -132,15 +129,14 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def Execute(self, batch_sz:int=1):
+    def Execute(self):
         """
         This function executes the feature aggregation process for the next neighbouring step.
-            :parama batch_sz:int: defines the batchsize
         """   
         try:
             AssertIsTensor(self.features)
             AssertIsTensor(self.neighbouring)
-            return self.InputStrategySelection(batch_sz)
+            return self.InputStrategySelection()
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

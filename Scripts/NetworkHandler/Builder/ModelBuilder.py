@@ -207,7 +207,7 @@ class ModelBuilder:
             extension = "_dense_act"
             out_shape_lambda = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
             features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute(self.batch_size)
+            neighbourhood_func = lambda x: Nhood(x[0], x[1], aggregator=aggregator, is_2d=self.input_is_2d).Execute()
 
             forward = features_inputs 
             backward = features_inputs 

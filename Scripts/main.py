@@ -93,10 +93,10 @@ class Graph2SeqInKeras():
     BATCH_SIZE:int = 32
     HOP_STEPS:int = 6
     WORD_WISE:bool = False
-    USE_GLOVE:bool = False
+    USE_GLOVE:bool = True
 
     #GLOVE
-    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.200d.txt'
+    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.100d.txt'
     GLOVE_OUTPUT_DIM:int = 200
     GLOVE_VOCAB_SIZE:int = 15000
 
@@ -124,7 +124,7 @@ class Graph2SeqInKeras():
     _loss_function:str = 'mae'
     _last_activation:str = 'relu'
     _optimizer:str ='adam'
-    _use_stated_encoder:bool = True
+    _use_recursive_encoder:bool = True
     
     _predict_split_value:int = -1
     _dataset_size:int = -1
@@ -409,12 +409,14 @@ class Graph2SeqInKeras():
             vectorized_targets = None
 
             if self.SHOW_GLOBAL_FEEDBACK:
-                print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape, train_x[3][0].shape)
-                print("Test X: ", test_x[0][0].shape, test_x[1][0].shape, test_x[2][0].shape, test_x[3][0].shape)
                 if self.WORD_WISE:
+                    print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape, train_x[3][0].shape)
+                    print("Test X: ", test_x[0][0].shape, test_x[1][0].shape, test_x[2][0].shape, test_x[3][0].shape)
                     print("Train Y: ", train_y[0].shape)
                     print("Test Y: ", test_y[0].shape)
                 else:
+                    print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
+                    print("Test X: ", test_x[0].shape, test_x[1].shape, test_x[2].shape, test_x[3].shape)
                     print("Train Y: (" +  str(len(train_y)) + ", " + str(len(train_y[0])) + ")")
                     print("Test Y: (" + str(len(test_y)) + ", " + str(len(test_y[0])) + ")")
                 print("Network Input: Result structure [{}{}{}{}]".format(type(train_x), type(train_y), type(test_x), type(test_y)))
@@ -439,7 +441,7 @@ class Graph2SeqInKeras():
             graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.GLOVE_OUTPUT_DIM)
             sequence_embedding = embedding_layer(builder.get_decoder_inputs())
 
-            if self._use_stated_encoder:
+            if ((not self._use_recursive_encoder) and (self.WORD_WISE)):
                 print("Build Encoder Stated!")
                 units, encoder, enc_h, enc_c, att_weights = builder.BuildStatePassingEncoder(   sequence_embedding=sequence_embedding,
                                                                                                 graph_embedding=graph_embedding,

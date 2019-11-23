@@ -1,7 +1,7 @@
 import numpy as np
 import re
 import sys
-from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray, MultiDimNdArrayToListedNdArrays, isNdarray, ValueReport
+from DatasetHandler.ContentSupport import isNotNone, AssertNotNone, StatusReport, ConcatenateNdArrays, RepeatNTimsNdArray, MultiDimNdArrayToListedNdArrays, isNdarray, ValueReport, SplitBorderAdjustment
 from Configurable.ProjectConstants import Constants
 
 class NumpyDatasetHandler():
@@ -235,7 +235,7 @@ class NumpyDatasetPreprocessor():
             print(message)
             print(ex)
 
-    def NetworkInputPreparation(self, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_words:np.ndarray, vecs_target_words:np.ndarray, split_border:int):
+    def NetworkInputPreparation(self, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_words:np.ndarray, vecs_target_words:np.ndarray, desired_batch_sz:int, split_border:int):
         """
         This method return the train and test data.
             :param nodes_embedding:np.ndarray: node embedding numpy array
@@ -243,21 +243,36 @@ class NumpyDatasetPreprocessor():
             :param bw_look_up:np.ndarray: backward look up numpy array
             :param vecs_input_sentences:np.ndarray: input sentences vector numpy array -> they will be word level seperated
             :param vecs_target_sentences:np.ndarray: target sentences vector numpy array
+            :param desired_batch_sz:int: batch size should support the splitting to keep informations
             :param split_border:int: the index where to split the dataset
         """
         try:
             assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_words) == len(vecs_target_words)), "The given inputs of NetworkInputPreparation aren't machting at first dimension!"
             assert (len(nodes_embedding) >= split_border), ("The split index value was to high! [", len(nodes_embedding), " >= ", split_border, "]")
 
+            print("Border: ", split_border)
+            print("Batches: ", desired_batch_sz)
+            print("Datasize: ", len(nodes_embedding))
+
+            split_border, reducer = SplitBorderAdjustment(len(nodes_embedding), split_border, desired_batch_sz)
+
             train_x = [ nodes_embedding[:split_border], 
                         fw_look_up[:split_border], 
                         bw_look_up[:split_border],
                         vecs_input_words[:split_border]]
 
-            test_x = [  nodes_embedding[split_border:], 
-                        fw_look_up[split_border:], 
-                        bw_look_up[split_border:],
-                        vecs_input_words[split_border:]]
+            if isNotNone(reducer): 
+                reducer = (-1 * reducer)
+                test_x = [  nodes_embedding[split_border:reducer], 
+                            fw_look_up[split_border:reducer], 
+                            bw_look_up[split_border:reducer],
+                            vecs_input_words[split_border:reducer]]
+            else:
+                test_x = [  nodes_embedding[split_border:], 
+                            fw_look_up[split_border:], 
+                            bw_look_up[split_border:],
+                            vecs_input_words[split_border:]]
+
 
             train_y = vecs_target_words[:split_border]
             test_y = vecs_target_words[split_border:]

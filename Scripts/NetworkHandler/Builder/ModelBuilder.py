@@ -6,7 +6,7 @@ from keras.engine import training
 from keras import regularizers, activations
 from keras import backend as K
 from keras.optimizers import RMSprop, Adam, Nadam, Adagrad, Adadelta
-from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, GlobalMaxPooling1D, RepeatVector, Activation, multiply, add, Flatten, BatchNormalization
+from keras.layers import Lambda, concatenate, Dense, Dropout, Input, LSTM, Embedding, Layer, GlobalMaxPooling1D, RepeatVector, Activation, multiply, add, Flatten, BatchNormalization, TimeDistributed
 from NetworkHandler.Neighbouring.NeighbourhoodCollector import Neighbourhood as Nhood
 from NetworkHandler.KerasSupportMethods.SupportMethods import AssertNotNone, AssertNotNegative, AssertIsKerasTensor
 
@@ -247,12 +247,15 @@ class ModelBuilder:
                                                 return_sequences =True, 
                                                 return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
+            #This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/ ~> Recursive Model B
+            #Encoder Attention
             attention_out, att_weights = self.BuildBahdanauAttentionPipe(units, encoder_out, enc_h)
-
             attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
 
+            #Recursive style Embedding
             embedding_lstm = LSTM(attention_reshaped.shape[-1].value, batch_size=self.batch_size, return_sequences=True, name="attention_activate")(sequence_embedding)
 
+            print("batches: ", self.batch_size)
             print("attention: ", attention_reshaped.shape)
             print("embedding: ", embedding_lstm.shape)
 
@@ -303,23 +306,27 @@ class ModelBuilder:
     def BuildBahdanauAttentionPipe(self, units:int, sample_outs:Layer, sample_state:Layer):
         """
         This method implements the functionality of the "BahdanauAttention". 
-        It is an abstaction from https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention example.
+        It is an abstaction from: 
+        1. https://www.tensorflow.org/beta/tutorials/text/nmt_with_attention example and 
+        2. https://machinelearningmastery.com/encoder-decoder-attention-sequence-to-sequence-prediction-keras/ example
             :param units:int: dense units for the given sample out and hidden
             :param sample_outs:Layer: encoder or decoder sample outs
             :param sample_state:Layer: encoder or decoder hidden states
         """
         try:
-
-            #TODO: Remove prints!
-            print("hidden: ", sample_state.shape)
-            print("output: ", sample_outs.shape)
-            print("units: ", units)
-
+            #Example 2: 
+            # time_steps = sample_outs.shape[1]
+            # hidden_with_time_axis = K.repeat(sample_state, time_steps)
             hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="expand_time_axis")(sample_state)
-            outs = Dense(units, name="dense_sample_outs")(sample_outs)
+            
+            #Example 1: outs = Dense(units, name="dense_sample_outs")(sample_outs)
+            outs = TimeDistributed(Dense(units, name="dense_sample_outs"))(sample_outs)
             hidd = Dense(units, name="dense_hidden_outs")(hidden_with_time_axis)
-            score = Dense(1, name="dense_score")(Activation("tanh", name="tanh_bahdanau")(add([outs, hidd])))
+
+            #Example 1: score = Dense(1, activation="tanh", name="dense_score")(add[outs, hidd])
+            score = Activation("tanh", name="dense_score")(outs + hidd)
             attention_weights = Activation("softmax", name="softmax_bahdanau")(score)
+
             context_vector = Lambda(lambda z: K.sum(z, axis=1), name="lambda_context_vector")(multiply([attention_weights, sample_outs]))
             return context_vector, attention_weights
         except Exception as ex:

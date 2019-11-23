@@ -162,18 +162,18 @@ class ModelBuilder:
             AssertNotNone(forward_layer, 'forward_layer')
             AssertNotNone(backward_layer, 'backward_layer')
             concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
-            hidden_dim = 2* hidden_dim
+            #hidden_dim = 2* hidden_dim
 
-            '''
-            hidden = Dense( hidden_dim, 
-                                kernel_initializer=kernel_init,
-                                activation=act,
-                                kernel_regularizer=kernel_regularizer,
-                                activity_regularizer=activity_regularizer,
-                                name="concatenation_act")(concat)
-            '''
             
-            hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
+            hidden = Dense( hidden_dim, 
+                            kernel_initializer=kernel_init,
+                            activation=act,
+                            kernel_regularizer=kernel_regularizer,
+                            activity_regularizer=activity_regularizer,
+                            name="concatenation_act")(concat)
+            
+            
+            #hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
 
             concat_pool = None
             if(not self.input_is_2d):
@@ -183,7 +183,6 @@ class ModelBuilder:
 
             graph_embedding_state_h = concat_pool
             graph_embedding_state_c = concat_pool
-            #graph_embedding_states = [concat_pool, concat_pool]
 
             return [hidden, graph_embedding_state_h, graph_embedding_state_c]
         except Exception as ex:
@@ -281,7 +280,6 @@ class ModelBuilder:
         """
         try: 
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-            
             encoder_out = LSTM( name="encoder_lstm", 
                                 units=units, 
                                 batch_size=self.batch_size, 
@@ -314,16 +312,16 @@ class ModelBuilder:
             :param sample_state:Layer: encoder or decoder hidden states
         """
         try:
-            #Example 2: 
+            #Example Res. 2: 
             # time_steps = sample_outs.shape[1]
             # hidden_with_time_axis = K.repeat(sample_state, time_steps)
             hidden_with_time_axis = Lambda(lambda q: K.expand_dims(q, axis=1), name="expand_time_axis")(sample_state)
             
-            #Example 1: outs = Dense(units, name="dense_sample_outs")(sample_outs)
+            #Example Res. 1: outs = Dense(units, name="dense_sample_outs")(sample_outs)
             outs = TimeDistributed(Dense(units, name="dense_sample_outs"))(sample_outs)
             hidd = Dense(units, name="dense_hidden_outs")(hidden_with_time_axis)
 
-            #Example 1: score = Dense(1, activation="tanh", name="dense_score")(add[outs, hidd])
+            #Example Res. 1: score = Dense(1, activation="tanh", name="dense_score")(add[outs, hidd])
             score = Activation("tanh", name="dense_score")(outs + hidd)
             attention_weights = Activation("softmax", name="softmax_bahdanau")(score)
 
@@ -405,6 +403,8 @@ class ModelBuilder:
             :param learn_rate:float: optimizer learning rate
         """   
         try:
+            print("Compile Model!")
+
             optimizer = self.get_optimizer(name=optimizer, clipvalue=clipvalue, learn_rate=learn_rate)
 
             model.compile(  loss=loss,

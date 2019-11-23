@@ -348,6 +348,41 @@ def CreateNListWithRepeatingValue(repeatable_value, times:int):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
+def SplitBorderAdjustment(dataset_sz:int, split_border:int, desired_batch_sz:int):
+    """
+    This method allow to fix split border errors to secure batched process execution.
+        :param dataset_sz:int: dataset size
+        :param split_border:int: calculated solit border index
+        :param desired_batch_sz:int: desired datset batch size
+    """
+    try:
+        left_rest:int = split_border%desired_batch_sz
+        right_rest:int = (dataset_sz - split_border) % desired_batch_sz
+        reducer:int = left_rest + right_rest
+
+        if (reducer >= desired_batch_sz):
+            split_border += (desired_batch_sz - left_rest)
+            reducer = (desired_batch_sz - right_rest)
+            print("1")
+        else:
+            split_border -= left_rest
+            print("2")
+
+
+        left_rest = split_border%desired_batch_sz
+        dataset_right = dataset_sz - split_border - reducer
+        right_rest = dataset_right % desired_batch_sz
+
+        if(left_rest == 0) and (right_rest == 0): 
+            return split_border, reducer
+        else:
+            print("Error: Adjustment of the split border value failed!")
+            return split_border, None
+    except Exception as ex:
+        template = "An exception of type {0} occurred in [ContentSupport.SplitBorderAdjustment]. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+
 def ReorderListByIndices(reorder_list:list, ordering_indices:list):
     """
     This function reorder a list by a given list of ordering indices.

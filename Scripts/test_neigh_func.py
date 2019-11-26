@@ -71,5 +71,10 @@ class TestNeigh():
         print("Stated Encoder result shape: (batch size, units) {}".format(stated_att_encoder.shape))
 
 
+    def TestTFScan(self):
+        entity_location = K.permute_dimensions((1,0,2))
+        y, _ = tf.scan(lambda _x, _el: _x[:, _el[0, 0], :], sequences = (x, entity_location))
+
+
 if __name__ == "__main__":
     TestNeigh().TestBahdanau()

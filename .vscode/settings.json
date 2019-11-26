@@ -10,7 +10,10 @@
     "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": false,
     "python.testing.promptToConfigure": false,
-    "python.autoComplete.extraPaths": ["./Scripts/"],
+    "python.autoComplete.extraPaths": [
+        "./Scripts/",
+        "~/AppData/Roaming/Python/Python36/site-packages",
+        "~/AppData/Local/Programs/Python/Python36/Lib/site-packages"],
     "python.linting.pylintEnabled": true,
     "python.jediEnabled": false
 }

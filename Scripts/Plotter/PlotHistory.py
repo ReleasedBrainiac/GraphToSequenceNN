@@ -239,6 +239,15 @@ class HistoryPlotter(object):
                                 extender = 'loss_epoch_plot')
             fig_num += 1
 
+            if 'acc' in self._history_keys:
+                self.AccOrLossPlot( fig_num = fig_num, 
+                                    title = 'Model Accuracy', 
+                                    metric = 'acc', 
+                                    axis_labels = ['train', 'validation'], 
+                                    history_labels = ['Accuracy', 'Epoch'], 
+                                    extender = 'accuracy_epoch_plot')
+                fig_num += 1
+
             if 'top_k_categorical_accuracy' in self._history_keys:
                 self.AccOrLossPlot( fig_num = fig_num, 
                                     title = 'Model Top k Categorical Accuracy', 
@@ -295,7 +304,7 @@ class HistoryPlotter(object):
 
             plt.ylabel(history_labels[0])
             plt.xlabel(history_labels[1])
-            plt.legend(axis_labels, loc='upper right')
+            plt.legend(axis_labels, loc='lower right')
             if self._save_it: 
                 PlotSaver(self._model_description, figure).SavePyPlotToFile(extender=extender)
             else:

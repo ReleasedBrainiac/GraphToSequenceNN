@@ -80,7 +80,7 @@ class Graph2SeqInKeras():
     TF_CPP_MIN_LOG_LEVEL:str = '2'
     MULTI_RUN:bool = False
     CPUS:int = os.cpu_count()
-    GPUS = None #TODO: Bug on no old TF versions: KTFGPUHandler().GetAvailableGPUsTF2()
+    GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
     #Logging
     SHOW_GLOBAL_FEEDBACK:bool = True
@@ -93,7 +93,7 @@ class Graph2SeqInKeras():
     BATCH_SIZE:int = 16
     HOP_STEPS:int = 3
     WORD_WISE:bool = False
-    USE_GLOVE:bool = False
+    USE_GLOVE:bool = True
     EMBEDDING_OUTPUT_DIM:int = 100
 
     #GLOVE
@@ -300,8 +300,7 @@ class Graph2SeqInKeras():
 
             nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(nodes_embedding)
             embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
-            print("Emb_Layer: ", embedding_layer.shape)
-
+            
             if nodes_to_embedding:
                 vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
                 vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)

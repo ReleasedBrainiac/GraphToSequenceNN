@@ -84,8 +84,6 @@ In the sentences:
 
 [THE RESULT] is a cleaned AMR string which i gonna use for to create a node embedding with GloVe.
 
-## [Attention]
-
 ## [Bugs]
 
 For python 3.6.5 saving the whole model throws an key argument error 

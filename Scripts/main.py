@@ -93,11 +93,11 @@ class Graph2SeqInKeras():
     BATCH_SIZE:int = 8
     HOP_STEPS:int = 3
     WORD_WISE:bool = False
-    USE_GLOVE:bool = True
+    USE_GLOVE:bool = False
+    EMBEDDING_OUTPUT_DIM:int = 100
 
     #GLOVE
-    GLOVE_OUTPUT_DIM:int = 100
-    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(GLOVE_OUTPUT_DIM)+'d.txt'
+    GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
     GLOVE_VOCAB_SIZE:int = 15000
 
     #Dataset
@@ -114,7 +114,7 @@ class Graph2SeqInKeras():
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
     SHUFFLE_DATASET:bool = True
     FOLDERNAME:str = "graph2seq_model_" + _fname + "_DT_" + TIME_NOW + "/"
-    MODEL_DESC:str = FOLDERNAME + "model_" + _fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(GLOVE_OUTPUT_DIM) + "_DT_" + TIME_NOW + "_"
+    MODEL_DESC:str = FOLDERNAME + "model_" + _fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(EMBEDDING_OUTPUT_DIM) + "_DT_" + TIME_NOW + "_"
 
     #Plotting
     PLOT:str = "plot.png"
@@ -166,7 +166,7 @@ class Graph2SeqInKeras():
                 #Set name elements and time elements
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
                 self.FOLDERNAME:str = "graph2seq_model_" + self._fname + "_DT_" + self.TIME_NOW + "/"
-                self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self._fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.GLOVE_OUTPUT_DIM) + "_DT_" + self.TIME_NOW + "_"
+                self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self._fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.EMBEDDING_OUTPUT_DIM) + "_DT_" + self.TIME_NOW + "_"
                 self.ToolPipe()
 
     def SystemInfo(self):
@@ -300,6 +300,7 @@ class Graph2SeqInKeras():
 
             nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(nodes_embedding)
             embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
+            print("Emb_Layer: ", embedding_layer.shape)
 
             if nodes_to_embedding:
                 vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
@@ -322,7 +323,7 @@ class Graph2SeqInKeras():
                                 vectorized_targets:list, 
                                 max_cardinality:int, 
                                 max_sequence_len:int, 
-                                in_vocab_size:int, 
+                                in_vocab_size:int,
                                 out_dim_emb:int, 
                                 show_processor_feedback:bool=True, 
                                 embedding_input_wordwise:bool=True,
@@ -330,18 +331,34 @@ class Graph2SeqInKeras():
         try:
             print("#######################################\n")
             print("##### Categorical Embedding Layer #####")
+            final_embeddings:list = []
+            self.EMBEDDING_OUTPUT_DIM = self._unique_words
             input_len:int = 1 if embedding_input_wordwise else max_sequence_len
-            embedding_layer = Embedding(in_vocab_size, out_dim_emb, input_length=input_len)
+
+            embedding_layer = Embedding(input_dim=self._unique_words, 
+                                        output_dim=out_dim_emb, 
+                                        input_length=input_len,
+                                        trainable=False,
+                                        name=('categorical_'+str(out_dim_emb)+'d_embedding'))
+
+            
 
             if self.SHOW_GLOBAL_FEEDBACK: print("Nodes example: ", nodes_embedding[0])
 
             nodes_embedding = tokenizer.TokenizeNodes(nodes_embedding)
-            nodes_embedding = [to_categorical(y=node_vec, num_classes=self._unique_words) for node_vec in nodes_embedding]
+
+            # Append 0-vectors to incorrect cardinalities feature arrays
+
+            while nodes_embedding:
+                current_features:list = to_categorical(y=nodes_embedding.pop(), num_classes=self._unique_words).tolist()
+                diff = max_cardinality - len(current_features)
+                for _ in range(diff): current_features.append(np.zeros(self._unique_words))
+                final_embeddings.append(np.asarray(current_features))
 
             if self.SHOW_GLOBAL_FEEDBACK: 
                 print("Categorical: Result structure [{}{}{}{}]".format(type(nodes_embedding), type(vectorized_inputs), type(vectorized_targets), type(embedding_layer)))
 
-            return [nodes_embedding, vectorized_inputs, vectorized_targets, embedding_layer]
+            return [final_embeddings, vectorized_inputs, vectorized_targets, embedding_layer]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.CategoricalEmbedding]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -434,13 +451,13 @@ class Graph2SeqInKeras():
             input_dec_dim = 1 if self.WORD_WISE else target_shape[-1]
 
             print("Builder Init!")
-            builder = ModelBuilder( input_enc_dim=self.GLOVE_OUTPUT_DIM, 
+            builder = ModelBuilder( input_enc_dim=self.EMBEDDING_OUTPUT_DIM, 
                                     edge_dim=max_cardinality, 
                                     input_dec_dim=input_dec_dim,
                                     batch_size=self.BATCH_SIZE)
 
             print("Build Neighbourhood Submodel!")
-            graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.GLOVE_OUTPUT_DIM)
+            graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.EMBEDDING_OUTPUT_DIM)
             sequence_embedding = embedding_layer(builder.get_decoder_inputs())
 
             if ((not self._use_recursive_encoder) and (self.WORD_WISE)):
@@ -590,7 +607,7 @@ class Graph2SeqInKeras():
                                                                                                                 max_cardinality=max_cardinality, 
                                                                                                                 max_sequence_len=self._max_sequence_len, 
                                                                                                                 in_vocab_size=self.GLOVE_VOCAB_SIZE, 
-                                                                                                                out_dim_emb=self.GLOVE_OUTPUT_DIM, 
+                                                                                                                out_dim_emb=self.EMBEDDING_OUTPUT_DIM, 
                                                                                                                 show_processor_feedback=True, 
                                                                                                                 embedding_input_wordwise=self.WORD_WISE, 
                                                                                                                 nodes_to_embedding=False)
@@ -601,8 +618,8 @@ class Graph2SeqInKeras():
                                                                                                                     vectorized_targets=vectorized_targets, 
                                                                                                                     max_cardinality=max_cardinality, 
                                                                                                                     max_sequence_len=self._max_sequence_len, 
-                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE, 
-                                                                                                                    out_dim_emb=self.GLOVE_OUTPUT_DIM, 
+                                                                                                                    in_vocab_size=self.GLOVE_VOCAB_SIZE,
+                                                                                                                    out_dim_emb=self.EMBEDDING_OUTPUT_DIM,
                                                                                                                     show_processor_feedback=True, 
                                                                                                                     embedding_input_wordwise=self.WORD_WISE, 
                                                                                                                     nodes_to_embedding=False)

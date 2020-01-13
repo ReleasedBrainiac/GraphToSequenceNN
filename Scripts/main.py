@@ -300,7 +300,7 @@ class Graph2SeqInKeras():
 
             nodes_embedding = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(nodes_embedding)
             embedding_layer = glove_embedding.BuildGloveVocabEmbeddingLayer(embedding_input_wordwise)
-            
+
             if nodes_to_embedding:
                 vectorized_inputs = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_inputs, check_cardinality=False)
                 vectorized_targets = glove_embedding.ReplaceDatasetsNodeValuesByEmbedding(vectorized_targets, check_cardinality=False)
@@ -560,6 +560,8 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)  
     
+    #Predict would actually take to much time. @Githung-Community: Please feel free to implement it by yourself!
+    """
     def NetworkPredict(self, model, test_x:list, test_y:np.ndarray):
         try:
             print("#######################################\n")
@@ -581,6 +583,7 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)  
+    """
 
     def ToolPipe(self):
         try:
@@ -645,7 +648,9 @@ class Graph2SeqInKeras():
 
             history = self.NetworkTrain(model, train_x, train_y)
             self.NetworkPlotResults(history)
-            self.NetworkPredict(model, test_x, test_y)
+            
+            #Predict would actually take to much time. @Githung-Community: Please feel free to implement it by yourself!
+            #self.NetworkPredict(model, test_x, test_y)
 
             print("#######################################\n")
             print("######## Process End ########")

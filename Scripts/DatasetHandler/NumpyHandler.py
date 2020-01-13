@@ -250,10 +250,7 @@ class NumpyDatasetPreprocessor():
             assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_words) == len(vecs_target_words)), "The given inputs of NetworkInputPreparation aren't machting at first dimension!"
             assert (len(nodes_embedding) >= split_border), ("The split index value was to high! [", len(nodes_embedding), " >= ", split_border, "]")
 
-            print("Border: ", split_border)
-            print("Batches: ", desired_batch_sz)
-            print("Datasize: ", len(nodes_embedding))
-
+            print("Adjust splitting border!")
             split_border, reducer = SplitBorderAdjustment(len(nodes_embedding), split_border, desired_batch_sz)
 
             train_x = [ nodes_embedding[:split_border], 

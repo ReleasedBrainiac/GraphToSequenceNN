@@ -78,7 +78,7 @@ class Graph2SeqInKeras():
     """
     #System
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    MULTI_RUN:bool = False
+    MULTI_RUN:bool = True
     CPUS:int = os.cpu_count()
     GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
@@ -87,13 +87,13 @@ class Graph2SeqInKeras():
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
 
     #Network
-    EPOCHS:int = 15
+    EPOCHS:int = 3
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
     BATCH_SIZE:int = 16
     HOP_STEPS:int = 3
     WORD_WISE:bool = False
-    USE_GLOVE:bool = True
+    USE_GLOVE:bool = False
     EMBEDDING_OUTPUT_DIM:int = 100
 
     #GLOVE
@@ -134,10 +134,11 @@ class Graph2SeqInKeras():
        
     
     # Multi Run Setup!
-    _datasets:list = ['2mAMR/2m.json', 'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt']
-    _multi_epochs:list = [10, 15]
-    _multi_hops:list = [6, 9]
-    _multi_val_split:list = [0.10, 0.20]
+    _datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
+    _multi_epochs:list = [10, 15, 10, 15]
+    _multi_hops:list = [6, 9, 6, 9]
+    _multi_val_split:list = [0.10, 0.20, 0.10, 0.20]
+    _multi_use_glove:list = [True, True, False, False]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):
@@ -162,6 +163,7 @@ class Graph2SeqInKeras():
                 self.EPOCHS = self._multi_epochs[run]
                 self.HOP_STEPS = self._multi_hops[run]
                 self.VALIDATION_SPLIT = self._multi_val_split[run]
+                self.USE_GLOVE = self._multi_use_glove[run]
 
                 #Set name elements and time elements
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
@@ -648,7 +650,7 @@ class Graph2SeqInKeras():
 
             history = self.NetworkTrain(model, train_x, train_y)
             self.NetworkPlotResults(history)
-            
+
             #Predict would actually take to much time. @Githung-Community: Please feel free to implement it by yourself!
             #self.NetworkPredict(model, test_x, test_y)
 

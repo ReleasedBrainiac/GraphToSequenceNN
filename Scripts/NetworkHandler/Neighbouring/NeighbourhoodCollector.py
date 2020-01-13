@@ -22,24 +22,20 @@ class Neighbourhood:
         1. https://github.com/tensorflow/tensorflow/issues/31991
     """
 
-    def __init__(self, features, neighbouring, batch_sz:int = 32, axis:int=1, aggregator:str ='mean', is_2d:bool =True):
+    def __init__(self, batch_sz:int = 32, axis:int=1, aggregator:str ='mean', is_2d:bool =True):
         """
         This constructor stores all necessary variables for the setup.
-            :param features: matrix of feature vectors defining graph verticies
-            :param neighbouring: matrix defining graph verticies neighbouring
             :param batch_sz:int: desired batch size
             :param axis:int: axis definition if an element-wise aggregator is chosen and for the other matrix operations (default = 1) 
             :param aggregator:str: aggregator of choice (default = mean)
             :param is_2d:bool: relevant if the function is used on single samples. allows the inserted 2D return a 2D result otherwise its 3D
         """
-        self.features = features
-        self.neighbouring = neighbouring
+        self.features = None
+        self.neighbouring = None
         self.aggregator = aggregator
         self.axis = axis
         self.is_2d = is_2d
         self.batch_sz:int = batch_sz
-
-        #self.batch_sz:int = K.int_shape(self.features)[0] if isNotNone(self.features.shape[0].value) else batch_sz
 
     def GetVectorNeighbours(self, features, neighbouring, index:int):
         """
@@ -99,8 +95,6 @@ class Neighbourhood:
             dims = len(self.neighbouring.shape)
             vecs = self.neighbouring.shape[dims-1]
 
-            #batch_sz:int = K.int_shape(self.features)[0] if isNotNone(self.features.shape[0].value) else batch_sz
-
             for sample in range(self.features.shape[0].value):
                 
                 sample_concatenate = None
@@ -130,7 +124,7 @@ class Neighbourhood:
             if self.is_2d:
                 return samples_results[0]
             else:
-                if(self.features.shape[0].value == 1):
+                if isNotNone(self.features.shape[0].value) and (self.features.shape[0].value == 1):
                     return K.expand_dims(samples_results[0], axis=0)
                 else:  
                     return K.stack(samples_results)
@@ -139,21 +133,22 @@ class Neighbourhood:
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def Execute(self):
+    def Execute(self, features, neighbouring):
         """
         This function executes the feature aggregation process for the next neighbouring step.
         """   
         try:
-            AssertIsTensor(self.features)
-            AssertIsTensor(self.neighbouring)
+            AssertIsTensor(features)
+            AssertIsTensor(neighbouring)
+
+            self.features = features
+            self.neighbouring = neighbouring
 
             if isNotNone(self.features.shape[0].value):
-                print("Normal Shape: ", self.features.shape)
                 return self.InputStrategySelection()
-            else:
-                placeholder = K.zeros(shape=(self.batch_sz, self.neighbouring.shape[1], (self.features.shape[-1] + self.neighbouring.shape[-1])))
-                print("PH Shape: ", placeholder.shape)
-                return placeholder
+
+            # This is just for passing a mask to avoid slicing errors during batched training.
+            return self.features
         except Exception as ex:
             template = "An exception of type {0} occurred in [NeighbourhoodCollector.Execute]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

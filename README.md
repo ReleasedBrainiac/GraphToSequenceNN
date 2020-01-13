@@ -84,10 +84,9 @@ In the sentences:
 
 [THE RESULT] is a cleaned AMR string which i gonna use for to create a node embedding with GloVe.
 
-## [Bugs]
+## [Attention]
 
-It isn't possible to extend the batch_size > 1 
-  * [Fix status => PAUSED]
+## [Bugs]
 
 For python 3.6.5 saving the whole model throws an key argument error 
   * [Fix status => IGNORED]

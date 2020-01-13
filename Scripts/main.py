@@ -90,7 +90,7 @@ class Graph2SeqInKeras():
     EPOCHS:int = 15
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 8
+    BATCH_SIZE:int = 16
     HOP_STEPS:int = 3
     WORD_WISE:bool = False
     USE_GLOVE:bool = False
@@ -416,7 +416,6 @@ class Graph2SeqInKeras():
                                                                                     bw_look_up, 
                                                                                     vectorized_inputs,
                                                                                     vectorized_targets,
-                                                                                    self.BATCH_SIZE,
                                                                                     (self._dataset_size - self._predict_split_value))
 
             # Free space

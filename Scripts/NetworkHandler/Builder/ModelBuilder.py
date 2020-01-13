@@ -93,33 +93,32 @@ class ModelBuilder:
             print(message)
 
     def NhoodLambdaLayer(self, 
-                                features, 
-                                look_up, 
-                                hop:int, 
-                                hood_func: types.LambdaType, 
-                                layer_name: str, 
-                                out_shape: list):
+                        features, 
+                        look_up, 
+                        hop:int, 
+                        aggregator: str ='mean', 
+                        layer_name: str = 'Nhood_Layer'):
         """
         This function builds a neighbourhood collecting keras lambda layer.
             :param features: 2D tensor with rows of vectoriced words 
             :param look_up: 2D tensor with neighbourhood description for foward,backward or both in one
             :param hop:int: hop position in the network model structure
-            :param hood_func:types.LambdaType: a lambda neighbourhood function which matches the input structure
+            :param aggregator:str: aggretaor function [Default mean]
             :param layer_name:str: name of the layer (remind an extension will be added)
-            :param out_shape:list: shape of the output
         """
         try:
-            name = layer_name if layer_name is not None else ''
-            name_ext = '_lambda_init' if hop == 0 else '_lambda_step'
-
             AssertIsKerasTensor(features)
             AssertIsKerasTensor(look_up)
             AssertNotNone(features, 'features'), 'Input tensor for features was None!'
             AssertNotNone(look_up, 'look_up'), 'Input tensor for look_up was None!'
-            AssertNotNone(out_shape, 'out_shape'), 'Input for out_shape was None!'
             AssertNotNegative(hop), 'input dimension was negative or none!'
+
+            name = layer_name if layer_name is not None else ''
+            name_ext = '_lambda_init' if hop == 0 else '_lambda_step'
+            
             dataset = [features, look_up]
-            return Lambda(hood_func, output_shape=out_shape, name=name+name_ext)(dataset)
+            hood_func = lambda x: Nhood(batch_sz=self.batch_size,aggregator=aggregator, is_2d=self.input_is_2d).Execute(x[0], x[1])
+            return Lambda(  function = hood_func, name=name+name_ext)(dataset)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.NhoodLambdaLayer]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -190,7 +189,7 @@ class ModelBuilder:
     def BuildGraphEmbeddingLayers(
                             self, 
                             hops: int =1,
-                            aggregator: str ='mean',
+                            aggregator: str ='mean', 
                             hidden_dim: int =100, 
                             act: activations = activations.relu):
         """
@@ -202,9 +201,7 @@ class ModelBuilder:
         """ 
         try:
             extension = "_dense_act"
-            out_shape = (self.input_enc_dim+self.edge_dim,) if (self.input_is_2d) else (self.edge_dim, self.input_enc_dim+self.edge_dim)
             features_inputs, fw_look_up_inputs, bw_look_up_inputs = self.encoder_inputs
-            neighbourhood_func = lambda x: Nhood(x[0], x[1], batch_sz=self.batch_size,aggregator=aggregator, is_2d=self.input_is_2d).Execute()
 
             forward = features_inputs 
             backward = features_inputs 
@@ -213,10 +210,10 @@ class ModelBuilder:
                 fw_name = ("fw_"+str(i))
                 bw_name = ("bw_"+str(i))
 
-                forward = self.NhoodLambdaLayer(forward, fw_look_up_inputs, i, neighbourhood_func, fw_name, out_shape)
+                forward = self.NhoodLambdaLayer(forward, fw_look_up_inputs, i, aggregator, fw_name)
                 forward = Dense(units=hidden_dim, activation=act, name=fw_name+extension)(forward)
                 
-                backward = self.NhoodLambdaLayer(backward, bw_look_up_inputs, i, neighbourhood_func, bw_name, out_shape)
+                backward = self.NhoodLambdaLayer(backward, bw_look_up_inputs, i, aggregator, bw_name)
                 backward = Dense(units=hidden_dim, activation=act, name=bw_name+extension)(backward)
 
             return self.BuildGraphEmeddingConcatenation(forward,backward, hidden_dim=hidden_dim)

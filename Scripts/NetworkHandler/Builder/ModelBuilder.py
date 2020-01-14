@@ -239,7 +239,7 @@ class ModelBuilder:
                                                 return_sequences =True, 
                                                 return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
-            #This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/ ~> Recursive Model B
+            #This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
             #Encoder Attention
             attention_out, att_weights = self.BuildBahdanauAttentionPipe(units, encoder_out, enc_h)
             attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
@@ -269,7 +269,7 @@ class ModelBuilder:
                                 prev_carry_state: Layer,
                                 act = activations.relu):
         """
-        This implemenation is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/ ~> Recursive Model B
+        This implemenation is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
         """
         try: 
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])

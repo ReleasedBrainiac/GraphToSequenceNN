@@ -168,7 +168,7 @@ class Graph2SeqInKeras():
                 #Set name elements and time elements
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
                 
-                self.FOLDERNAME:str = "graph2seq_model_" + self._fname + "_DT_" + self.TIME_NOW + "_WITH_GLOVE" + str(USE_GLOVE) + "/"
+                self.FOLDERNAME:str = "graph2seq_model_" + self._fname + "_DT_" + self.TIME_NOW + "_WITH_GLOVE" + str(self.USE_GLOVE) + "/"
                 self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self._fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_EmbSize_" + str(self.EMBEDDING_OUTPUT_DIM) + "_DT_" + self.TIME_NOW + "_"
                 self.ToolPipe()
 

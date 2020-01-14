@@ -113,8 +113,8 @@ class Graph2SeqInKeras():
     USE_PREPARED_DATASET:bool = False
     PREPARED_DS_PATH:str = 'graph2seq_model_AMR Bio_DT_20190808 09_23_25/AMR BioAMR Bio_DT_20190808 09_23_25'
     SHUFFLE_DATASET:bool = True
-    FOLDERNAME:str = "graph2seq_model_" + _fname + "_DT_" + TIME_NOW + "/"
-    MODEL_DESC:str = FOLDERNAME + "model_" + _fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_GVSize_" + str(EMBEDDING_OUTPUT_DIM) + "_DT_" + TIME_NOW + "_"
+    FOLDERNAME:str = "graph2seq_model_" + _fname + "_DT_" + TIME_NOW + "_WITH_GLOVE" + str(USE_GLOVE) + "/"
+    MODEL_DESC:str = FOLDERNAME + "model_" + _fname + "_eps_"+ str(EPOCHS) + "_HOPS_" + str(HOP_STEPS) + "_EmbSize_" + str(EMBEDDING_OUTPUT_DIM) + "_DT_" + TIME_NOW + "_"
 
     #Plotting
     PLOT:str = "plot.png"
@@ -167,8 +167,9 @@ class Graph2SeqInKeras():
 
                 #Set name elements and time elements
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
-                self.FOLDERNAME:str = "graph2seq_model_" + self._fname + "_DT_" + self.TIME_NOW + "/"
-                self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self._fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_GVSize_" + str(self.EMBEDDING_OUTPUT_DIM) + "_DT_" + self.TIME_NOW + "_"
+                
+                self.FOLDERNAME:str = "graph2seq_model_" + self._fname + "_DT_" + self.TIME_NOW + "_WITH_GLOVE" + str(USE_GLOVE) + "/"
+                self.MODEL_DESC:str = self.FOLDERNAME + "model_" + self._fname + "_eps_"+ str(self.EPOCHS) + "_HOPS_" + str(self.HOP_STEPS) + "_EmbSize_" + str(self.EMBEDDING_OUTPUT_DIM) + "_DT_" + self.TIME_NOW + "_"
                 self.ToolPipe()
 
     def SystemInfo(self):

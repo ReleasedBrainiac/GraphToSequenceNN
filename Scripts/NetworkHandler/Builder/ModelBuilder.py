@@ -224,6 +224,8 @@ class ModelBuilder:
 
     ######################################################################################
 
+    #TODO: This method must be fixed and tested!
+
     def BuildStatePassingEncoder(   self,
                                     sequence_embedding: Embedding,
                                     graph_embedding: Layer,
@@ -249,6 +251,7 @@ class ModelBuilder:
 
             print("batches: ", self.batch_size)
             print("attention: ", attention_reshaped.shape)
+            print("seq_emb: ", sequence_embedding.shape)
             print("embedding: ", embedding_lstm.shape)
 
             stated_att_encoder = concatenate([attention_reshaped,embedding_lstm], name="att_emb_concatenation", axis=-1)

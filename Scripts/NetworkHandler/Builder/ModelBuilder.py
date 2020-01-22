@@ -169,7 +169,7 @@ class ModelBuilder:
                             activity_regularizer=activity_regularizer,
                             name="concatenation_act")(concat)"""
             
-            hidden = Dense(units=hidden_dim, activation=act, name='concatenation_act')(concat)
+            hidden = Dense(units=hidden_dim, activation=act, name='reduce_concatenation_act')(concat)
 
             concat_pool = None
             if(not self.input_is_2d):
@@ -190,12 +190,14 @@ class ModelBuilder:
                             self, 
                             hops: int =1,
                             aggregator: str ='mean', 
+                            reduction_dim: int =100,
                             hidden_dim: int =100, 
                             act: activations = activations.relu):
         """
         This function builds the 1st (encoder) part of the Graph2Sequence ANN
             :param hops:int: size of neighbours cover sphere for each node (which neighbours you want to know from your current p.o.v.) [Default 1]
             :param aggregator:str: aggretaor function [Default mean]
+            :param reduction_dim: int: allow to reduce the dimensions in the last step like the autoencoder
             :param hidden_dim:int: hidden dimension depends on the embedding dimension e.g. GloVe vector length used. [Default 100]
             :param act:activations: activation function [Default relu]
         """ 
@@ -216,7 +218,7 @@ class ModelBuilder:
                 backward = self.NhoodLambdaLayer(backward, bw_look_up_inputs, i, aggregator, bw_name)
                 backward = Dense(units=hidden_dim, activation=act, name=bw_name+extension)(backward)
 
-            return self.BuildGraphEmeddingConcatenation(forward,backward, hidden_dim=hidden_dim)
+            return self.BuildGraphEmeddingConcatenation(forward,backward, hidden_dim=reduction_dim)
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildGraphEmbeddingLayers]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -226,12 +228,19 @@ class ModelBuilder:
 
     #TODO: This method must be fixed and tested!
 
-    def BuildStatePassingEncoder(   self,
-                                    sequence_embedding: Embedding,
-                                    graph_embedding: Layer,
-                                    prev_memory_state: Layer,  
-                                    prev_carry_state: Layer,
-                                    act = activations.relu):
+    def BuildRecursiveEncoderA( self,
+                                sequence_lenght:int,
+                                sequence_embedding: Embedding,
+                                graph_embedding: Layer,
+                                reduction_dim: int,
+                                prev_memory_state: Layer,  
+                                prev_carry_state: Layer,
+                                act = activations.relu):
+        """
+        This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
+        Recursive Model A.
+        Its a state passing encoder.
+        """
         try:
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
             encoder_out, enc_h, enc_c = LSTM(   name="encoder_lstm", 
@@ -239,54 +248,49 @@ class ModelBuilder:
                                                 batch_size=self.batch_size, 
                                                 activation=act, 
                                                 return_sequences =True, 
-                                                return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
+                                                return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state]
 
-            #This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
-            #Encoder Attention
-            attention_out, att_weights = self.BuildBahdanauAttentionPipe(units, encoder_out, enc_h)
-            attention_reshaped = Lambda(lambda q: K.expand_dims(q, axis=1), name="attention_reshape")(attention_out)
+            embedding_lstm = LSTM(  units=reduction_dim, #encoder_out.shape[-1].value, 
+                                    batch_size=self.batch_size, 
+                                    return_sequences=True, 
+                                    name="embedding_lstm")(sequence_embedding)
 
-            #Recursive style Embedding
-            embedding_lstm = LSTM(attention_reshaped.shape[-1].value, batch_size=self.batch_size, return_sequences=True, name="attention_activate")(sequence_embedding)
+            encoder = concatenate([encoder_out,embedding_lstm], name="att_emb_concatenation", axis=-1)
 
-            print("batches: ", self.batch_size)
-            print("attention: ", attention_reshaped.shape)
-            print("seq_emb: ", sequence_embedding.shape)
-            print("embedding: ", embedding_lstm.shape)
-
-            stated_att_encoder = concatenate([attention_reshaped,embedding_lstm], name="att_emb_concatenation", axis=-1)
-
-            print("result: ", stated_att_encoder.shape)
-
-            return units, stated_att_encoder, enc_h, enc_c, att_weights
+            # Model A part returns the states too.
+            return units, encoder, enc_h, enc_c
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildStatePassingEncoder]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message) 
 
-    def BuildRecursiveEncoder(  self,
+    def BuildRecursiveEncoderB( self,
                                 sequence_lenght:int,
                                 sequence_embedding: Embedding,
                                 graph_embedding: Layer,
+                                reduction_dim: int,
                                 prev_memory_state: Layer,  
                                 prev_carry_state: Layer,
                                 act = activations.relu):
         """
         This implemenation is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
+        Recursive Model B.
         """
         try: 
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
+
             encoder_out = LSTM( name="encoder_lstm", 
                                 units=units, 
                                 batch_size=self.batch_size, 
                                 activation=act)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
-            repeated_graph_embedding = RepeatVector(sequence_lenght)(encoder_out)
+            # Model B part instead of preparing dataset.
+            repeated_graph_embedding = RepeatVector(sequence_lenght, name="encoder_repeated")(encoder_out)
 
-            embedding_lstm = LSTM(  units=encoder_out.shape[-1].value, 
+            embedding_lstm = LSTM(  units=reduction_dim, #encoder_out.shape[-1].value, 
                                     batch_size=self.batch_size,
                                     return_sequences=True, 
-                                    name="attention_activate")(sequence_embedding)
+                                    name="embedding_lstm")(sequence_embedding)
 
             encoder = concatenate([repeated_graph_embedding, embedding_lstm], name="repeat_emb_concatenation", axis=-1)
             return units, encoder

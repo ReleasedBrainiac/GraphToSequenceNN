@@ -78,7 +78,7 @@ class Graph2SeqInKeras():
     """
     #System
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    MULTI_RUN:bool = True
+    MULTI_RUN:bool = False
     CPUS:int = os.cpu_count()
     GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
@@ -87,7 +87,7 @@ class Graph2SeqInKeras():
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
 
     #Network
-    EPOCHS:int = 3
+    EPOCHS:int = 4
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
     BATCH_SIZE:int = 16
@@ -95,6 +95,7 @@ class Graph2SeqInKeras():
     WORD_WISE:bool = False
     USE_GLOVE:bool = False
     EMBEDDING_OUTPUT_DIM:int = 100
+    REDUCTION_DIM:int = 100
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
@@ -102,7 +103,7 @@ class Graph2SeqInKeras():
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
-    DATASET_NAME:str =    'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'AMR Bio/amr-release-training-bio.txt' #'2mAMR/2m.json'
+    DATASET_NAME:str =    'AMR Bio/amr-release-training-bio.txt' #'Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt' #'2mAMR/2m.json'
     _fname = DATASET_NAME.split('/')[0]
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
@@ -124,7 +125,7 @@ class Graph2SeqInKeras():
     _loss_function:str = 'mae'
     _last_activation:str = 'relu'
     _optimizer:str ='adam'
-    _use_recursive_encoder:bool = True
+    _use_recursive_encoder:bool = False
     
     _predict_split_value:int = -1
     _dataset_size:int = -1
@@ -337,13 +338,15 @@ class Graph2SeqInKeras():
             self.EMBEDDING_OUTPUT_DIM = self._unique_words
             input_len:int = 1 if embedding_input_wordwise else max_sequence_len
 
-            embedding_layer = Embedding(input_dim=self._unique_words, 
-                                        output_dim=out_dim_emb, 
-                                        input_length=input_len,
-                                        trainable=False,
-                                        name=('categorical_'+str(out_dim_emb)+'d_embedding'))
+            #TODO: The categorical dies over 1k features so maybe try these 2 options:
+            # 1. https://github.com/keras-team/keras/issues/2505
+            # 2. https://medium.com/analytics-vidhya/tensorflow-2-tutorial-on-categorical-features-embedding-93dd81027ea9
 
-            
+            embedding_layer = Embedding(input_dim=self._unique_words, 
+                                        output_dim=self.EMBEDDING_OUTPUT_DIM, 
+                                        input_length=input_len,
+                                        trainable=True,
+                                        name=('categorical_'+str(out_dim_emb)+'d_embedding'))
 
             if self.SHOW_GLOBAL_FEEDBACK: print("Nodes example: ", nodes_embedding[0])
 
@@ -458,24 +461,30 @@ class Graph2SeqInKeras():
                                     batch_size=self.BATCH_SIZE)
 
             print("Build Neighbourhood Submodel!")
-            graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.EMBEDDING_OUTPUT_DIM)
+            graph_embedding, graph_embedding_h, graph_embedding_c = builder.BuildGraphEmbeddingLayers(hops=self.HOP_STEPS, hidden_dim=self.EMBEDDING_OUTPUT_DIM, reduction_dim=self.REDUCTION_DIM)
             sequence_embedding = embedding_layer(builder.get_decoder_inputs())
 
-            if ((not self._use_recursive_encoder) and (self.WORD_WISE)):
+            sequence_lenght:int = (1 if self.WORD_WISE else self._max_sequence_len)
+
+            if (not self._use_recursive_encoder):
+            #if ((not self._use_recursive_encoder) and (self.WORD_WISE)):
                 print("Build Encoder Stated!")
-                units, encoder, enc_h, enc_c, att_weights = builder.BuildStatePassingEncoder(   sequence_embedding=sequence_embedding,
-                                                                                                graph_embedding=graph_embedding,
-                                                                                                prev_memory_state=graph_embedding_h,  
-                                                                                                prev_carry_state=graph_embedding_c)
-                return [builder, units, encoder, enc_h, enc_c, att_weights]
+                units, encoder, enc_h, enc_c = builder.BuildRecursiveEncoderA(  sequence_lenght=sequence_lenght,
+                                                                                sequence_embedding=sequence_embedding,
+                                                                                graph_embedding=graph_embedding,
+                                                                                reduction_dim = self.REDUCTION_DIM,
+                                                                                prev_memory_state=graph_embedding_h,  
+                                                                                prev_carry_state=graph_embedding_c)
+                return [builder, units, encoder, enc_h, enc_c]
             else:
                 print("Build Encoder Repeated!")
-                units, encoder = builder.BuildRecursiveEncoder( sequence_lenght=(1 if self.WORD_WISE else self._max_sequence_len),
-                                                                sequence_embedding=sequence_embedding,
-                                                                graph_embedding= graph_embedding,
-                                                                prev_memory_state=graph_embedding_h,  
-                                                                prev_carry_state=graph_embedding_c)
-                return [builder, units, encoder, None, None, None]
+                units, encoder = builder.BuildRecursiveEncoderB(    sequence_lenght=sequence_lenght,
+                                                                    sequence_embedding=sequence_embedding,
+                                                                    graph_embedding= graph_embedding,
+                                                                    reduction_dim = self.REDUCTION_DIM,
+                                                                    prev_memory_state=graph_embedding_h,  
+                                                                    prev_carry_state=graph_embedding_c)
+                return [builder, units, encoder, None, None]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.NetworkGraphEncoderConstruction]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -500,7 +509,7 @@ class Graph2SeqInKeras():
         try:
             print("#######################################\n")
             print("####### Construct Network Model #######")
-            builder, units, encoder, enc_h, enc_c, _ = self.NetworkGraphEncoderConstruction(target_shape, max_cardinality, embedding_layer)
+            builder, units, encoder, enc_h, enc_c = self.NetworkGraphEncoderConstruction(target_shape, max_cardinality, embedding_layer)
             model = self.NetworkDecoderConstruction(builder, encoder, units, [enc_h, enc_c])
 
 

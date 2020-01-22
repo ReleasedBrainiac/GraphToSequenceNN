@@ -162,12 +162,16 @@ class ModelBuilder:
             AssertNotNone(backward_layer, 'backward_layer')
             concat = concatenate([forward_layer,backward_layer], name="fw_bw_concatenation", axis=1)
 
-            """hidden = Dense( hidden_dim, 
+            """
+    	    Deprecated!
+
+            hidden = Dense( hidden_dim, 
                             kernel_initializer=kernel_init,
                             activation=act,
                             kernel_regularizer=kernel_regularizer,
                             activity_regularizer=activity_regularizer,
-                            name="concatenation_act")(concat)"""
+                            name="concatenation_act")(concat)
+            """
             
             hidden = Dense(units=hidden_dim, activation=act, name='reduce_concatenation_act')(concat)
 
@@ -226,8 +230,6 @@ class ModelBuilder:
 
     ######################################################################################
 
-    #TODO: This method must be fixed and tested!
-
     def BuildRecursiveEncoderA( self,
                                 sequence_lenght:int,
                                 sequence_embedding: Embedding,
@@ -249,7 +251,7 @@ class ModelBuilder:
                                                 activation=act, 
                                                 return_sequences =True, 
                                                 return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
-                                                
+
             # deprecated  => units=encoder_out.shape[-1].value,
             embedding_lstm = LSTM(  units=reduction_dim,
                                     batch_size=self.batch_size,
@@ -258,7 +260,7 @@ class ModelBuilder:
 
             encoder = concatenate([encoder_out,embedding_lstm], name="att_emb_concatenation", axis=-1)
 
-            # Model A part returns the states too.
+            # Model A part one shot model returns the states too.
             return units, encoder, enc_h, enc_c
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildStatePassingEncoder]. Arguments:\n{1!r}"
@@ -287,7 +289,7 @@ class ModelBuilder:
                                 batch_size=self.batch_size, 
                                 activation=act)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
-            # Model B part instead of preparing dataset.
+            # Model B part repeating the graph embedding.
             repeated_graph_embedding = RepeatVector(sequence_lenght, name="encoder_repeated")(encoder_out)
 
             # deprecated  => units=encoder_out.shape[-1].value, 

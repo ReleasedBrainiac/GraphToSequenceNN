@@ -248,10 +248,11 @@ class ModelBuilder:
                                                 batch_size=self.batch_size, 
                                                 activation=act, 
                                                 return_sequences =True, 
-                                                return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state]
-
-            embedding_lstm = LSTM(  units=reduction_dim, #encoder_out.shape[-1].value, 
-                                    batch_size=self.batch_size, 
+                                                return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
+                                                
+            # deprecated  => units=encoder_out.shape[-1].value,
+            embedding_lstm = LSTM(  units=reduction_dim,
+                                    batch_size=self.batch_size,
                                     return_sequences=True, 
                                     name="embedding_lstm")(sequence_embedding)
 
@@ -279,6 +280,8 @@ class ModelBuilder:
         try: 
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
+
+            
             encoder_out = LSTM( name="encoder_lstm", 
                                 units=units, 
                                 batch_size=self.batch_size, 
@@ -287,7 +290,8 @@ class ModelBuilder:
             # Model B part instead of preparing dataset.
             repeated_graph_embedding = RepeatVector(sequence_lenght, name="encoder_repeated")(encoder_out)
 
-            embedding_lstm = LSTM(  units=reduction_dim, #encoder_out.shape[-1].value, 
+            # deprecated  => units=encoder_out.shape[-1].value, 
+            embedding_lstm = LSTM(  units=reduction_dim,
                                     batch_size=self.batch_size,
                                     return_sequences=True, 
                                     name="embedding_lstm")(sequence_embedding)

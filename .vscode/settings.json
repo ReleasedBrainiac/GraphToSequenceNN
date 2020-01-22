@@ -15,5 +15,6 @@
         "~/AppData/Roaming/Python/Python36/site-packages",
         "~/AppData/Local/Programs/Python/Python36/Lib/site-packages"],
     "python.linting.pylintEnabled": true,
-    "python.jediEnabled": false
+    "python.jediEnabled": false,
+    "python.pythonPath": "C:\\Users\\Tobias.Turke\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"
 }

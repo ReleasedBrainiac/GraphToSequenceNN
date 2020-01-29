@@ -78,7 +78,7 @@ class Graph2SeqInKeras():
     """
     #System
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    MULTI_RUN:bool = False
+    MULTI_RUN:bool = True
     CPUS:int = os.cpu_count()
     GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
@@ -122,7 +122,7 @@ class Graph2SeqInKeras():
     SAVE_PLOTS = True
 
     _accurracy:list = ['acc']
-    _loss_function:str = 'mae'
+    _loss_function:str = 'mse'
     _last_activation:str = 'relu'
     _optimizer:str ='adam'
     _use_recursive_encoder:bool = False
@@ -137,9 +137,10 @@ class Graph2SeqInKeras():
     # Multi Run Setup!
     _datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
     _multi_epochs:list = [10, 15, 10, 15]
-    _multi_hops:list = [6, 9, 6, 9]
-    _multi_val_split:list = [0.10, 0.20, 0.10, 0.20]
+    _multi_hops:list = [3, 6, 2, 6]
+    _multi_val_split:list = [0.20, 0.20, 0.20, 0.20]
     _multi_use_glove:list = [True, True, False, False]
+    _multi_use_encoder_model:list = [False, True, False, True]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):
@@ -165,6 +166,7 @@ class Graph2SeqInKeras():
                 self.HOP_STEPS = self._multi_hops[run]
                 self.VALIDATION_SPLIT = self._multi_val_split[run]
                 self.USE_GLOVE = self._multi_use_glove[run]
+                self._use_recursive_encoder = self._multi_use_encoder_model[run]
 
                 #Set name elements and time elements
                 self.TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())

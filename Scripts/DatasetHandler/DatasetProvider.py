@@ -176,13 +176,14 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectAllDatasetPairs(self, data_pairs:list):
+    def CollectAllDatasetPairs(self, data_pairs:list, feedback:int = 10000):
         """
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
         Also the cardinalities will be collected.
             :param data_pairs:list: array of amr data pairs
+            :param feedback:int: print out steps for bigger datasets
         """
         try:
             self._max_chars_sentences = 0
@@ -202,9 +203,13 @@ class DatasetPipeline:
                 return placeholder_pairs
 
             else:
-                print("Collect sample informations!")
+                print("START: Collect sample informations!")
+                num_pairs:int = len(placeholder_pairs)
+                print("Processable pairs = ", num_pairs)
+
                 while placeholder_pairs:
                     entry = placeholder_pairs.pop(0)
+                    num_pairs -= 1
 
                     if isNotNone(entry):
                         data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = entry
@@ -214,6 +219,11 @@ class DatasetPipeline:
                         if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
                     else: 
                         continue;
+
+                    if (num_pairs % feedback == 0) and (num_pairs > feedback):
+                        print("Processed pairs: ", num_pairs)
+
+            print("END: Collect sample informations!")
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"

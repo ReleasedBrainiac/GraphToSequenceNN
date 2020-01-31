@@ -204,12 +204,12 @@ class DatasetPipeline:
 
             else:
                 print("START: Collect sample informations!")
-                num_pairs:int = len(placeholder_pairs)
-                print("Processable pairs = ", num_pairs)
+                num_pairs:int = 0
+                print("Processable pairs = ", len(placeholder_pairs))
 
                 while placeholder_pairs:
                     entry = placeholder_pairs.pop(0)
-                    num_pairs -= 1
+                    num_pairs += 1
 
                     if isNotNone(entry):
                         data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = entry

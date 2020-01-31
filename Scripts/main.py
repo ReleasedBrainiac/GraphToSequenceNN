@@ -90,7 +90,7 @@ class Graph2SeqInKeras():
     EPOCHS:int = 4
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 16
+    BATCH_SIZE:int = 128
     HOP_STEPS:int = 3
     WORD_WISE:bool = False
     USE_GLOVE:bool = False
@@ -99,7 +99,7 @@ class Graph2SeqInKeras():
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
-    GLOVE_VOCAB_SIZE:int = 15000
+    GLOVE_VOCAB_SIZE:int = 20000
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
@@ -135,12 +135,13 @@ class Graph2SeqInKeras():
        
     
     # Multi Run Setup!
-    _datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
-    _multi_epochs:list = [10, 15, 10, 15]
-    _multi_hops:list = [3, 6, 2, 6]
-    _multi_val_split:list = [0.20, 0.20, 0.20, 0.20]
-    _multi_use_glove:list = [True, True, False, False]
-    _multi_use_encoder_model:list = [False, True, False, True]
+    #_datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
+    _datasets:list = ['2mAMR/2m.json']
+    _multi_epochs:list = [15, 25]
+    _multi_hops:list = [6, 9]
+    _multi_val_split:list = [0.20, 0.20]
+    _multi_use_glove:list = [True, True]
+    _multi_use_encoder_model:list = [False, True]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):

@@ -99,7 +99,7 @@ class Graph2SeqInKeras():
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
-    GLOVE_VOCAB_SIZE:int = 20000
+    GLOVE_VOCAB_SIZE:int = 22000
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 

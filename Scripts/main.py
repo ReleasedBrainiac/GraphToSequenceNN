@@ -122,9 +122,9 @@ class Graph2SeqInKeras():
     SAVE_PLOTS = True
 
     _accurracy:list = ['acc']
-    _loss_function:str = 'mse'
+    _loss_function:str = 'mae'
     _last_activation:str = 'relu'
-    _optimizer:str ='adam'
+    _optimizer:str ='rmsprop'
     _use_recursive_encoder:bool = False
     
     _predict_split_value:int = -1
@@ -534,7 +534,7 @@ class Graph2SeqInKeras():
             print("########### Starts Training ###########")
 
             base_lr = BaseLogger()
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001, verbose=self.VERBOSE)
             es = EarlyStopping(monitor='val_loss', mode='min', patience=100)
             #mc = ModelCheckpoint(self.MODEL_DESC+'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 

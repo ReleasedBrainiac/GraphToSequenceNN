@@ -126,6 +126,9 @@ class Graph2SeqInKeras():
     _last_activation:str = 'relu'
     _optimizer:str ='rmsprop'
     _use_recursive_encoder:bool = False
+    _initial_lr:float=0.0001
+    _min_lr:float=0.00005
+    _clipvalue:float=10.0
     
     _predict_split_value:int = -1
     _dataset_size:int = -1
@@ -137,11 +140,11 @@ class Graph2SeqInKeras():
     # Multi Run Setup!
     #_datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
     _datasets:list = ['2mAMR/2m.json']
-    _multi_epochs:list = [15, 25]
-    _multi_hops:list = [6, 9]
-    _multi_val_split:list = [0.20, 0.20]
-    _multi_use_glove:list = [True, True]
-    _multi_use_encoder_model:list = [False, True]
+    _multi_epochs:list = [25]
+    _multi_hops:list = [9]
+    _multi_val_split:list = [0.20]
+    _multi_use_glove:list = [True]
+    _multi_use_encoder_model:list = [True]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):
@@ -518,7 +521,14 @@ class Graph2SeqInKeras():
 
             print("Build Finalize and Plot!")
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, optimizer=self._optimizer, metrics=self._accurracy, loss = self._loss_function)
+
+            builder.CompileModel(   model=model, 
+                                    optimizer=self._optimizer, 
+                                    metrics=self._accurracy, 
+                                    loss = self._loss_function,
+                                    clipvalue=self._clipvalue,
+                                    learn_rate=self._initial_lr)
+
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             return model
@@ -534,7 +544,7 @@ class Graph2SeqInKeras():
             print("########### Starts Training ###########")
 
             base_lr = BaseLogger()
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001, verbose=self.VERBOSE)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=self._min_lr, verbose=self.VERBOSE)
             es = EarlyStopping(monitor='val_loss', mode='min', patience=100)
             #mc = ModelCheckpoint(self.MODEL_DESC+'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 

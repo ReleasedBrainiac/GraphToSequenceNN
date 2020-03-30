@@ -336,7 +336,7 @@ class Cleaner:
             :param in_context:str: input string
         """   
         try:
-            if ('-' in in_context):
+            if ('-' in in_context and self.hasExtentsionsDict):
                 look_up_control = self.CollectAllMatches(self.constants.EXTENSION_MULTI_WORD_REGEX, in_context)
                 if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
                     for found in look_up_control:
@@ -497,8 +497,8 @@ class Cleaner:
 
                 if(self.isCleaned):
                     return self.cleaned_context
-                else:                 
-                    return None
+
+            return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.GenerateCleanAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)

@@ -25,7 +25,7 @@ class DatasetPipeline:
                  output_path_extender:str='ouput', 
                  max_length:int=-1, 
                  show_feedback:bool =False, 
-                 keep_edges:bool =False, 
+                 keep_opt_infos:bool =False, 
                  min_cardinality:int =1, 
                  max_cardinality:int =100,
                  cpu_cores:int = 1,
@@ -47,7 +47,7 @@ class DatasetPipeline:
             :param output_path_extender:str: result output path
             :param max_length:int: context length restriction
             :param show_feedback:bool: show process content as console feedback
-            :param keep_edges:bool: include edges in the amr cleaner strategy
+            :param keep_opt_infos:bool: include optional info in the amr cleaner strategy
             :param min_cardinality:int: define min range for the node matrix representation [>2 (at least 3 nodes/words) depends on the SPO sentence definition in english]
             :param max_cardinality:int: define max range for the node matrix representation 
             :param cpu_cores:int: define the number of existing/accessible cpu cores.
@@ -69,7 +69,7 @@ class DatasetPipeline:
             self._count_graph_node_cards_occs = dict()
             self._is_showing_feedback = show_feedback
             self._is_saving = saving_cleaned_data
-            self._is_keeping_edges = keep_edges
+            self._is_keep_opt_infos = keep_opt_infos
             self._out_path_extender = output_path_extender
             self._restriction_chars_sentence = setOrDefault(max_length, -1, isInt(max_length))
             self._restriction_chars_semantic = -1 if (max_length < 0)  else (2 * self._restriction_chars_sentence)
@@ -103,7 +103,7 @@ class DatasetPipeline:
         """
         try:
             node_parenthesis = ['(',')'] if ('(' in semantic and ')' in semantic) else None
-            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_edges=self._is_keeping_edges, node_parenthesis=node_parenthesis)
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_opt_infos=self._is_keep_opt_infos, node_parenthesis=node_parenthesis)
 
             if cleaner.isCleaned:
                 self._extension_dict = cleaner.extension_dict
@@ -218,7 +218,7 @@ class DatasetPipeline:
                         if (self._max_chars_sentences < pair_sent_chars_count): self._max_chars_sentences = pair_sent_chars_count
                         if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
                     else: 
-                        continue;
+                        continue
 
                     if (num_pairs % feedback == 0) and (num_pairs > feedback):
                         print("Processed pairs: ", num_pairs)

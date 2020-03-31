@@ -108,7 +108,7 @@ class Graph2SeqInKeras():
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
     MAX_LENGTH_DATA:int = -1
-    KEEP_EDGES:bool = True
+    keep_opt_infos:bool = True
     MIN_NODE_CARDINALITY:int = 3
     MAX_NODE_CARDINALITY:int = 35
     USE_PREPARED_DATASET:bool = False
@@ -214,13 +214,13 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DatasetPreprocessor(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, show_processor_feedback:bool=False, keep_edges:bool=True, semantic_amr_string:bool=False):
+    def DatasetPreprocessor(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, show_processor_feedback:bool=False, keep_opt_infos:bool=True, semantic_amr_string:bool=False):
         try:
             pipe = DatasetPipeline( in_path=in_dataset, 
                                     output_path_extender=in_extender, 
                                     max_length=in_max_length, 
                                     show_feedback=show_processor_feedback,
-                                    keep_edges=keep_edges,
+                                    keep_opt_infos=keep_opt_infos,
                                     min_cardinality=self.MIN_NODE_CARDINALITY, 
                                     max_cardinality=self.MAX_NODE_CARDINALITY,
                                     cpu_cores=self.CPUS,
@@ -617,7 +617,7 @@ class Graph2SeqInKeras():
             max_cardinality, datapairs = self.DatasetPreprocessor(  in_dataset=self.DATASET,
                                                                     in_extender=self.EXTENDER,
                                                                     in_max_length=self.MAX_LENGTH_DATA, 
-                                                                    keep_edges=self.KEEP_EDGES)
+                                                                    keep_opt_infos=self.keep_opt_infos)
             
             tokenizer, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding = self.TokenizerPreprocessor( datapairs=datapairs, 
                                                                                                                                     in_vocab_size=self.GLOVE_VOCAB_SIZE, 
@@ -659,13 +659,13 @@ class Graph2SeqInKeras():
                                                                                                                                                 vectorized_inputs=vectorized_inputs, 
                                                                                                                                                 vectorized_targets=vectorized_targets, 
                                                                                                                                                 save_dataset=False)
-
-            train_x, train_y, test_x, test_y = self.NetworkInput(   generator=generator, 
-                                                                    nodes_embedding=nodes_embedding, 
-                                                                    fw_look_up=fw_look_up, 
-                                                                    bw_look_up=bw_look_up, 
-                                                                    vectorized_inputs=vectorized_inputs, 
-                                                                    vectorized_targets=vectorized_targets)
+            # Removed test_x and test_y because since there was not time left to build the Predict pipe correctly.
+            train_x, train_y, _, _ = self.NetworkInput( generator=generator, 
+                                                        nodes_embedding=nodes_embedding, 
+                                                        fw_look_up=fw_look_up, 
+                                                        bw_look_up=bw_look_up, 
+                                                        vectorized_inputs=vectorized_inputs, 
+                                                        vectorized_targets=vectorized_targets)
 
             model = self.NetworkConstruction(   target_shape=vectorized_targets.shape, 
                                                 max_cardinality=max_cardinality, 

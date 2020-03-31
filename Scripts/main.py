@@ -674,7 +674,7 @@ class Graph2SeqInKeras():
             history = self.NetworkTrain(model, train_x, train_y)
             self.NetworkPlotResults(history)
 
-            #Predict would actually take to much time. @Githung-Community: Please feel free to implement it by yourself!
+            #Removed Predict -> would actually take to much time.
             #self.NetworkPredict(model, test_x, test_y)
 
             print("#######################################\n")

@@ -19,17 +19,17 @@ class Cleaner:
     hasContext = False
     hasExtentsionsDict = False
 
-    def __init__(self, node_parenthesis:list =['(',')'], input_context:str =None, input_extension_dict:dict ={}, opt_infos:bool =False):
+    def __init__(self, node_parenthesis:list =['(',')'], input_context:str =None, input_extension_dict:dict ={}, keep_opt_infos:bool =False):
         """
         Class constructor collect all necessary parameters for the cleaning process.
             :param node_parenthesis:list: define node parenthesis
             :param input_context:str: input amr string
             :param input_extension_dict:dict: look up dictionairy
-            :param opt_infos:bool: switch allow to optional infos
+            :param keep_opt_infos:bool: switch allow to optional infos
         """   
         try:
             self.constants = Constants()
-            self.keep_opt_info_encoding = opt_infos 
+            self.keep_opt_info_encoding = keep_opt_infos 
 
             if isNotNone(input_context): 
                 self.hasContext = True

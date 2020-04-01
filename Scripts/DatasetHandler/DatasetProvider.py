@@ -1,4 +1,4 @@
-import re
+import re, sys
 from multiprocessing import Pool
 from DatasetHandler.ContentSupport import isStr, isInt, isNotNone, setOrDefault, CalculateMeanValue, isNone
 from DatasetHandler.FileReader import Reader
@@ -314,6 +314,8 @@ class DatasetPipeline:
             if(self._is_saving and self._stringified_amr): 
                 Writer(self._in_path, self._out_path_extender, datapairs)
                 print('Finished storing process!')
+                sys.exit(0)
+                
 
             print('Result structure:\n\t=> [Sentence, EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
             return datapairs

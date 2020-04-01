@@ -26,7 +26,7 @@ class DatasetPipeline:
                  max_length:int=-1, 
                  show_feedback:bool =False, 
                  keep_opt_infos:bool =False, 
-                 min_cardinality:int =1, 
+                 min_cardinality:int =3, 
                  max_cardinality:int =100,
                  cpu_cores:int = 1,
                  saving_cleaned_data:bool = False,

@@ -376,7 +376,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)
 
-    def DatasetConvertToTeacherForcing(self, nodes_embedding:list, fw_look_up:list, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list, save_dataset:bool=False):
+    def DatasetConvertToWWTeacherForcing(self, nodes_embedding:list, fw_look_up:list, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list, save_dataset:bool=False):
         try:
             print("#######################################\n")
             print("### Create Word Wise Teacherforcing ###")
@@ -398,7 +398,7 @@ class Graph2SeqInKeras():
             
             return [generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.DatasetConvertToTeacherForcing]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.DatasetConvertToWWTeacherForcing]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)   
@@ -652,8 +652,9 @@ class Graph2SeqInKeras():
             tokenizer = None
             generator = None
             
+            # UNUSED: Need more control of the data flow which is not yet build.
             if self.WORD_WISE:
-                generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = self.DatasetConvertToTeacherForcing(nodes_embedding=nodes_embedding, 
+                generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = self.DatasetConvertToWWTeacherForcing(nodes_embedding=nodes_embedding, 
                                                                                                                                                 fw_look_up=fw_look_up, 
                                                                                                                                                 bw_look_up=bw_look_up, 
                                                                                                                                                 vectorized_inputs=vectorized_inputs, 

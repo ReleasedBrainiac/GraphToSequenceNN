@@ -97,6 +97,7 @@ class Graph2SeqInKeras():
     USE_GLOVE:bool = True
     EMBEDDING_OUTPUT_DIM:int = 100
     REDUCTION_DIM:int = 100
+    USE_TEXT_INPUT_IN_ENCODER:bool = False
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
@@ -428,7 +429,8 @@ class Graph2SeqInKeras():
                                                                                     bw_look_up, 
                                                                                     vectorized_inputs,
                                                                                     vectorized_targets,
-                                                                                    (self._dataset_size - self._predict_split_value))
+                                                                                    (self._dataset_size - self._predict_split_value),
+                                                                                    use_text_emb=self.USE_TEXT_INPUT_IN_ENCODER)
 
             # Free space
             nodes_embedding = None
@@ -439,12 +441,18 @@ class Graph2SeqInKeras():
 
             if self.SHOW_GLOBAL_FEEDBACK:
                 if self.WORD_WISE:
-                    print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape, train_x[3][0].shape)
+                    if self.USE_TEXT_INPUT_IN_ENCODER:
+                        print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape, train_x[3][0].shape)
+                    else:
+                        print("Train X: ", train_x[0][0].shape, train_x[1][0].shape, train_x[2][0].shape)
                     print("Test X: ", test_x[0][0].shape, test_x[1][0].shape, test_x[2][0].shape, test_x[3][0].shape)
                     print("Train Y: ", train_y[0].shape)
                     print("Test Y: ", test_y[0].shape)
                 else:
-                    print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
+                    if self.USE_TEXT_INPUT_IN_ENCODER:
+                        print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape, train_x[3].shape)
+                    else:
+                        print("Train X: ", train_x[0].shape, train_x[1].shape, train_x[2].shape)
                     print("Test X: ", test_x[0].shape, test_x[1].shape, test_x[2].shape, test_x[3].shape)
                     print("Train Y: (" +  str(len(train_y)) + ", " + str(len(train_y[0])) + ")")
                     print("Test Y: (" + str(len(test_y)) + ", " + str(len(test_y[0])) + ")")
@@ -481,7 +489,8 @@ class Graph2SeqInKeras():
                                                                                 graph_embedding=graph_embedding,
                                                                                 reduction_dim = self.REDUCTION_DIM,
                                                                                 prev_memory_state=graph_embedding_h,  
-                                                                                prev_carry_state=graph_embedding_c)
+                                                                                prev_carry_state=graph_embedding_c,
+                                                                                use_text_emb=self.USE_TEXT_INPUT_IN_ENCODER)
                 return [builder, units, encoder, enc_h, enc_c]
             else:
                 print("Build Encoder Repeated!")
@@ -490,7 +499,8 @@ class Graph2SeqInKeras():
                                                                     graph_embedding= graph_embedding,
                                                                     reduction_dim = self.REDUCTION_DIM,
                                                                     prev_memory_state=graph_embedding_h,  
-                                                                    prev_carry_state=graph_embedding_c)
+                                                                    prev_carry_state=graph_embedding_c,
+                                                                    use_text_emb=self.USE_TEXT_INPUT_IN_ENCODER)
                 return [builder, units, encoder, None, None]
         except Exception as ex:
             template = "An exception of type {0} occurred in [Main.NetworkGraphEncoderConstruction]. Arguments:\n{1!r}"

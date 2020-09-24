@@ -237,7 +237,8 @@ class ModelBuilder:
                                 reduction_dim: int,
                                 prev_memory_state: Layer,  
                                 prev_carry_state: Layer,
-                                act = activations.relu):
+                                act:activations = activations.relu,
+                                use_text_emb:bool = True):
         """
         This part is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
         Recursive Model A.
@@ -245,20 +246,23 @@ class ModelBuilder:
         """
         try:
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
-            encoder_out, enc_h, enc_c = LSTM(   name="encoder_lstm", 
+            encoder_out, enc_h, enc_c = LSTM(   name="graph_encoder_lstm", 
                                                 units=units, 
                                                 batch_size=self.batch_size, 
                                                 activation=act, 
                                                 return_sequences =True, 
                                                 return_state =True)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
-            # deprecated  => units=encoder_out.shape[-1].value,
-            embedding_lstm = LSTM(  units=reduction_dim,
-                                    batch_size=self.batch_size,
-                                    return_sequences=True, 
-                                    name="embedding_lstm")(sequence_embedding)
+            if use_text_emb:
+                embedding_lstm = LSTM(  units=reduction_dim,
+                                        batch_size=self.batch_size,
+                                        return_sequences=True, 
+                                        name="sent_embedding_lstm")(sequence_embedding)
 
-            encoder = concatenate([encoder_out,embedding_lstm], name="sentence_emb_concatenation", axis=-1)
+                encoder = concatenate([encoder_out,embedding_lstm], name="graph_sent_emb_concat", axis=-1)
+
+            else:
+                encoder = encoder_out
 
             # Model A part one shot model returns the states too.
             return units, encoder, enc_h, enc_c
@@ -274,7 +278,8 @@ class ModelBuilder:
                                 reduction_dim: int,
                                 prev_memory_state: Layer,  
                                 prev_carry_state: Layer,
-                                act = activations.relu):
+                                act:activations = activations.relu,
+                                use_text_emb:bool = True):
         """
         This implemenation is based on https://machinelearningmastery.com/encoder-decoder-models-text-summarization-keras/
         Recursive Model B.
@@ -282,23 +287,24 @@ class ModelBuilder:
         try: 
             units = int(prev_memory_state.shape[len(prev_memory_state.shape)-1])
 
-
-            
-            encoder_out = LSTM( name="encoder_lstm", 
+            encoder_out = LSTM( name="graph_encoder_lstm", 
                                 units=units, 
                                 batch_size=self.batch_size, 
                                 activation=act)(inputs=graph_embedding, initial_state=[prev_memory_state, prev_carry_state])
 
             # Model B part repeating the graph embedding.
-            repeated_graph_embedding = RepeatVector(sequence_lenght, name="encoder_repeated")(encoder_out)
+            repeated_graph_embedding = RepeatVector(sequence_lenght, name="graph_repeat_lstm")(encoder_out)
 
-            # deprecated  => units=encoder_out.shape[-1].value, 
-            embedding_lstm = LSTM(  units=reduction_dim,
-                                    batch_size=self.batch_size,
-                                    return_sequences=True, 
-                                    name="embedding_lstm")(sequence_embedding)
+            if use_text_emb:
+                embedding_lstm = LSTM(  units=reduction_dim,
+                                        batch_size=self.batch_size,
+                                        return_sequences=True, 
+                                        name="text_embedding_lstm")(sequence_embedding)
 
-            encoder = concatenate([repeated_graph_embedding, embedding_lstm], name="repeat_emb_concatenation", axis=-1)
+                encoder = concatenate([repeated_graph_embedding, embedding_lstm], name="repeat_graph_text_emb_concat", axis=-1)
+            else:
+                encoder = repeated_graph_embedding
+
             return units, encoder
         except Exception as ex:
             template = "An exception of type {0} occurred in [ModelBuilder.BuildRecursiveEncoder]. Arguments:\n{1!r}"

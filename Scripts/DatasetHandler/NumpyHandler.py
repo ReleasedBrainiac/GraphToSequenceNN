@@ -235,7 +235,7 @@ class NumpyDatasetPreprocessor():
             print(message)
             print(ex)
 
-    def NetworkInputPreparation(self, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_words:np.ndarray, vecs_target_words:np.ndarray, split_border:int):
+    def NetworkInputPreparation(self, nodes_embedding:np.ndarray, fw_look_up:np.ndarray, bw_look_up:np.ndarray, vecs_input_words:np.ndarray, vecs_target_words:np.ndarray, split_border:int, use_text_emb:bool = True):
         """
         This method return the train and test data.
             :param nodes_embedding:np.ndarray: node embedding numpy array
@@ -249,17 +249,24 @@ class NumpyDatasetPreprocessor():
             assert (len(nodes_embedding) == len(fw_look_up) == len(bw_look_up) == len(vecs_input_words) == len(vecs_target_words)), "The given inputs of NetworkInputPreparation aren't machting at first dimension!"
             assert (len(nodes_embedding) >= split_border), ("The split index value was to high! [", len(nodes_embedding), " >= ", split_border, "]")
 
+            if use_text_emb:
+                train_x = [ nodes_embedding[:split_border], 
+                            fw_look_up[:split_border], 
+                            bw_look_up[:split_border],
+                            vecs_input_words[:split_border]]
 
-            train_x = [ nodes_embedding[:split_border], 
-                        fw_look_up[:split_border], 
-                        bw_look_up[:split_border],
-                        vecs_input_words[:split_border]]
+                test_x = [  nodes_embedding[split_border:], 
+                            fw_look_up[split_border:], 
+                            bw_look_up[split_border:],
+                            vecs_input_words[split_border:]]
+            else:
+                train_x = [ nodes_embedding[:split_border], 
+                            fw_look_up[:split_border], 
+                            bw_look_up[:split_border]]
 
-            test_x = [  nodes_embedding[split_border:], 
-                        fw_look_up[split_border:], 
-                        bw_look_up[split_border:],
-                        vecs_input_words[split_border:]]
-
+                test_x = [  nodes_embedding[split_border:], 
+                            fw_look_up[split_border:], 
+                            bw_look_up[split_border:]]
 
             train_y = vecs_target_words[:split_border]
             test_y = vecs_target_words[split_border:]

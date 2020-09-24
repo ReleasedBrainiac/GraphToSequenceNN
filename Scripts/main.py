@@ -90,8 +90,9 @@ class Graph2SeqInKeras():
     EPOCHS:int = 15
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 64
-    HOP_STEPS:int = 6
+
+    BATCH_SIZE:int = 128
+    HOP_STEPS:int = 3
     WORD_WISE:bool = False
     USE_GLOVE:bool = True
     EMBEDDING_OUTPUT_DIM:int = 100
@@ -99,7 +100,7 @@ class Graph2SeqInKeras():
 
     #GLOVE
     GLOVE:str = './Datasets/GloVeWordVectors/glove.6B/glove.6B.'+str(EMBEDDING_OUTPUT_DIM)+'d.txt'
-    GLOVE_VOCAB_SIZE:int = 15000
+    GLOVE_VOCAB_SIZE:int = 22000
 
     #Dataset
     PREDICT_SPLIT:float = 0.2 # percentage of used samples form raw dataset for prediction ~> 0.2 = 20% for prediction 
@@ -108,7 +109,7 @@ class Graph2SeqInKeras():
     DATASET:str = './Datasets/Raw/'+DATASET_NAME
     EXTENDER:str = "amr.cleaner.ouput"
     MAX_LENGTH_DATA:int = -1
-    KEEP_EDGES:bool = True
+    keep_opt_infos:bool = True
     MIN_NODE_CARDINALITY:int = 3
     MAX_NODE_CARDINALITY:int = 35
     USE_PREPARED_DATASET:bool = False
@@ -122,10 +123,13 @@ class Graph2SeqInKeras():
     SAVE_PLOTS = True
 
     _accurracy:list = ['acc']
-    _loss_function:str = 'mse'
+    _loss_function:str = 'mae'
     _last_activation:str = 'relu'
-    _optimizer:str ='adam'
+    _optimizer:str ='rmsprop'
     _use_recursive_encoder:bool = False
+    _initial_lr:float=0.0001
+    _min_lr:float=0.00005
+    _clipvalue:float=10.0
     
     _predict_split_value:int = -1
     _dataset_size:int = -1
@@ -135,12 +139,13 @@ class Graph2SeqInKeras():
        
     
     # Multi Run Setup!
-    _datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
-    _multi_epochs:list = [10, 15, 10, 15]
-    _multi_hops:list = [3, 6, 2, 6]
-    _multi_val_split:list = [0.20, 0.20, 0.20, 0.20]
-    _multi_use_glove:list = [True, True, False, False]
-    _multi_use_encoder_model:list = [False, True, False, True]
+    #_datasets:list = ['Der Kleine Prinz AMR/amr-bank-struct-v1.6-training.txt', 'AMR Bio/amr-release-training-bio.txt', '2mAMR/2m.json']
+    _datasets:list = ['2mAMR/2m.json']
+    _multi_epochs:list = [25]
+    _multi_hops:list = [9]
+    _multi_val_split:list = [0.20]
+    _multi_use_glove:list = [True]
+    _multi_use_encoder_model:list = [True]
     _runs:int = len(_multi_epochs)
 
     def Execute(self):
@@ -210,13 +215,13 @@ class Graph2SeqInKeras():
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def DatasetPreprocessor(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, show_processor_feedback:bool=False, keep_edges:bool=True, semantic_amr_string:bool=False):
+    def DatasetPreprocessor(self, in_dataset:str, in_extender:str="output", in_max_length:int=-1, show_processor_feedback:bool=False, keep_opt_infos:bool=True, semantic_amr_string:bool=False):
         try:
             pipe = DatasetPipeline( in_path=in_dataset, 
                                     output_path_extender=in_extender, 
                                     max_length=in_max_length, 
                                     show_feedback=show_processor_feedback,
-                                    keep_edges=keep_edges,
+                                    keep_opt_infos=keep_opt_infos,
                                     min_cardinality=self.MIN_NODE_CARDINALITY, 
                                     max_cardinality=self.MAX_NODE_CARDINALITY,
                                     cpu_cores=self.CPUS,
@@ -372,7 +377,7 @@ class Graph2SeqInKeras():
             print(message)
             print(ex)
 
-    def DatasetConvertToTeacherForcing(self, nodes_embedding:list, fw_look_up:list, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list, save_dataset:bool=False):
+    def DatasetConvertToWWTeacherForcing(self, nodes_embedding:list, fw_look_up:list, bw_look_up:list, vectorized_inputs:list, vectorized_targets:list, save_dataset:bool=False):
         try:
             print("#######################################\n")
             print("### Create Word Wise Teacherforcing ###")
@@ -394,7 +399,7 @@ class Graph2SeqInKeras():
             
             return [generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets]
         except Exception as ex:
-            template = "An exception of type {0} occurred in [Main.DatasetConvertToTeacherForcing]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [Main.DatasetConvertToWWTeacherForcing]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
             print(ex)   
@@ -517,7 +522,14 @@ class Graph2SeqInKeras():
 
             print("Build Finalize and Plot!")
             model = builder.MakeModel(layers=[model])
-            builder.CompileModel(model=model, optimizer=self._optimizer, metrics=self._accurracy, loss = self._loss_function)
+
+            builder.CompileModel(   model=model, 
+                                    optimizer=self._optimizer, 
+                                    metrics=self._accurracy, 
+                                    loss = self._loss_function,
+                                    clipvalue=self._clipvalue,
+                                    learn_rate=self._initial_lr)
+
             builder.Plot(model=model, file_name=self.MODEL_DESC+'model_graph.png')
 
             return model
@@ -533,7 +545,7 @@ class Graph2SeqInKeras():
             print("########### Starts Training ###########")
 
             base_lr = BaseLogger()
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.001, verbose=self.VERBOSE)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=self._min_lr, verbose=self.VERBOSE)
             es = EarlyStopping(monitor='val_loss', mode='min', patience=100)
             #mc = ModelCheckpoint(self.MODEL_DESC+'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
@@ -606,7 +618,7 @@ class Graph2SeqInKeras():
             max_cardinality, datapairs = self.DatasetPreprocessor(  in_dataset=self.DATASET,
                                                                     in_extender=self.EXTENDER,
                                                                     in_max_length=self.MAX_LENGTH_DATA, 
-                                                                    keep_edges=self.KEEP_EDGES)
+                                                                    keep_opt_infos=self.keep_opt_infos)
             
             tokenizer, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets, nodes_embedding = self.TokenizerPreprocessor( datapairs=datapairs, 
                                                                                                                                     in_vocab_size=self.GLOVE_VOCAB_SIZE, 
@@ -641,14 +653,15 @@ class Graph2SeqInKeras():
             tokenizer = None
             generator = None
             
+            # UNUSED: Need more control of the data flow which is not yet build.
             if self.WORD_WISE:
-                generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = self.DatasetConvertToTeacherForcing(nodes_embedding=nodes_embedding, 
+                generator, nodes_embedding, fw_look_up, bw_look_up, vectorized_inputs, vectorized_targets = self.DatasetConvertToWWTeacherForcing(nodes_embedding=nodes_embedding, 
                                                                                                                                                 fw_look_up=fw_look_up, 
                                                                                                                                                 bw_look_up=bw_look_up, 
                                                                                                                                                 vectorized_inputs=vectorized_inputs, 
                                                                                                                                                 vectorized_targets=vectorized_targets, 
                                                                                                                                                 save_dataset=False)
-            #train_x, train_y, test_x, test_y
+            # Removed test_x and test_y because since there was not time left to build the Predict pipe correctly.
             train_x, train_y, _, _ = self.NetworkInput( generator=generator, 
                                                         nodes_embedding=nodes_embedding, 
                                                         fw_look_up=fw_look_up, 
@@ -663,7 +676,7 @@ class Graph2SeqInKeras():
             history = self.NetworkTrain(model, train_x, train_y)
             self.NetworkPlotResults(history)
 
-            #Predict would actually take to much time. @Githung-Community: Please feel free to implement it by yourself!
+            #Removed Predict -> would actually take to much time.
             #self.NetworkPredict(model, test_x, test_y)
 
             print("#######################################\n")

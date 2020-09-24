@@ -10,7 +10,7 @@ class Cleaner:
     This means collecting only the cleaned sentences and semantics.
     """
     node_parenthesis = ['(',')']
-    edge_parenthesis = ['[',']']
+    opt_info_parenthesis = ['[',']']
     extension_dict = {}
     extension_keys_dict = {}
     context = None
@@ -19,17 +19,17 @@ class Cleaner:
     hasContext = False
     hasExtentsionsDict = False
 
-    def __init__(self, node_parenthesis:list =['(',')'], input_context:str =None, input_extension_dict:dict ={}, keep_edges:bool =False):
+    def __init__(self, node_parenthesis:list =['(',')'], input_context:str =None, input_extension_dict:dict ={}, keep_opt_infos:bool =False):
         """
         Class constructor collect all necessary parameters for the cleaning process.
             :param node_parenthesis:list: define node parenthesis
             :param input_context:str: input amr string
             :param input_extension_dict:dict: look up dictionairy
-            :param keep_edges:bool: switch allow to keep edges or not
+            :param keep_opt_infos:bool: switch allow to optional infos
         """   
         try:
             self.constants = Constants()
-            self.keep_edge_encoding = keep_edges 
+            self.keep_opt_info_encoding = keep_opt_infos 
 
             if isNotNone(input_context): 
                 self.hasContext = True
@@ -130,17 +130,17 @@ class Cleaner:
         else:
             return False
  
-    def NewEdge(self , in_context:str =None):
+    def NewOptinalInfo(self , in_context:str =None):
         """
-        This function defines a new AMR converted node edge.
+        This function defines a new AMR converted node optional info.
             :param in_context:str: the corresponding content
         """
         try:
-            return self.node_parenthesis[0] + self.edge_parenthesis[0] + in_context + self.edge_parenthesis[1] + self.node_parenthesis[1]
+            return self.node_parenthesis[0] + self.opt_info_parenthesis[0] + in_context + self.opt_info_parenthesis[1] + self.node_parenthesis[1]
         except ValueError:
-            print("ERR: No label passed to [AMRCleaner.NewEdge].")
+            print("ERR: No label passed to [AMRCleaner.NewOptinalInfo].")
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.NewEdge]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.NewOptinalInfo]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)        
         
@@ -256,19 +256,19 @@ class Cleaner:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def EncapsulateEdge(self, in_match:str):
+    def EncapsulateOptionalInfo(self, in_match:str):
         """
-            Encapsulate edge inputs with defined edge parenthesis.
-            :param in_match:str: a edge string component
+            Encapsulate optional info inputs with defined opt_info parenthesis.
+            :param in_match:str: a optional info string component
         """   
         try:
             flag = in_match[0]
-            flagged_element = self.edge_parenthesis[0] + in_match[1].lstrip(' ') + self.edge_parenthesis[1]
+            flagged_element = self.opt_info_parenthesis[0] + in_match[1].lstrip(' ') + self.opt_info_parenthesis[1]
             return [flag, flagged_element]
         except ValueError:
-            print("ERR: Missing or wrong value passed to [AMRCleaner.EncapsulateEdge].")
+            print("ERR: Missing or wrong value passed to [AMRCleaner.EncapsulateOptionalInfo].")
         except Exception as ex:
-            template = "An exception of type {0} occurred in [AMRCleaner.EncapsulateEdge]. Arguments:\n{1!r}"
+            template = "An exception of type {0} occurred in [AMRCleaner.EncapsulateOptionalInfo]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
@@ -282,12 +282,12 @@ class Cleaner:
                 for loot_elem in self.CollectAllMatches(self.constants.UNENCLOSED_ARGS_MULTIWORD_REGEX, in_context):
                     search = ''.join(loot_elem)
                     found_flag = loot_elem[0]
-                    found_edge = loot_elem[1].lstrip(' ')
-                    replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_edge + self.node_parenthesis[1]])
+                    found_opt_info = loot_elem[1].lstrip(' ')
+                    replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_opt_info + self.node_parenthesis[1]])
                     if 'ARG' not in loot_elem[0]:
-                        if self.keep_edge_encoding:
-                            found_flag, found_edge = self.EncapsulateEdge(loot_elem)
-                            replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_edge + self.node_parenthesis[1]])
+                        if self.keep_opt_info_encoding:
+                            found_flag, found_opt_info = self.EncapsulateOptionalInfo(loot_elem)
+                            replace = ''.join([found_flag, ' ' + self.node_parenthesis[0] + found_opt_info + self.node_parenthesis[1]])
                         else:
                             replace = ''
                         
@@ -306,7 +306,7 @@ class Cleaner:
 
     def EncapsulateStringifiedValues(self, in_context:str):
         """
-        This function creates new edge with defined edge_parenthesis for qualified nested values in quotation marks in the input.
+        This function creates new optional info with defined opt_info_parenthesis for qualified nested values in quotation marks in the input.
             :param in_context:str: a string with at least one qualified name
         """
         try:
@@ -315,11 +315,11 @@ class Cleaner:
                     replacer = ''
 
                     if hasContent(elem[0]) and elem[0].count(self.constants.QUOTATION_MARK) == 2:
-                        if self.keep_edge_encoding:
+                        if self.keep_opt_info_encoding:
                             content = re.sub(self.constants.QUOTATION_MARK,'',elem[0]).replace('_',' ')
 
                             if all(x.isalnum() or x.isspace() for x in content):
-                                replacer = self.NewEdge(content)
+                                replacer = self.NewOptinalInfo(content)
 
                     in_context = in_context.replace(elem[0], replacer, 1)
             return in_context
@@ -336,7 +336,7 @@ class Cleaner:
             :param in_context:str: input string
         """   
         try:
-            if ('-' in in_context):
+            if ('-' in in_context and self.hasExtentsionsDict):
                 look_up_control = self.CollectAllMatches(self.constants.EXTENSION_MULTI_WORD_REGEX, in_context)
                 if (isNotNone(look_up_control) and isNotNone(self.extension_dict) and isDict(self.extension_dict)):
                     for found in look_up_control:
@@ -351,13 +351,13 @@ class Cleaner:
 
     def ReplacePolaritySign(self, in_context:str):
         """
-        This function replace negative polarity (-) with a new edge.
+        This function replace negative polarity (-) with a new optional info.
             :param in_context:str: string containing at least on AMR polarity sign
         """
         try:
             replace = ''
 
-            if self.keep_edge_encoding: replace = self.NewEdge(self.constants.NEG_POLARITY)
+            if self.keep_opt_info_encoding: replace = self.NewOptinalInfo(self.constants.NEG_POLARITY)
 
             in_context = re.sub(self.constants.SIGN_POLARITY_REGEX, replace, in_context)
             return in_context
@@ -370,13 +370,13 @@ class Cleaner:
 
     def ReplacePoliteSign(self, in_context:str):
         """
-        This function replace positive polite (+) signs with a new edge.
+        This function replace positive polite (+) signs with a new optional info.
             :param in_context:str: string containing at least on AMR polite sign
         """
         try:
             replace = ''
 
-            if self.keep_edge_encoding: replace = self.NewEdge(self.constants.POS_POLITE)
+            if self.keep_opt_info_encoding: replace = self.NewOptinalInfo(self.constants.POS_POLITE)
 
             in_context = re.sub(self.constants.SIGN_POLITE_REGEX, replace, in_context)
             return in_context
@@ -497,8 +497,8 @@ class Cleaner:
 
                 if(self.isCleaned):
                     return self.cleaned_context
-                else:                 
-                    return None
+
+            return None
         except Exception as ex:
             template = "An exception of type {0} occurred in [ARMCleaner.GenerateCleanAMR]. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -506,12 +506,12 @@ class Cleaner:
 
     def AllowedCharacterOccurenceCheck(self, in_context:str):
         """
-        This function check a string being AMR conform and additionally allows new defined type of edge informations.
+        This function check a string being AMR conform and additionally allows new defined type of optional informations.
             :param in_context:str: a string
         """   
         try:
             only_allowed_chars = all(x.isalnum() or x.isspace() or (x is '[') or (x is ']') or (x is '(') or (x is ')')  or (x is '/') or (x is '?') or (x is '\n') for x in in_context)
-            has_correct_parenthesis = self.MatchSignsOccurences(in_context) and self.MatchSignsOccurences(in_context, self.edge_parenthesis)
+            has_correct_parenthesis = self.MatchSignsOccurences(in_context) and self.MatchSignsOccurences(in_context, self.opt_info_parenthesis)
             allowed = only_allowed_chars and has_correct_parenthesis
 
             if (not allowed):

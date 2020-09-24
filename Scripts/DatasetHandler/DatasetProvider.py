@@ -25,8 +25,8 @@ class DatasetPipeline:
                  output_path_extender:str='ouput', 
                  max_length:int=-1, 
                  show_feedback:bool =False, 
-                 keep_edges:bool =False, 
-                 min_cardinality:int =1, 
+                 keep_opt_infos:bool =False, 
+                 min_cardinality:int =3, 
                  max_cardinality:int =100,
                  cpu_cores:int = 1,
                  saving_cleaned_data:bool = False,
@@ -47,7 +47,7 @@ class DatasetPipeline:
             :param output_path_extender:str: result output path
             :param max_length:int: context length restriction
             :param show_feedback:bool: show process content as console feedback
-            :param keep_edges:bool: include edges in the amr cleaner strategy
+            :param keep_opt_infos:bool: include optional info in the amr cleaner strategy
             :param min_cardinality:int: define min range for the node matrix representation [>2 (at least 3 nodes/words) depends on the SPO sentence definition in english]
             :param max_cardinality:int: define max range for the node matrix representation 
             :param cpu_cores:int: define the number of existing/accessible cpu cores.
@@ -69,7 +69,7 @@ class DatasetPipeline:
             self._count_graph_node_cards_occs = dict()
             self._is_showing_feedback = show_feedback
             self._is_saving = saving_cleaned_data
-            self._is_keeping_edges = keep_edges
+            self._is_keep_opt_infos = keep_opt_infos
             self._out_path_extender = output_path_extender
             self._restriction_chars_sentence = setOrDefault(max_length, -1, isInt(max_length))
             self._restriction_chars_semantic = -1 if (max_length < 0)  else (2 * self._restriction_chars_sentence)
@@ -103,7 +103,7 @@ class DatasetPipeline:
         """
         try:
             node_parenthesis = ['(',')'] if ('(' in semantic and ')' in semantic) else None
-            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_edges=self._is_keeping_edges, node_parenthesis=node_parenthesis)
+            cleaner = Cleaner(input_context=semantic, input_extension_dict=self._extension_dict, keep_opt_infos=self._is_keep_opt_infos, node_parenthesis=node_parenthesis)
 
             if cleaner.isCleaned:
                 self._extension_dict = cleaner.extension_dict
@@ -176,13 +176,14 @@ class DatasetPipeline:
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-    def CollectAllDatasetPairs(self, data_pairs:list):
+    def CollectAllDatasetPairs(self, data_pairs:list, feedback:int = 10000):
         """
         This function collect multiples pairs of semantic and sentence data as list of data pairs.
         For this case we pass arrays of raw sentences and semantics, 
         where index i in both arrays point to a sentence and the corresponding semantic.
         Also the cardinalities will be collected.
             :param data_pairs:list: array of amr data pairs
+            :param feedback:int: print out steps for bigger datasets
         """
         try:
             self._max_chars_sentences = 0
@@ -202,9 +203,13 @@ class DatasetPipeline:
                 return placeholder_pairs
 
             else:
-                print("Collect sample informations!")
+                print("START: Collect sample informations!")
+                num_pairs:int = 0
+                print("Processable pairs = ", len(placeholder_pairs))
+
                 while placeholder_pairs:
                     entry = placeholder_pairs.pop(0)
+                    num_pairs += 1
 
                     if isNotNone(entry):
                         data_pair, edges_dim, pair_sent_chars_count, pair_sent_words_count = entry
@@ -213,7 +218,12 @@ class DatasetPipeline:
                         if (self._max_chars_sentences < pair_sent_chars_count): self._max_chars_sentences = pair_sent_chars_count
                         if (self._max_words_sentences < pair_sent_words_count): self._max_words_sentences = pair_sent_words_count
                     else: 
-                        continue;
+                        continue
+
+                    if (num_pairs % feedback == 0) and (num_pairs > feedback):
+                        print("Processed pairs: ", num_pairs)
+
+            print("END: Collect sample informations!")
             return dataset_pairs_sent_sem
         except Exception as ex:
             template = "An exception of type {0} occurred in [DatasetProvider.CollectAllDatasetPairs]. Arguments:\n{1!r}"
@@ -304,6 +314,7 @@ class DatasetPipeline:
             if(self._is_saving and self._stringified_amr): 
                 Writer(self._in_path, self._out_path_extender, datapairs)
                 print('Finished storing process!')
+                
 
             print('Result structure:\n\t=> [Sentence, EdgeArrays [Forward Connections, Backward Connections], OrderedNodeDict(Content)]')
             return datapairs

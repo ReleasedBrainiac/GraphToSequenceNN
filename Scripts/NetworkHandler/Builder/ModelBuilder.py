@@ -258,7 +258,7 @@ class ModelBuilder:
                                     return_sequences=True, 
                                     name="embedding_lstm")(sequence_embedding)
 
-            encoder = concatenate([encoder_out,embedding_lstm], name="att_emb_concatenation", axis=-1)
+            encoder = concatenate([encoder_out,embedding_lstm], name="sentence_emb_concatenation", axis=-1)
 
             # Model A part one shot model returns the states too.
             return units, encoder, enc_h, enc_c

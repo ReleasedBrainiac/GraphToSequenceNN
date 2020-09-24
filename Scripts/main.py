@@ -78,7 +78,7 @@ class Graph2SeqInKeras():
     """
     #System
     TF_CPP_MIN_LOG_LEVEL:str = '2'
-    MULTI_RUN:bool = True
+    MULTI_RUN:bool = False
     CPUS:int = os.cpu_count()
     GPUS = KTFGPUHandler().GetAvailableGPUsTF2()
 
@@ -87,13 +87,13 @@ class Graph2SeqInKeras():
     TIME_NOW:str = strftime("%Y%m%d %H_%M_%S", gmtime())
 
     #Network
-    EPOCHS:int = 4
+    EPOCHS:int = 15
     VERBOSE:int = 1
     VALIDATION_SPLIT:float = 0.2 # percentage of used samples from train set for cross validation ~> 0.2 = 20% for validation
-    BATCH_SIZE:int = 16
-    HOP_STEPS:int = 3
+    BATCH_SIZE:int = 64
+    HOP_STEPS:int = 6
     WORD_WISE:bool = False
-    USE_GLOVE:bool = False
+    USE_GLOVE:bool = True
     EMBEDDING_OUTPUT_DIM:int = 100
     REDUCTION_DIM:int = 100
 
@@ -648,13 +648,13 @@ class Graph2SeqInKeras():
                                                                                                                                                 vectorized_inputs=vectorized_inputs, 
                                                                                                                                                 vectorized_targets=vectorized_targets, 
                                                                                                                                                 save_dataset=False)
-
-            train_x, train_y, test_x, test_y = self.NetworkInput(   generator=generator, 
-                                                                    nodes_embedding=nodes_embedding, 
-                                                                    fw_look_up=fw_look_up, 
-                                                                    bw_look_up=bw_look_up, 
-                                                                    vectorized_inputs=vectorized_inputs, 
-                                                                    vectorized_targets=vectorized_targets)
+            #train_x, train_y, test_x, test_y
+            train_x, train_y, _, _ = self.NetworkInput( generator=generator, 
+                                                        nodes_embedding=nodes_embedding, 
+                                                        fw_look_up=fw_look_up, 
+                                                        bw_look_up=bw_look_up, 
+                                                        vectorized_inputs=vectorized_inputs, 
+                                                        vectorized_targets=vectorized_targets)
 
             model = self.NetworkConstruction(   target_shape=vectorized_targets.shape, 
                                                 max_cardinality=max_cardinality, 
